@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+import pyautogui as auto
+import cv2
+
+def findimg(Target,value = 0.8):
+    x,y = auto.locateCenterOnScreen(Target,grayscale = True,confidence = value) #后面参数为灰度匹配，提升速度
+    return x,y
+def moveimg(x,y):
+    auto.moveTo(x,y)
+
+
+if __name__ == '__main__':
+    x,y = findimg("D:\pythonProject\image\sp.PNG")
+    moveimg(x,y)
+
