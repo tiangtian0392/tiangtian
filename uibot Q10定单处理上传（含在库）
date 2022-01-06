@@ -1,0 +1,216 @@
+
+Dim hWeb = ""
+Dim iPID = ""
+Dim arrYOUJUUP1 = ""
+Dim K = ""
+Dim iRet = ""
+Dim 重复 = ""
+Dim 数组长度 = ""
+Dim 字典 = ""
+Dim arrYOUJUUP = ""
+Dim Z = ""
+Dim Y = ""
+Dim arrZUOCHUAN = ""
+Dim arrYOUJU = ""
+Dim Q10文件名 = ""
+Dim dTime = ""
+Q10文件名 = "DeliveryManagement_detail_"
+#icon("@res:0df3g224-781r-ng7g-ue7b-8jsjbm2i2091.png")
+Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"配送管理 - Google Chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"配送管理"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"配送管理"},{"role":"ROLE_SYSTEM_LINK","name":"配送/キャンセル/未受取"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"配送/キャンセル/未受取"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:k6pfq4ps-lgnq-i81l-ol8m-pc7d06vvtgvr.png")
+Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"配送管理 - Google Chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"配送管理"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"配送管理"},{"role":"ROLE_SYSTEM_LINK","name":"配送管理"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"配送管理"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:31fq06gb-kr4l-9mch-2g3o-amhdqch76shb.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"tab_main_request"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:35oa4h6a-8jl8-8j1r-5o03-3a690f74ujab.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_confirmed_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:mnh775r0-14ad-7eu8-ol0g-hbtn8eps7f5o.png")
+Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:q62h2h6e-ghpl-e33s-qv17-ttt8m453usid.png")
+Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"配送管理 - Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"q62h2h6e-ghpl-e33s-qv17-ttt8m453usid.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+dTime = Time.Now()
+dTime = Time.Format(dTime,"yyyymmdd_hhmm")
+Q10文件名 = "C:\\Users\\user\\Downloads\\"&Q10文件名&dTime&".csv"
+Clipboard.SetText(Q10文件名)
+TracePrint(Q10文件名)
+#icon("@res:hbr4f8jm-7cq5-3jpm-lnts-uicuijunqk5f.png")
+Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+Delay(2000)
+arrYOUJU = [["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"]]
+arrZUOCHUAN = [["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"]]
+Y = 1
+Z = 1
+For i = 0 To 5 Step 1 
+	bRet = File.FileExists(Q10文件名)
+	If bRet
+		
+		arrayQ10 = CSV.Open(Q10文件名,{"encoding":"auto"})
+		iRet = UBound(arrayQ10)
+		For j = 1 To iRet Step 1 
+			bRet = StrComp(arrayQ10[j][3],"ゆうパケット",False)
+			TracePrint(bRet)
+			If bRet
+				arrYOUJU[Y] = []
+				arrYOUJU[Y] = arrayQ10[j]
+				Y = Y+1
+				
+			Else
+				arrZUOCHUAN[Z] = []
+				arrZUOCHUAN[Z] = arrayQ10[j]
+				Z = Z+1
+				
+			End If
+			
+		Next
+		Q10文件 = App.Start(Q10文件名, 0, "1")
+		CSV.Save(arrYOUJU,"F:\\クリックポスト\\クリックポスト"&dTime&".csv",{"encoding":"utf-8-sig"})
+		CSV.Save(arrZUOCHUAN,"F:\\zuochuan\\ZUOCHUAN"&dTime&".csv",{"encoding":"utf-8-sig"})
+		Break
+	Else
+		
+		Delay(1000)
+		#icon("@res:koofn09f-3gvl-dkkm-auo4-utqo8ds83t5p.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送/キャンセル/未受取"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:jcrn3ul3-gb7h-ki7n-93sh-bt5f6j3vkrpa.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送管理 "}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:mjdog3r5-6h0t-kvte-984v-8ug6l7e9lecq.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"tab_main_request"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:9advupfg-c700-h1fj-hkj1-3oi7a234d1lu.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_new_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:ek4r45db-r6kd-mjl8-68im-7rnr4fe8vp9e.png")
+		Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Mouse.Click("left", "click", [],{"iDelayAfter":300,"iDelayBefore":200})
+		dTime = Time.Now()
+		dTime = Time.Format(dTime,"yyyymmdd_hhmm")
+		Q10文件名 = "DeliveryManagement_detail_"
+		Q10文件名 = "C:\\Users\\user\\Downloads\\"&Q10文件名&dTime&".csv"
+		TracePrint("没有文件："&Q10文件名)
+		Delay(1500)
+		arrayQ10 = CSV.Open(Q10文件名,{"encoding":"auto"})
+		iRet = UBound(arrayQ10)
+		For j = 1 To iRet Step 1 
+			bRet = StrComp(arrayQ10[j][3],"ゆうパケット",False)
+			TracePrint(bRet)
+			If bRet
+				arrYOUJU[Y] = []
+				arrYOUJU[Y] = arrayQ10[j]
+				Y = Y+1
+				
+			Else
+				arrZUOCHUAN[Z] = []
+				arrZUOCHUAN[Z] = arrayQ10[j]
+				Z = Z+1
+				
+			End If
+			
+		Next
+		Q10文件 = App.Start(Q10文件名, 0, "1")
+		CSV.Save(arrYOUJU,"F:\\クリックポスト\\クリックポスト"&dTime&".csv",{"encoding":"utf-8-sig"})
+		CSV.Save(arrZUOCHUAN,"F:\\zuochuan\\ZUOCHUAN"&dTime&".csv",{"encoding":"utf-8-sig"})
+		Break
+	End If
+	
+Next
+
+Rem 以下为生成ゆうパク上传文件，有个去重插件要在命令中心下载
+arrYOUJUUP = [["お届け先郵便番号","お届け先氏名","お届け先敬称","お届け先住所1行目","お届け先住所2行目","お届け先住所3行目","お届け先住所4行目","内容品"]]
+字典 = { "3DS" : "ゲームソフト", "KOEI" : "ゲームソフト", "Nintendo" : "ゲームソフト", "PS4" : "ゲームソフト", "PS4ソフト" : "ゲームソフト", "PS5" : "ゲームソフト", "PlayStation4" : "ゲームソフト", "SEGA" : "ゲームソフト", "SIE" : "ゲームソフト", "SQUARE" : "ゲームソフト", "Switch" : "ゲームソフト", "WIN" : "ゲームソフト", "ゲーム" : "ゲームソフト", "コナミ" : "ゲームソフト", "ソニー" : "ゲームソフト", "任天堂" : "ゲームソフト", "通常版" : "ゲームソフト","Office" : "PCソフト","ESET" : "PCソフト","Kaspersky" : "PCソフト","マカフィー" : "PCソフト","トレンドマイクロ" : "PCソフト","ノートン" : "PCソフト"," Pencil" : "APPLEペン/ペン","ペンシル" : "APPLEペン/ペン","Pen" : "APPLEペン/ペン","ペン" : "APPLEペン/ペン","Lightning" : "HDMI変換ケーブル","SSD" : "PCパーツ(バッテリーなし)","HHD" : "PCパーツ(バッテリーなし)","NVMe" : "PCパーツ(バッテリーなし)","SATA" : "PCパーツ(バッテリーなし)","M.2" : "PCパーツ(バッテリーなし)","メモリ" : "PCパーツ(バッテリーなし)","DDR" : "PCパーツ(バッテリーなし)","ヒアルロン酸" : "サプリメント","DHC" : "サプリメント","EPA" : "サプリメント","酸" : "サプリメント","製薬" : "サプリメント","虫" : "サプリメント","粒" : "サプリメント","SDHC" : "PC周辺機器(バッテリーなし)","SDXC" : "PC周辺機器(バッテリーなし)","メモリカード" : "PC周辺機器(バッテリーなし)","電池" : "アルカリ乾電池","ケース" : "PC周辺機器(バッテリーなし)","Keyboard" : "キーボード","Trackpad" : "マウス","SDカードリーダー" : "PC周辺機器(バッテリーなし)","MD826" : "HDMI変換ケーブル"}
+数组长度 = UBound(arrYOUJU)
+For i = 1 To 数组长度 Step 1 
+	
+	arrYOUJUUP[i] = []
+	转换邮编 = arrYOUJU[i][23]
+	转换邮编 = Replace(转换邮编,"'","",False)
+	arrYOUJUUP[i][0] = 转换邮编
+	arrYOUJUUP[i][1] = arrYOUJU[i][18]
+	arrYOUJUUP[i][2] = "様"
+	转换地址 = arrYOUJU[i][22]
+	地址长度 = Len(转换地址)
+	If 地址长度<=20
+		
+		地址1 = Left(转换地址,20)
+		地址2 = ""
+	Else
+		地址1 = Left(转换地址,20)
+		
+		地址2 = Right(转换地址,地址长度-20)
+	End If
+	arrYOUJUUP[i][3] = 地址1
+	arrYOUJUUP[i][4] = 地址2
+	电话 = arrYOUJU[i][21]
+	电话长度 = Len(电话)
+	If 电话长度<=10
+		
+		arrYOUJUUP[i][6] = "TEL:"&arrYOUJU[i][20]
+	Else
+		
+		arrYOUJUUP[i][6] = "TEL:"&arrYOUJU[i][21]
+	End If
+	标题 = arrYOUJU[i][13]
+	For Each key, value In 字典
+		
+		关键字长度 = InStr(标题,key,1,False)
+		If 关键字长度>0
+			
+			arrYOUJUUP[i][7] = value
+			Break
+		Else
+			
+		End If
+	Next
+Next
+Rem 以下内容为去重
+重复 = "重复"
+Dim J = ""
+iRet = UBound(arrYOUJUUP)
+For i = 0 To iRet Step 1 
+	J = i+1
+	For J = J To iRet Step 1 
+		If arrYOUJUUP[i][0]=arrYOUJUUP[J][0] And arrYOUJUUP[i][1]=arrYOUJUUP[J][1]
+			
+			TracePrint("重复")
+			arrYOUJUUP[J][1] = "copy"
+		Else
+			
+		End If
+		
+	Next
+	
+Next
+K = 0
+arrYOUJUUP1 = [[]]
+For i = 0 To iRet Step 1 
+	If arrYOUJUUP[i][1]<>"copy"
+		arrYOUJUUP1[K] = []
+		arrYOUJUUP1[K] = arrYOUJUUP[i]
+		K = K+1
+		
+	Else
+		
+	End If
+	
+Next
+TracePrint(arrYOUJUUP)
+Rem 去重完成
+CSV.Save(arrYOUJUUP1,"F:\\クリックポスト\\クリックポスト_UP"&dTime&".csv")
+iPID = App.Start("F:\\クリックポスト\\クリックポスト_UP"&dTime&".csv", "0", "1")
+Delay(1000)
+hWeb = WebBrowser.Create("chrome","https://clickpost.jp/mypage/index",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+#icon("@res:popvpum3-to4i-fk66-kn5s-jt6f4h5hb282.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"login","aaname":"ログイン"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:2bjsfp5a-dgfb-fqgd-df7b-13qit15uh3h8.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:grlqprlk-54vj-4a9b-f4q4-vbhhm90ll2i1.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","type":"button","aaname":"まとめ申込"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:5upk7bbu-rigk-63ov-g9e2-vi5d58u5v3hv.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"file"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+Clipboard.SetText("F:\\クリックポスト\\クリックポスト_UP"&dTime&".csv")
+#icon("@res:ocdiorhd-98m2-2jco-2pin-i4li46ibq3vl.png")
+Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+#icon("@res:i6j68ll7-e3u2-i7gt-jk94-5g668gn2nkqt.png")
+Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:orkee3dp-l8t1-dk9r-vssi-f33vkdf2fot3.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","name":"commit"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+#icon("@res:6vhpe00h-v2rt-hk7d-mda1-3ct66ve1jd30.png")
+Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","name":"create"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+
