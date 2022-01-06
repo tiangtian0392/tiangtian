@@ -1,0 +1,2819 @@
+
+Dim 所有价格数量 = ""
+Dim 有货数量 = ""
+Dim arr有货价格 = ""
+Dim arr所有价格 = ""
+Dim 计算的均价 = ""
+Dim item = ""
+Dim paichu_excel = ""
+Dim 停止出品 = ""
+Dim dRet = ""
+Dim dictRet = ""
+Dim 输入加价 = ""
+Dim 标题 = ""
+Dim 现有行数 = ""
+Dim 笔记本 = ""
+Dim 单独子程序 = ""
+Dim Text查找内容 = ""
+Dim obj笔记本 = ""
+Dim obj子程序 = ""
+Dim 固定加价 = ""
+Dim DBJAN
+Dim GWeb
+Dim objWindow
+Dim 后
+Dim 商品网址
+Dim 源代码
+Dim 源网址
+Dim aa
+Dim iRet1
+Dim 商品説明全部
+Dim LTnojima
+Dim 总长
+Dim obj加价价格
+Dim obj商家
+Dim obj固定加价
+Dim obj手数料
+Dim obj查找内容
+Dim obj结果
+Dim 商品説明OK
+Dim Text商家
+Dim Text手数料
+Dim tianxie
+Dim only型番
+Dim 商品説明校対3
+Dim 型番校対2
+Dim auto
+Dim 返回查找内容 = ""
+Dim 加价价格 = ""
+Dim Text供给原价 = ""
+Dim obj供给原价 = ""
+Dim 主的式样 = ""
+Dim CD = ""
+Dim 加价 = ""
+Dim 全商家 = ""
+Dim 长度 = ""
+Dim objPoint = ""
+Dim hWeb1 = ""
+Dim 网址2 = ""
+Dim 网址1 = ""
+Dim arrRet = ""
+Dim title后綴1 = ""
+Dim 厂家前 = ""
+Dim ComboBox = ""
+Dim Value = ""
+Dim Text = ""
+Dim Index = ""
+Dim 前 = ""
+Dim temp = ""
+Dim title前 = ""
+Dim arrayQ10data
+Dim ButtonID = ""
+Dim objButton = ""
+Dim winForm = ""
+Dim arrayData = ""
+Dim JS = ""
+Dim hWeb = ""
+Dim TPJS = ""
+Dim arrayRet = ""
+Dim Q10data = ""
+Dim JAN校対1 = ""
+Dim objControl = ""
+Dim 位置 = ""
+Dim 待写入行数据 = ""
+Dim 在庫写入csv = ""
+Dim iPID = ""
+Dim objExcelWorkBook = ""
+Dim 発送日 = ""
+Dim 数量 = ""
+Dim 图片 = ""
+Dim 价格 = ""
+Dim 厂家 = ""
+Dim title = ""
+Dim 网址 = ""
+Dim 商品説明 = ""
+Dim 型番 = ""
+Dim JAN = ""
+Dim bRet = ""
+Dim only商品説明 = ""
+Dim XJ = ""
+Dim 型番OK = ""
+Dim JANOK = ""
+Dim iRet = ""
+Dim onlyJAN = ""
+Dim sRet = ""
+Dim 全信息商家数 = ""
+Dim SS = ""
+Dim title后綴 = ""
+
+Rem 平均价格计算
+Function 平均价格计算()
+	Rem 价格计算
+	计算的均价 = 0
+	arr所有价格 = []
+	arr有货价格 = []
+	Try 1
+		array抓取价格 = UiElement.DataScrap({"html":[{"parentid":"mainLeft","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	Catch e
+		array抓取价格 = UiElement.DataScrap({"html":[{"aaname":"順位 価格（差額） 送料 在庫・発送の目安 地域 ショップ/評価 支払方法 購入条件(登録日) ショップサイト 順位 価格（差額*","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	Else
+	End Try
+	For Each value In array抓取价格
+		arrRet = Regex.Find(value[0],"\\d.*")
+		Try 1
+			iRet = InStr(arrRet[0],"位",1,False)
+		Catch e
+		Else
+			If iRet>0
+				Rem 以下正则提取价格数据在存回原数组
+				提取价格 = Regex.Find(value[1],"[\\s\\S]*(?=[\\（\\(])")
+				value[1] = DigitFromStr(提取价格[0])
+				Rem 把数组去掉无用重新存贮
+				arr所有价格 = push(arr所有价格,value)
+				Rem 以下把圈的商家独为"arr有货价格"
+				iRet = InStr(value[3],"○",1,False)
+				iRet1 = InStr(value[3],"有",1,False)
+				If iRet+iRet1>0
+					arr有货价格 = push(arr有货价格,value)
+					
+				Else
+					
+				End If
+				
+			Else
+				
+			End If
+		End Try
+		
+	Next
+	有货数量 = UBound(arr有货价格)
+	所有价格数量 = UBound(arr所有价格)
+	TracePrint("有货商家数，",有货数量)
+	Rem 有货价格>=5，则有货商家为大于6家，否则用所有商家计算价格
+	If 有货数量>=5
+		For i = 0 To 5 Step 1 
+			iRet  = CInt(arr有货价格[i][1])
+			计算的均价 = 计算的均价+iRet
+			
+		Next
+		
+		计算的均价 = 计算的均价/6
+		TracePrint("\"○\"商家的平均价")
+	Else
+		If 所有价格数量>=5
+			For i = 0 To 5 Step 1 
+				iRet  = CInt(arr所有价格[i][1])
+				计算的均价 = 计算的均价+iRet
+				
+			Next
+			
+			计算的均价 = 计算的均价/6
+			TracePrint("非\"○\"商家的平均价,商家>=6")
+		Else
+			For i = 0 To 所有价格数量 Step 1 
+				iRet  = CInt(arr所有价格[i][1])
+				计算的均价 = 计算的均价+iRet
+				
+			Next
+			
+			计算的均价 = 计算的均价/(所有价格数量+1)
+			TracePrint("非\"○\"商家的平均价,商家<6")
+			
+		End If
+		
+	End If
+	TracePrint("计算的均价，",计算的均价)
+	
+End Function
+Rem 对比不在出品商家
+Function 不在出品(厂家)
+	TracePrint("查找不在出品名单",厂家)
+	Try 1
+		paichu_excel = Excel.BindBook("paichu.xlsx")
+	Catch e
+		sRet = Dialog.OpenFile("Z:\\bazhuayu","paichu文档 |*.xlsx;*.log|任意文件|*","UiBot")
+		iPID = App.Start("Z:\\bazhuayu\\paichu.xlsx", "0", "1")
+		Try 999
+			paichu_excel = Excel.BindBook("paichu.xlsx")
+		Catch w
+		Else
+		End Try
+	Else
+		Excel.ActiveBook(paichu_excel)
+		iRet_行数  = Excel.GetRowsCount(paichu_excel,"不出品")
+		array不在出品 = Excel.ReadRange(paichu_excel,"不出品","B2:D"&iRet_行数)
+		For Each value In array不在出品
+			For Each value_brand In value
+				If value_brand=厂家
+					TracePrint("这个厂家不在出品，出品退出")
+					Dialog.Notify("这个厂家不在出品，出品退出", "UiBot", "0")
+					停止出品 = 1
+					
+				Else
+					
+				End If
+				
+			Next
+			
+		Next
+	End Try
+	
+End Function
+Rem 对比尺寸
+Function saizi()
+	sRet = HTTP.Get("https://kakaku.com/item/"&SKU&"/spec/#tab",  {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}, 60000)
+	sRet = Regex.FindStr(sRet,"(?<=室内機サイズ</th><td>).*?(?=</td>)",0)
+	arrRet = Regex.FindAll(sRet,"\\d+")
+	尺寸 = 0
+	For Each value In arrRet
+		iRet = CNumber(value)
+		尺寸 = 尺寸+iRet
+		
+	Next
+	
+	TracePrint(尺寸)
+	Return 尺寸
+End Function
+objWindow = PrintToScreen.CreateWindow({"height":115,"resolution":{"height":1080,"width":1920},"width":319,"x":1580,"y":923},True)
+arrayQ10data = CSV.Open("Z:\\bazhuayu\\标题和番号.csv",{"encoding":"auto"})
+item = Shift(arrayQ10data)
+Do While True
+	sRet = Dialog.OpenFile("Z:\\YS登録\\在庫出力","CSV文档 (txt、log)|*.csv;*.xlsx|任意文件|*","打开要写入文件")
+	
+	在库出力 = Regex.FindStr(sRet,"\\w*.xlsx",0)
+	在库出力表名 = Replace(在库出力,".xlsx","",False)
+	iRet = Dialog.MsgBox("在库出力文件-"&在库出力表名&"是否正确，はい-确认，いいえ-重新选择","UiBot",1,2,0)
+	If iRet=6
+		Break
+		
+	Else
+		
+	End If
+Loop
+Rem 主程序
+停止出品 = 0
+Do While True
+	INI.Write(@res"seting.ini", "詳細信息", "商品説明", "")
+	PrintToScreen.DrawText(objWindow,"程序运行中",18,[255,0,0])
+	
+	winForm = myUI.CreateForm("出品1.0",353,170)
+	objControl = myUI.CreateControl(winForm,"Label","供给原价",55,24,0,6)
+	obj供给原价 = myUI.CreateControl(winForm,"TextBox","到手价",52,24,53,1)
+	objControl = myUI.CreateControl(winForm,"Label","手数料",42,24,108,6)
+	obj手数料 = myUI.CreateControl(winForm,"ComboBox","8%",40,24,150,1)
+	objControl = myUI.CreateControl(winForm,"Label","结果",30,24,190,6)
+	obj结果 = myUI.CreateControl(winForm,"TextBox",计算结果,60,24,220,1)
+	objButton = myUI.CreateButton(winForm,"Ignore","计算",70,24,282,0)
+	objControl = myUI.CreateControl(winForm,"Label","查找",30,24,0,36)
+	TracePrint(查找内容)
+	obj查找内容 = myUI.CreateControl(winForm,"TextBox",查找内容,88,24,30,31)
+	myUI.SetControlText(obj查找内容,查找内容)
+	objControl = myUI.CreateControl(winForm,"Label","返回",30,24,118,36)
+	TracePrint(返回查找内容)
+	obj返回查找内容 = myUI.CreateControl(winForm,"TextBox",返回查找内容,108,24,148,31)
+	objButton = myUI.CreateButton(winForm,"No","清",24,24,258,31)
+	objButton = myUI.CreateButton(winForm,"Yes","查找",70,24,282,31)
+	Index = myUI.AddComboBoxItem(obj手数料,"8%")
+	Index = myUI.AddComboBoxItem(obj手数料,"9%")
+	Index = myUI.AddComboBoxItem(obj手数料,"10%")
+	// objButton = myUI.CreateButton(winForm,"Suspend",位置,88,24,206,3)
+	objControl = myUI.CreateControl(winForm,"ComboBox","写入EXCEL",95,24,3,63)
+	ComboBox = myUI.AddComboBoxItem(objControl,"写入EXCEL")
+	ComboBox = myUI.AddComboBoxItem(objControl,"写入在库软件")
+	obj商家 = myUI.CreateControl(winForm,"ComboBox","全商家",120,24,101,63)
+	ComboBox = myUI.AddComboBoxItem(obj商家,"全商家")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"ヤマダウェブコム")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"PREMOA")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"エディオン")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"コジマ")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"コジマネット")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"EDIONネットショップ")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"ひかりTVショッピング")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"ソフマップ")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"ノジマオンライン")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"kakaku仕样情报")
+	ComboBox = myUI.AddComboBoxItem(obj商家,"amazon")
+	obj固定加价 = myUI.CreateControl(winForm,"CheckBox","固定加价",70,24,230,62)
+	obj加价价格 = myUI.CreateControl(winForm,"TextBox","加价",50,24,300,63)
+	obj型番 = myUI.CreateControl(winForm,"CheckBox","型番选项",70,24,3,88)
+	obj型番Text = myUI.CreateControl(winForm,"TextBox","",180,24,80,88)
+	objButton = myUI.CreateButton(winForm,"Cancel","添写基本信息",88,24,3,115)
+	objButton = myUI.CreateButton(winForm,"Confirm","自动添写",88,24,100,115)
+	obj子程序 = myUI.CreateControl(winForm,"CheckBox","子程序",58,24,190,115)
+	obj笔记本 = myUI.CreateControl(winForm,"CheckBox","笔记本",58,24,248,115)
+	objButton = myUI.CreateButton(winForm,"Retry","退出",40,24,310,115)
+	INI.Write(@res"seting.ini", "基本信息", "位置", "1")
+	myUI.ShowModal(winForm)
+	ButtonID = myUI.GetButtonID()
+	Text查找内容 = myUI.GetControlText(obj查找内容)
+	Text = myUI.GetControlText(objControl)
+	Text商家 = myUI.GetControlText(obj商家)
+	INI.Write(@res"seting.ini", "基本信息", "指定商家", Text商家)
+	固定加价 = myUI.GetValue(obj固定加价)
+	加价价格 = myUI.GetControlText(obj加价价格)
+	加价价格 = CInt(加价价格)
+	单独子程序 = myUI.GetValue(obj子程序)
+	笔记本 = myUI.GetValue(obj笔记本)
+	型番选择 = myUI.GetValue(obj型番)
+	型番Text = myUI.GetControlText(obj型番Text)
+	Text供给原价 = myUI.GetControlText(obj供给原价)
+	Text手数料 = myUI.GetControlText(obj手数料)
+	TracePrint("型番选择"&型番选择)
+	TracePrint("型番Text"&型番Text)
+	TracePrint(单独子程序)
+	TracePrint(笔记本)
+	TracePrint(Text)
+	TracePrint(Text商家)
+	TracePrint(ButtonID)
+	If Text="写入在库软件"
+		
+		#icon("@res:qr1ap8qq-e6th-dv4v-1oah-5silpdusiprh.png")
+		sRet = UiElement.GetValue({"wnd":[{"app":"explorer","cls":"Shell_TrayWnd"},{"cls":"TrayNotifyWnd"},{"cls":"TrayInputIndicatorWClass","title":"トレイ入力インジケーター","aaname":"トレイ入力インジケーター"},{"cls":"InputIndicatorButton","aaname":"トレイ入力インジケーター - *"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If "トレイ入力インジケーター - 中国語 (簡体字、中国)"=sRet
+			Keyboard.Press("Left Alt", "press", ["Shift"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+			Keyboard.Press("`", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+			
+		Else
+			
+		End If
+	Else
+		
+	End If
+	If ButtonID=1
+		If 单独子程序=1
+			PrintToScreen.DrawText(objWindow,"独立运行子程序-"&Text商家,18,[255,0,0])
+			TracePrint("独立运行子程序-"&Text商家)
+			If Text商家="ヤマダウェブコム"
+				TracePrint("ヤマダウェブコム")
+				yamada(URL)
+				
+				
+			ElseIf Text商家="ひかりTVショッピング"
+				TracePrint("ひかりTVショッピング")
+				HIKARITV(URL)
+				
+			ElseIf Text商家="EDIONネットショップ"
+				TracePrint("EDIONネットショップ")
+				
+				EDIONGW(URL)
+				
+			ElseIf Text商家="ソフマップ"
+				TracePrint("ソフマップ")
+				SOFUMA(URL)
+				
+			ElseIf Text商家="コジマ"
+				TracePrint("コジマ")
+				kojimaLT(URL)
+				
+			ElseIf Text商家="エディオン"
+				TracePrint("エディオン")
+				
+				EDIONLT(URL)
+				
+			ElseIf Text商家="PREMOA"
+				TracePrint("PREMOA")
+				
+				PREMOALT(URL)
+				
+			ElseIf Text商家="ノジマオンライン"
+				TracePrint("ノジマオンライン")
+				
+				nojima(URL)
+				
+			ElseIf Text商家="コジマネット"
+				TracePrint("コジマネット")
+				
+				KOJIMA(URL)
+			ElseIf Text商家="amazon"
+				TracePrint("amazon")
+				amazon()
+				Continue
+			End If
+			
+			商品説明 = INI.Read(@res"seting.ini", "詳細信息", "商品説明", "")
+			sRet = Regex.FindStr(商品説明,"<iframe([\\s\\S]*?)</iframe>",0)
+			商品説明 = Replace(商品説明,sRet,"",False)
+			sRet = Regex.FindStr(商品説明,"<img([\\s\\S]*?).jpg([\\s\\S]*?)>",0)
+			TracePrint(sRet)
+			iRet = Len(sRet)
+			Do While iRet>0 
+				
+				商品説明 = Replace(商品説明,sRet,"",False)
+				sRet = Regex.FindStr(商品説明,"<img([\\s\\S]*?).jpg([\\s\\S]*?)>",0)
+				iRet = Len(sRet)
+			Loop
+			Rem 
+			sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+			TracePrint(sRet)
+			iRet = Len(sRet)
+			Do While iRet>0 
+				
+				商品説明 = Replace(商品説明,sRet,"",False)
+				sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+				iRet = Len(sRet)
+			Loop
+			Rem 
+			sRet = Regex.FindStr(商品説明,"<\\w+ \\w+=\"\\w+\\b\">",0)
+			TracePrint(sRet)
+			iRet = Len(sRet)
+			Do While iRet>0 
+				
+				商品説明 = Replace(商品説明,sRet,"",False)
+				sRet = Regex.FindStr(商品説明,"<\\w+ \\w+=\"\\w+\\b\">",0)
+				iRet = Len(sRet)
+			Loop
+			INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+			File.WriteFile("C:\\Users\\user\\Documents\\商品説明.html",商品説明,"utf-8")
+			iPID = App.Start("C:\\Users\\user\\Documents\\商品説明.html", "0", "1")
+			iPID = App.Start(@res"seting.ini", "0", "1")
+		Else
+			
+			PrintToScreen.DrawText(objWindow,"开始自动添写",18,[255,0,0])
+			TracePrint("开始运行基本信息程序")
+			基本信息(信息)
+			If 停止出品=1
+				停止出品 = 0
+				
+			Else
+				
+				TracePrint("开始运行自动添写程序")
+				自动添写(auto)
+				TracePrint("自动添写完成，开始对比JAN")
+				对比JAN()
+				If DBJAN="有"
+					TracePrint("以出品，不在重复出品")
+					Dialog.Notify("以出品，不在重复出品", "UiBot", "0")
+					
+				Else
+					
+					If Text="写入在库软件"
+						Dialog.Notify("写入数据到在库软件", "UiBot", "0")
+						添写(tianxie)
+						
+					Else
+						Dialog.Notify("写入数据到EXCEL", "UiBot", "0")
+						写入EXCEL()
+					End If
+				End If
+				sRet = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+				sRet = CInt(sRet)
+				TracePrint("图片-"&sRet)
+				If sRet=0
+					TracePrint("判断"&sRet)
+					
+					// 保存图片()
+				Else
+				End If
+			End If
+		End If
+	ElseIf ButtonID=2
+		TracePrint("添写基本信息")
+		PrintToScreen.DrawText(objWindow,"添写基本信息",18,[255,0,0])
+		基本信息(信息)
+		If 停止出品=1
+			停止出品 = 0
+			
+		Else
+			
+			If Text商家="kakaku仕样情报"
+				仕样情报()
+			Else
+				
+			End If
+			对比JAN()
+			If DBJAN="有"
+				TracePrint("以出品，不在重复出品")
+				Dialog.Notify("以出品，不在重复出品", "UiBot", "0")
+				
+			Else
+				
+				If Text="写入在库软件"
+					Dialog.Notify("写入数据到在库软件", "UiBot", "0")
+					添写(tianxie)
+					
+				Else
+					Dialog.Notify("写入数据到EXCEL", "UiBot", "0")
+					写入EXCEL()
+				End If
+			End If
+			sRet = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+			sRet = CInt(sRet)
+			TracePrint("图片-"&sRet)
+			If sRet=0
+				TracePrint("判断"&sRet)
+				
+				// 保存图片()
+			Else
+			End If
+		End If
+	ElseIf ButtonID=3 
+		PrintToScreen.DrawText(objWindow,"上传",18,[255,0,0])
+		TracePrint("上传")
+	ElseIf ButtonID=4
+		PrintToScreen.DrawText(objWindow,"退出",18,[255,0,0])
+		TracePrint("退出")
+		exit()
+	ElseIf ButtonID=5
+		供给原价计算(Text供给原价,Text手数料)
+	ElseIf ButtonID=6
+		TracePrint(Text查找内容)
+		If Text查找内容<>""
+			
+			查找出品(Text查找内容)
+		Else
+			
+		End If
+		
+	ElseIf ButtonID=7
+		TracePrint("清空查找，返回")
+		返回查找内容 = "返回"
+		查找内容 = "查找"
+		
+	End If
+Loop
+Rem 获取kakaku商家信息
+
+
+
+Rem 基本信息
+Function 基本信息(信息)
+	PrintToScreen.DrawText(objWindow,"开始获取基本信息",18,[255,0,0])
+	INI.Write(@res"seting.ini", "基本信息", "title后綴", "")
+	INI.Write(@res"seting.ini", "詳細信息", "JAN校対", "否")
+	INI.Write(@res"seting.ini", "詳細信息", "JAN", "")
+	INI.Write(@res"seting.ini", "詳細信息", "型番校対", "否")
+	INI.Write(@res"seting.ini", "詳細信息", "型番", "")
+	INI.Write(@res"seting.ini", "詳細信息", "商品説明校対", "否")
+	INI.Write(@res"seting.ini", "詳細信息", "商品説明", "")
+	INI.Write(@res"seting.ini", "詳細信息", "信息校対", "否")
+	JAN = ""
+	型番 = ""
+	商品説明 = ""
+	网址 = ""
+	Clipboard.SetText("")
+	利润 = [{"单选框" : "1500" },{ "单选框" : "2500" },{ "单选框" : "3500" },{ "单选框" : "5000" },{ "单选框" : "8000" }]
+	手机价格 = [[]]
+	
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100})
+	#icon("@res:52t4pph5-aq9i-b8it-g1st-ium0lk4f1jfb.png")
+	网址 = UiElement.GetValue({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"価格.com*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"価格.com*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	SKU = Regex.FindStr(网址,"(?<=item/)\\w\\d+",0)
+	网址 = "https://"&网址
+	sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+	sRet1 = INI.Read(@res"seting.ini", "基本信息", "完成", "")
+	TracePrint(sRet1)
+	If sRet=网址 And sRet1=sRet  
+		Return
+	Else
+		INI.Write(@res"seting.ini", "基本信息", "网址", 网址)
+		
+	End If
+	TracePrint(网址)
+	PrintToScreen.DrawText(objWindow,"获取网址："&网址,18,[255,0,0])
+	#icon("@res:r96c3up4-u0gi-21au-svl2-o166cu9e4th2.png")
+	title = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"H2"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	sRet = Regex.FindStr(title," *\\[.*",0)
+	sRet = Replace(title,sRet,"",False)
+	查找出品(title)
+	If 停止出品=1
+		Return 
+		
+	Else
+		
+	End If
+	INI.Write(@res"seting.ini", "基本信息", "title", title)
+	TracePrint("基本信息内型番选择"&型番选择)
+	If 型番选择=1
+		TracePrint("基本信息内型番选择"&型番选择)
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番Text)
+		INI.Write(@res"seting.ini", "詳細信息", "型番校対", "OK")
+		
+	Else
+		
+		sRet = Regex.FindStr(title,"(\\w|\\d)+(-|/)+[A-Za-z0-9-/()]*",0)
+		TracePrint(title)
+		TracePrint(sRet)
+		iRet = Len(sRet)
+		If iRet>0
+			sRet = Replace(sRet," ","",False)
+			INI.Write(@res"seting.ini", "詳細信息", "型番", sRet)
+			INI.Write(@res"seting.ini", "詳細信息", "型番校対", "OK")
+			
+		Else
+			sRet = Regex.FindStr(title,"\\s[A-Za-z0-9]{3,}\\s?",0)
+			TracePrint(sRet)
+			
+		End If
+	End If
+	PrintToScreen.DrawText(objWindow,"获取title："&title,18,[255,0,0])
+	#icon("@res:90ekikk7-m3lj-a6ql-o0co-19uv9bd3qvk0.png")
+	判断厂家 = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","parentid":"makerSeries","aaname":"*"}]},{"bContinueOnError":False,"iDelayAfter":0,"iDelayBefore":0})
+	If 判断厂家
+		#icon("@res:fvvrciij-moh4-3m10-kc8a-v25a3krq1nj4.png")
+		厂家 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","parentid":"makerSeries","aaname":"*"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		
+	Else
+		
+		#icon("@res:kin2qu6j-7f3c-g9qh-aa3j-lqvspkolmjnc.png")
+		厂家 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"relateList","aaname":"*"}]},{"bContinueOnError":True,"iDelayAfter":50,"iDelayBefore":50})
+	End If
+	If 厂家 = ""
+		
+	Else
+		
+		不在出品(厂家)
+	End If
+	If 停止出品=1
+		Return 
+		
+	Else
+		
+	End If
+	INI.Write(@res"seting.ini", "基本信息", "厂家", 厂家)
+	PrintToScreen.DrawText(objWindow,"获取厂家："&厂家,18,[255,0,0])
+	#icon("@res:5pq2b5ot-dp20-bnvq-tf89-9tmk6eb346lm.png")
+	//sofuma = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"mainLeft","aaname":"ソフマップ.com"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:75hfe5cc-8lnv-tlsi-k8c7-siv1qkha2g1d.png")
+	图片 = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"P","id":"imgOffer"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	If 图片
+		INI.Write(@res"seting.ini", "基本信息", "IMAGE", "0")
+		
+	Else
+		INI.Write(@res"seting.ini", "基本信息", "IMAGE", "1")
+		IMAGEURL = "<img src=\"https://img1.kakaku.k-img.com/images/productimage/fullscale/"&SKU&".jpg\">"
+		INI.Write(@res"seting.ini", "基本信息", "IMAGEURL", IMAGEURL)
+		
+	End If
+	title长度 = LenB(title)
+	限定 = InStr(title,"限定",1,False)
+	平均价格计算()
+	计算的均价 = CInt(计算的均价)
+	TracePrint("商品均价："&计算的均价)
+	If 固定加价=1
+		加价 = 加价价格
+		
+	Else
+		
+		If 计算的均价<20000
+			加价 = 利润[0]
+			PrintToScreen.DrawText(objWindow,"商品价格小于10000，加价1500",18,[255,0,0])
+			
+		ElseIf 计算的均价<35000
+			加价 = 利润[1]
+			PrintToScreen.DrawText(objWindow,"商品价格小于30000，加价2500",18,[255,0,0])
+		ElseIf 计算的均价<50000
+			PrintToScreen.DrawText(objWindow,"商品价格小于50000，加价3500",18,[255,0,0])
+			加价 = 利润[2]
+		ElseIf 计算的均价<80000
+			PrintToScreen.DrawText(objWindow,"商品价格小于80000，加价5000",18,[255,0,0])
+			加价 = 利润[3]
+		ElseIf 计算的均价>=80000
+			PrintToScreen.DrawText(objWindow,"商品价格大于80000，加价8000",18,[255,0,0])
+			加价 = 利润[4]
+			
+		End If
+		加价 = Dialog.UDFDialog("选择该商品的加价--",@res"1613029771897.json",加价,{"iTimeout":2,"strTimoutClick":"ok","bInterruptTimeout":True})
+		加价 = 加价["单选框"]
+	End If
+	TracePrint(加价)
+	If 有货数量<5
+		加价 = 加价*2
+		INI.Write(@res"seting.ini", "基本信息", "数量", "0")
+		
+	Else
+		
+		INI.Write(@res"seting.ini", "基本信息", "数量", "1")
+	End If
+	PrintToScreen.DrawText(objWindow,"商品均价："&计算的均价&"，加价为："&加价,18,[255,0,0])
+	计算的均价 = (计算的均价+加价)/0.92
+	
+	
+	
+	计算的均价 = CInt(计算的均价)
+	TracePrint("商品定价："&计算的均价)
+	价格文本 = CStr(计算的均价)
+	INI.Write(@res"seting.ini", "基本信息", "价格", 价格文本)
+	INI.Write(@res"seting.ini", "基本信息", "発送日", "5")
+	If 笔记本=1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+		sRet = Regex.FindStr(sRet,"(https?://)?kakaku.com/item/([\\w\\d]*)/",0)
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,sRet&"spec/#tab",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		arrayData = UiElement.DataScrap({"html":[{"aaname":"基本スペック CPU CPUスコア 画面サイズ 画面種類 解像度 タッチパネル 2in1タイプ ワイド画面 表面処理 メモリ容量*","parentid":"mainLeft","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+		Try 1
+			型 = Regex.FindStr(arrayData[2][1],"(.*)型",0)
+			CPU = Regex.FindStr(arrayData[1][1],"(Core|Ryzen|Celeron|Athlon)\\s(\\w?\\d)\\s(\\w?\\d\\w?)*",0)
+			硬盘 = Regex.FindStr(arrayData[7][1],"\\d+(GB|TB)",0)
+			系统 = Regex.FindStr(arrayData[9][1],"Windows \\d+",0)
+			iRet = InStr(arrayData[9][3],"Office",1,False)
+			If iRet>0
+				Office = "Office"
+				
+			Else
+				Office = ""
+				
+			End If
+			笔记本配置 = "["&型&"/"&CPU&"/"&arrayData[5][3]&"/"&硬盘&"/"&系统&"/"&Office&"]"
+		Catch e
+			TracePrint("XXX")
+		Else
+		End Try
+		TracePrint(笔记本配置)
+		INI.Write(@res"seting.ini", "基本信息", "笔记本后綴", 笔记本配置)
+		sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,sRet,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"基本信息获取完成",18,[255,0,0])
+	INI.Write(@res"seting.ini", "基本信息", "完成", 网址)
+End Function
+Rem 添写数据
+Function 添写(tianxie)
+	PrintToScreen.DrawText(objWindow,"开始添写数据",18,[255,0,0])
+	Dialog.Notify("开始添写数据", "UiBot", "0")
+	JAN = INI.Read(@res"seting.ini", "詳細信息", "JAN", "")
+	型番 = INI.Read(@res"seting.ini", "詳細信息", "型番", "")
+	商品説明 = INI.Read(@res"seting.ini", "詳細信息", "商品説明", "")
+	sRet = Regex.FindStr(商品説明,"<iframe([\\s\\S]*?)</iframe>",0)
+	商品説明 = Replace(商品説明,sRet,"",False)
+	sRet = Regex.FindStr(商品説明,"<img([\\s\\S]*?).jpg([\\s\\S]*?)>",0)
+	TracePrint(sRet)
+	iRet = Len(sRet)
+	Do While iRet>0 
+		
+		商品説明 = Replace(商品説明,sRet,"",False)
+		sRet = Regex.FindStr(商品説明,"<img([\\s\\S]*?).jpg([\\s\\S]*?)>",0)
+		iRet = Len(sRet)
+	Loop
+	Rem 
+	sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+	TracePrint(sRet)
+	iRet = Len(sRet)
+	Do While iRet>0 
+		
+		商品説明 = Replace(商品説明,sRet,"",False)
+		sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+		iRet = Len(sRet)
+	Loop
+	Rem 
+	sRet = Regex.FindStr(商品説明,"<\\w+ \\w+=\"\\w+\\b\">",0)
+	TracePrint(sRet)
+	iRet = Len(sRet)
+	Do While iRet>0 
+		
+		商品説明 = Replace(商品説明,sRet,"",False)
+		sRet = Regex.FindStr(商品説明,"<\\w+ \\w+=\"\\w+\\b\">",0)
+		iRet = Len(sRet)
+	Loop
+	网址 = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+	title = INI.Read(@res"seting.ini", "基本信息", "title", "")
+	If 笔记本=1
+		title后綴 = INI.Read(@res"seting.ini", "基本信息", "笔记本后綴", "")
+		
+	Else
+		title后綴 = INI.Read(@res"seting.ini", "基本信息", "title后綴", "")
+		
+	End If
+	厂家 = INI.Read(@res"seting.ini", "基本信息", "厂家", "")
+	价格 = INI.Read(@res"seting.ini", "基本信息", "价格", "")
+	图片 = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+	数量 = INI.Read(@res"seting.ini", "基本信息", "数量", "")
+	発送日 = INI.Read(@res"seting.ini", "基本信息", "発送日", "")
+	Do While True
+		
+		
+		Try 1
+			#icon("@res:s31jtd6b-ueek-i49g-hv2g-ehu64pg0unr6.png")
+			Mouse.Action({"wnd":[{"app":"StockC","cls":"TLicenseForm","title":"在庫番頭 Professional Edition"},{"cls":"TButton","title":"試用する(&Y)","aaname":"試用する(Y)"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Catch e
+		Else
+		End Try
+		#icon("@res:bu6i5ncj-itp3-gpck-fg45-2jpmdnmnn56a.png")
+		bRet = Window.Exists({"wnd":[{"cls":"TGoodsMasterEditForm","title":"商品マスタ追加","app":"StockC"}]})
+		If bRet=False
+			#icon("@res:qhbrgbe4-ah2h-r8th-gpd1-q905sdtgckl0.png")
+			Mouse.Action({"wnd":[{"app":"StockC","cls":"TGoodsMasterForm","title":"商品マスタ管理"},{"cls":"TPanel","idx":1},{"cls":"TPanel"},{"cls":"TBitBtn","title":"追加","aaname":"追加"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			
+		Else
+			
+		End If
+		If JAN=Null
+			
+			Clipboard.SetText(商品説明)
+			
+			Keyboard.PressKey({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TPanel"},{"cls":"nsRichEdit"}]},"V",20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+			TracePrint(商品説明)
+		Else
+			Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TEdit","idx":4}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},JAN,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			TracePrint(JAN)
+			Clipboard.SetText(商品説明)
+			
+			
+			Keyboard.PressKey({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TPanel"},{"cls":"nsRichEdit"}]},"V",20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+			TracePrint(商品説明)
+			
+		End If
+		If 型番=Null
+			
+		Else
+			Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TEdit","idx":5}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},型番,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			PrintToScreen.DrawText(objWindow,"添写型番："&型番,18,[255,0,0])
+			
+		End If
+		#icon("@res:gf2rc8pg-p65r-r426-sn5l-63ep6hn5obs6.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"XnsSrchItemEdit"}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},"119079",True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:9f0aq97h-terg-51v1-6cvk-rekbo4im022s.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"XnsSrchItemEdit","idx":4}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},厂家&" "&title&" "&title后綴,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:ffi7vc1h-mtu1-3jmu-gjtf-g6fhima46krr.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TEdit","idx":2}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},title,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:48lvjevt-144r-nmaq-mlj8-m0vle22lpf6q.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TEdit","idx":3}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},网址,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Rem  下面添的発送日期
+		#icon("@res:426q3lc8-0drq-cgnk-dn5r-ngv77qjv2squ.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TEdit"}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},発送日,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Rem           下面是添的图片有无0为无
+		TracePrint(图片)
+		#icon("@res:kso8gu3f-jfh0-44li-0r9b-t3ffqcojgngg.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TMemo","idx":2}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},图片,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Rem              下面根据商家小于5则不上架添入0
+		TracePrint(数量 )
+		#icon("@res:1uo8150l-3vf9-da5m-8lcn-rjh0hgbc5hav.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TMemo","idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},数量,True,20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:1jlh25bq-cf01-3rhs-5no0-shlvnfk4d210.png")
+		Keyboard.InputText({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TMemo"}],"ctrl":[{"role":"ROLE_SYSTEM_TEXT"}]},价格,True,20,10000,{"bContinueOnError":True,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:rqf482i3-vuu0-08ck-oara-6dn3vvhk295u.png")
+		对比值  = UiElement.GetValue({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TPanel"},{"cls":"TMemo"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		对比值 = CInt(对比值)
+		TracePrint(价格&"--"&对比值)
+		价格 = CInt(价格)
+		TracePrint(价格)
+		If 价格=对比值
+			Break
+			
+		Else
+			Delay(1000)
+			#icon("@res:s31jtd6b-ueek-i49g-hv2g-ehu64pg0unr6.png")
+			Mouse.Action({"wnd":[{"app":"StockC","cls":"TLicenseForm","title":"在庫番頭 Professional Edition"},{"cls":"TButton","title":"試用する(&Y)","aaname":"試用する(Y)"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:li5cocl0-lmqg-bgji-oqut-3rcpp6qs1b0d.png")
+			Mouse.Action({"wnd":[{"app":"StockC","cls":"TGoodsMasterEditForm","title":"商品マスタ追加"},{"cls":"TBitBtn","title":"ｷｬﾝｾﾙ","aaname":"ｷｬﾝｾﾙ"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			
+		End If
+	Loop
+	File.WriteFile("C:\\Users\\user\\Documents\\商品説明.html",商品説明,"utf-8")
+	iPID = App.Start("C:\\Users\\user\\Documents\\商品説明.html", "0", "1")
+	PrintToScreen.DrawText(objWindow,"添写完成",18,[255,0,0])
+End Function
+Rem 写入EXCEL
+Function 写入EXCEL()
+	TracePrint("运行添写EXCEL子程序")
+	TracePrint(在库出力)
+	excel名 = 在库出力&" - Excel"
+	TracePrint(excel名)
+	#icon("@res:qpqdg34p-odjq-cdin-p9el-ou2hrmg26kc3.png")
+	Window.SetActive({"wnd":[{"cls":"XLMAIN","title":excel名,"app":"EXCEL"}]})
+	TracePrint("激活完毕，按回车")
+	Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	TracePrint("回车完毕")
+	首行 = ["商品ID","商品名","商品説明","タイトル","予定価格","商品個数","IMAGE有無","発送日","送料","商品状態","補足","追加４","YSカテゴリ","カテゴリコード","単位"]
+	Try 1
+		在庫写入xlsx = Excel.BindBook(在库出力)
+	Catch e
+		sRet = Dialog.OpenFile("Z:\\YS登録\\在庫出力","excel文档 (csv、log)|*.csv;*.log|任意文件|*","UiBot")
+		iPID = App.Start(sRet, "0", "1")
+		Delay(2000)
+	Else
+	End Try
+	PrintToScreen.DrawText(objWindow,"开始写入EXCEL数据",18,[255,0,0])
+	TracePrint("开始写入EXCEL数据")
+	待写入行数据 = []
+	JAN = INI.Read(@res"seting.ini", "詳細信息", "JAN", "")
+	JAN校対 = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If JAN校対="OK"
+		待写入行数据[0] = JAN
+		
+	Else
+		待写入行数据[0] = "无"
+		
+	End If
+	型番 = INI.Read(@res"seting.ini", "詳細信息", "型番", "")
+	型番校対 = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If 型番校対="OK"
+		型番 = Replace(型番," ","-",False)
+		待写入行数据[1] = 型番
+		
+	Else
+		待写入行数据[1] = "无"
+		
+	End If
+	商品説明 = INI.Read(@res"seting.ini", "詳細信息", "商品説明", "")
+	Do While True
+		sRet = Regex.FindStr(商品説明,"<iframe([\\s\\S]*?)</iframe>",0)
+		
+		iRet = Len(sRet)
+		If iRet>0
+			商品説明 = Replace(商品説明,sRet,"",False)
+			
+		Else
+			Break
+			
+		End If
+	Loop
+	arrRet = Regex.FindAll(商品説明,"(<img([\\s\\S]*?)>)")
+	For Each value In arrRet
+		商品説明 = Replace(商品説明,value[0],"",False)
+		
+	Next
+	sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+	iRet = Len(sRet)
+	Do While iRet>0 
+		
+		商品説明 = Replace(商品説明,sRet,"",False)
+		sRet = Regex.FindStr(商品説明,"<font color([\\s\\S]*?)</font>",0)
+		iRet = Len(sRet)
+	Loop
+	商品説明 = Replace(商品説明,"<div align=\"\"left\"\"><b>■商品特徴</b>","<div align=\"left\"><b>■商品特徴</b>",False)
+	iRet = InStr(商品説明,"<div align=\"left\"><b>■商品特徴</b>",1,False)
+	If iRet>0
+		
+		商品説明 = Mid(商品説明,iRet,999999999)
+	Else
+		
+	End If
+	商品説明校対 = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If 商品説明校対="OK"
+		
+		待写入行数据[2] = 商品説明
+	Else
+		待写入行数据[2] = "无"
+		
+	End If
+	If 指定商家="kakaku仕样情报"
+		商品説明 = INI.Read(@res"seting.ini", "詳細信息", "商品説明", "")
+		
+	Else
+		
+	End If
+	待写入行数据[2] = 商品説明
+	网址 = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+	待写入行数据[10] = 网址
+	title = INI.Read(@res"seting.ini", "基本信息", "title", "")
+	If 笔记本=1
+		title后綴 = INI.Read(@res"seting.ini", "基本信息", "笔记本后綴", "")
+		
+	Else
+		title后綴 = INI.Read(@res"seting.ini", "基本信息", "title后綴", "")
+		
+	End If
+	厂家 = INI.Read(@res"seting.ini", "基本信息", "厂家", "")
+	If 厂家选择=1
+		待写入行数据[3] = 厂家&" "&title&" "&title后綴
+		
+	Else
+		
+		待写入行数据[3] = title&" "&title后綴
+	End If
+	待写入行数据[14] = 厂家
+	价格 = INI.Read(@res"seting.ini", "基本信息", "价格", "")
+	待写入行数据[4] = 价格
+	图片 = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+	待写入行数据[6] = 图片
+	数量 = INI.Read(@res"seting.ini", "基本信息", "数量", "")
+	待写入行数据[5] = 数量
+	発送日 = INI.Read(@res"seting.ini", "基本信息", "発送日", "")
+	待写入行数据[7] = 発送日
+	待写入行数据[8] = 119079
+	待写入行数据[9] = title
+	Rem 
+	在庫写入xlsx = Excel.BindBook(在库出力)
+	Excel.ActiveBook(在庫写入xlsx)
+	现有行数  = Excel.GetRowsCount(在庫写入xlsx,在库出力表名)
+	Excel.WriteRow(在庫写入xlsx,在库出力表名,"A"&(现有行数+1),待写入行数据,False)
+	File.WriteFile("C:\\Users\\user\\Documents\\商品説明.html",商品説明,"utf-8")
+	iPID = App.Start("C:\\Users\\user\\Documents\\商品説明.html", "0", "1")
+	PrintToScreen.DrawText(objWindow,"添写完成",18,[255,0,0])
+	
+End Function
+Rem 自动添写
+Function 自动添写(auto)
+	PrintToScreen.DrawText(objWindow,"开始获取商家信息",18,[255,0,0])
+	指定商家 = INI.Read(@res"seting.ini", "基本信息", "指定商家", "")
+	TracePrint("开始获取商家信息")
+	商家  = [["ヤマダウェブコム",1865,111],["PREMOA",3713,101],["コジマ",3832,101],["エディオン",3779,101],["コジマネット",1925,11],["タンタン",130,111],["WiNK",5,111],["EDIONネットショップ",1747,111],["ひかりTVショッピング",2162,111],["ソフマップ",1824,111],["阪通",915,110],["ノジマオンライン",1639,100],["特価.com",3830,100],["ECJOY!",1396,100],["ECカレント",74,11],["GIGA",1356,11],["特価.com",20,10]]
+	全商家 = []
+	If 指定商家="ヤマダウェブコム"
+		全商家[0] = 商家[0]
+		
+	ElseIf 指定商家="PREMOA"
+		全商家[0] = 商家[1]
+		
+	ElseIf 指定商家="エディオン"
+		全商家[0] = 商家[3]
+		
+	ElseIf 指定商家="コジマ"
+		全商家[0] = 商家[2]
+		
+	ElseIf 指定商家="コジマネット"
+		全商家[0] = 商家[4]
+		
+	ElseIf 指定商家="EDIONネットショップ"
+		全商家[0] = 商家[7]
+		
+	ElseIf 指定商家="ひかりTVショッピング"
+		全商家[0] = 商家[8]
+		
+	ElseIf 指定商家="ソフマップ"
+		全商家[0] = 商家[9]
+		
+	ElseIf 指定商家="ノジマオンライン"
+		全商家[0] = 商家[11]
+		
+	ElseIf 指定商家="全商家"
+		全商家 = 商家
+		
+	ElseIf 指定商家="kakaku仕样情报"	
+		仕样情报()
+	ElseIf 指定商家="amazon"
+		amazon()
+	End If
+	Rem 
+	arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text","url"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-shopInfo","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-shopInfo"},{"className":"p-PTShop","index":0,"prefix":">","tag":"div","value":"div.p-PTShop"},{"className":"p-PTShop_info","index":0,"prefix":">","tag":"div","value":"div.p-PTShop_info"},{"className":"p-PTShopData","index":0,"prefix":">","tag":"div","value":"div.p-PTShopData"},{"className":"p-PTShopData_name","index":0,"prefix":">","tag":"p","value":"p.p-PTShopData_name"},{"className":"p-PTShopData_name_link","index":0,"prefix":">","tag":"a","value":"a.p-PTShopData_name_link"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	Try 1
+		iRet = Len(arrayData[0])
+	Catch e
+		arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text","url"],"selecors":[{"className":"tblBorderGray","index":0,"prefix":"","tag":"table","value":"table.tblBorderGray"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"shopname","index":0,"prefix":">","tag":"td","value":"td.shopname"},{"className":"","index":0,"prefix":">","tag":"a","value":"a"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+		TracePrint("继续抓取手机商家")
+	Else
+	End Try
+	XJ = 1
+	TracePrint(全商家)
+	For Each qsj In 全商家
+		TracePrint("查询全商家第"&XJ)
+		qsj1 = CInt(qsj[1])
+		sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,网址,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		For Each value In arrayData
+			iRet = InStr(value[1],"shop/",1,False)
+			sRet = Regex.FindStr(value[1],"shop/\\w*/",0)
+			sRet = Regex.FindStr(sRet,"\\d+",0)
+			sRet = CInt(sRet)
+			TracePrint(sRet)
+			
+			If sRet=qsj1
+				URL = value[1]
+				If qsj[1]=1865
+					TracePrint("ヤマダウェブコム")
+					打开页面(URL)
+					yamada(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+					
+					Rem 获取信息子程序运行完回来后要在运行个子程序-判断信息完整性，如果完整则退出遍历和外围循环，不完整则向下继续遍历。现在这个想法不能换自己的想法来依次调用子程序。
+					
+				ElseIf qsj[1]=2162
+					TracePrint("ひかりTVショッピング")
+					打开页面(URL)
+					HIKARITV(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+					
+				ElseIf qsj[1]=5
+					TracePrint("WiNK")
+					打开页面(URL)
+					WiNK(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1747
+					TracePrint("EDIONネットショップ")
+					打开页面(URL)
+					EDIONGW(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1824
+					TracePrint("ソフマップ")
+					打开页面(URL)
+					SOFUMA(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=130
+					TracePrint("タンタン")
+					打开页面(URL)
+					tantan(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=915
+					TracePrint("阪通")
+					打开页面(URL)
+					fantong(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+					
+				ElseIf qsj[1]=3832
+					TracePrint("コジマ")
+					打开页面(URL)
+					kojimaLT(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=3779
+					TracePrint("エディオン")
+					打开页面(URL)
+					EDIONLT(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=3713
+					TracePrint("PREMOA")
+					打开页面(URL)
+					PREMOALT(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1639
+					TracePrint("ノジマオンライン")
+					打开页面(URL)
+					nojima(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=3830
+					TracePrint("特価.com")
+					打开页面(URL)
+					TJcomLT(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1396
+					TracePrint("ECJOY!")
+					打开页面(URL)
+					ecjoy(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1925
+					TracePrint("コジマネット")
+					打开页面(URL)
+					KOJIMA(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=74
+					TracePrint("ECカレント")
+					打开页面(URL)
+					ECGAIDO(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=1356
+					TracePrint("GIGA")
+					打开页面(URL)
+					giga(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				ElseIf qsj[1]=20
+					TracePrint("特価.com")
+					打开页面(URL)
+					TJcom(URL)
+					JANPD()
+					XBPD()
+					SMPD()
+					ZPD()
+					sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+					If sRet="否"
+						
+					Else
+						Break
+						
+					End If
+				End If	
+			Else
+				
+			End If
+		Next
+		
+		Rem 
+		sRet = INI.Read(@res"seting.ini", "詳細信息", "信息校対", "")
+		If sRet="否"
+			
+		Else
+			Break
+			
+		End If
+		XJ = XJ+1
+	Next
+	// TracePrint(arr全信息)
+	// 全信息商家数 = UBound(arr全信息)
+	// temp = UBound(arr全信息[0])
+	// TracePrint(temp)
+	// If temp<0 
+	// TracePrint("<0")
+	// INI.Write(@res"seting.ini", "詳細信息", "全信息商家数量", "")
+	
+	// Else
+	
+	// 全信息商家数1 = CStr(全信息商家数)
+	// INI.Write(@res"seting.ini", "詳細信息", "全信息商家数量", 全信息商家数1)
+	// End If
+	// TracePrint(arrJAN)
+	// JAN商家数 = UBound(arrJAN)
+	// temp = UBound(arrJAN[0])
+	// If temp<0 
+	// INI.Write(@res"seting.ini", "詳細信息", "JAN商家数量", "")
+	
+	// Else
+	
+	// JAN商家数1 = CStr(JAN商家数)
+	// INI.Write(@res"seting.ini", "詳細信息", "JAN商家数量", JAN商家数1)
+	// End If
+	// TracePrint(arr型番)
+	// 型番商家数 = UBound(arr型番)
+	// temp = UBound(arr型番[0])
+	// If temp<0
+	// INI.Write(@res"seting.ini", "詳細信息", "型番商家数量", "")
+	
+	// Else
+	
+	// 型番商家数1 = CStr(型番商家数)
+	// INI.Write(@res"seting.ini", "詳細信息", "型番商家数量", 型番商家数1)
+	// End If
+	// TracePrint(arr商品説明)
+	// 商品説明商家数 = UBound(arr商品説明)
+	// temp = UBound(arr型番[0])
+	// If temp<0
+	// INI.Write(@res"seting.ini", "詳細信息", "商品説明商家数量", "")
+	
+	// Else
+	
+	// 商品説明商家数1 = CStr(商品説明商家数)
+	// INI.Write(@res"seting.ini", "詳細信息", "商品説明商家数量", 商品説明商家数1)
+	// End If
+	
+	
+	
+	
+	// Rem 开始获取商家信息，下面开始先遍历全商家信息数组
+	// sRet = INI.Read(@res"seting.ini", "詳細信息", "商家数量", "")
+	// TracePrint(sRet)
+	PrintToScreen.DrawText(objWindow,"商家信息获取完成",18,[255,0,0])
+End Function
+Rem 以下为判断詳細信息
+Rem 以下为JAN判断詳細信息
+Function JANPD()
+	TracePrint("JAN判断")
+	onlyJAN = INI.Read(@res"seting.ini", "詳細信息", "JAN", "")
+	onlyJAN = Replace(onlyJAN," ","",False)
+	onlyJAN = Replace(onlyJAN,"　","",False)
+	iRet = Len(onlyJAN)
+	If iRet>=10 And iRet<=13  
+		TracePrint("JAN-OK")
+		JANOK = 1
+		INI.Write(@res"seting.ini", "詳細信息", "JAN校対", "OK")
+		
+	Else
+		TracePrint("JAN-无")
+		INI.Write(@res"seting.ini", "詳細信息", "JAN校対", "否")
+		INI.Write(@res"seting.ini", "詳細信息", "信息校対", "否")
+		
+	End If
+	
+End Function
+Rem 型番判断
+Function XBPD()
+	TracePrint("型番判断")
+	only型番 = INI.Read(@res"seting.ini", "詳細信息", "型番", "")
+	iRet = Len(only型番)
+	If iRet>=3 And iRet<=20  
+		TracePrint("型番OK")
+		型番OK = 1
+		INI.Write(@res"seting.ini", "詳細信息", "型番校対", "OK")
+		
+	Else
+		TracePrint("型番-无")
+		INI.Write(@res"seting.ini", "詳細信息", "型番校対", "否")
+		INI.Write(@res"seting.ini", "詳細信息", "信息校対", "否")
+		
+	End If
+	
+End Function
+Rem 商品説明判断
+Function SMPD()
+	TracePrint("商品説明判断")
+	only商品説明 = INI.Read(@res"seting.ini", "詳細信息", "商品説明", "")
+	sRet = Regex.FindStr(only商品説明,"<img src.*\\.\\w{3}>",0)
+	TracePrint(sRet)
+	only商品説明 = Replace(only商品説明,sRet,"",False)
+	INI.Write(@res"seting.ini", "詳細信息", "商品説明", only商品説明)
+	iRet = Len(only商品説明)
+	If iRet>=100  
+		TracePrint("商品説明-OK")
+		商品説明OK = 1
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明校対", "OK")
+		
+	Else
+		TracePrint("商品説明-无")
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明校対", "否")
+		INI.Write(@res"seting.ini", "詳細信息", "信息校対", "否")
+		
+	End If
+	
+End Function
+Rem 信息校対合计
+Function ZPD()
+	JAN校対1 = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	型番校対2 = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	商品説明校対3 = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If JAN校対1="OK" And 型番校対2="OK" And 商品説明校対3="OK"
+		INI.Write(@res"seting.ini", "詳細信息", "信息校対", "是")
+		
+	Else
+		INI.Write(@res"seting.ini", "詳細信息", "信息校対", "否")
+		
+	End If
+	
+End Function
+Rem 对比JAN，判断是否出品过
+Function 对比JAN()
+	
+	JAN = INI.Read(@res"seting.ini", "詳細信息", "JAN", "")
+	JAN = Regex.FindStr(JAN,"\\d{10,}",0)
+	If JAN<>0 And JAN<>"" And JAN<>Null
+		
+		DBJAN = CInt(JAN)
+		TracePrint("开始对比Q10JAN",DBJAN)
+		For Each value In arrayQ10data
+			Qjan = CInt(value[7])
+			If Qjan=DBJAN
+				TracePrint(Qjan)
+				DBJAN = "有"
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+	Else
+		TracePrint("商品没有JAN，手动查找JAN后在对比")
+		
+	End If
+	TracePrint("对比Q10JAN结束")
+End Function
+Rem 保存图片
+Function 保存图片()
+	图片商家  = [["コジマネット",1925],["ヤマダウェブコム",1865],["ヨドバシ.com",2220]]
+	sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+	bRet = WebBrowser.SwitchTab(hWeb,"url",sRet,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200})
+	arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text","url"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-shopInfo","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-shopInfo"},{"className":"p-PTShop","index":0,"prefix":">","tag":"div","value":"div.p-PTShop"},{"className":"p-PTShop_info","index":0,"prefix":">","tag":"div","value":"div.p-PTShop_info"},{"className":"p-PTShopData","index":0,"prefix":">","tag":"div","value":"div.p-PTShopData"},{"className":"p-PTShopData_name","index":0,"prefix":">","tag":"p","value":"p.p-PTShopData_name"},{"className":"p-PTShopData_name_link","index":0,"prefix":">","tag":"a","value":"a.p-PTShopData_name_link"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	TPJS = 1
+	For Each TPXJ In 图片商家
+		For Each value In arrayData
+			iRet = InStr(value[1],"shop/",1,False)
+			sRet = Mid(value[1],iRet+5,10)
+			iRet = InStr(sRet,"/",1,False)
+			sRet = Left(sRet,iRet-1)
+			sRet = CInt(sRet)
+			If sRet=TPXJ[1]
+				TWeb = WebBrowser.Create("chrome",value[1],30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+				If TPJS=1
+					#icon("@res:705l0fsl-qd6m-69ej-7rfq-94018u85i4h2.png")
+					Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"コジマ*"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					Do While True
+						#icon("@res:t1or42t0-amem-f612-a001-p01giblec9j3.png")
+						bRet = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","id":"logo"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+						If bRet
+							
+							Break
+						Else
+							
+						End If
+						
+					Loop
+					
+					#icon("@res:04nnjf4l-7rk8-rmtm-63uu-gh7djcsjm0el.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"item_slide","src":"*"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				ElseIf TPJS=3
+					
+					#icon("@res:b0r3tkad-ij6r-bl7u-ev81-4ehe3ftuj6o4.png")
+					Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"ヨドバシ*"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					Do While True
+						#icon("@res:3v5g6q7h-utl1-08ib-m2o6-ich6k3kf2e36.png")
+						bRet = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"headerLogoC"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+						If bRet
+							
+							Break
+						Else
+							
+						End If
+						
+					Loop
+					#icon("@res:1p5jvk8q-fa66-425u-ann6-igdfmedcpp94.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","id":"mainImg","parentid":"mainImgLink"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				ElseIf TPJS=2
+					#icon("@res:rglg386i-l1ei-uug5-isej-evg6ioqq350e.png")
+					Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"ヤマダ*"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					JS = 1
+					Do While True
+						#icon("@res:eu2hcvgo-lkaq-24f9-vj01-0d4k9ortdlij.png")
+						bRet = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","aaname":"ヤマダウェブコム"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+						If bRet
+							
+							Break
+						Else
+							JS = JS+1
+							
+						End If
+						If JS>=5
+							Keyboard.Press("F5", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+							
+						Else
+							
+						End If
+						
+					Loop
+					
+					#icon("@res:7u1c6ht5-mi48-tme0-9o9c-9no4t225nhl3.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","css-selector":"body>section>div>div>div>div>div>div>ul>li>img"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				End If
+				
+				Mouse.Click("right", "click", [],{"iDelayAfter":300,"iDelayBefore":200})
+				Keyboard.Press("V", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+				型番 = INI.Read(@res"seting.ini", "詳細信息", "型番", "")
+				#icon("@res:vhbdbdk8-33d4-17lr-jsi1-c3go74e3hmqo.png")
+				Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},型番,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+				#icon("@res:kul9u708-6q1b-mou1-h7v5-ngmjl4sd1r7h.png")
+				Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"Button","title":"保存(&S)","ctrlid":1,"aaname":"保存(S)"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				#icon("@res:3lmtinvh-gc18-dt3e-5pf9-4bf8bns4sh8m.png")
+				Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存の確認"},{"cls":"DirectUIHWND","aaname":"名前を付けて保存の確認"},{"cls":"CtrlNotifySink","idx":6},{"cls":"Button","title":"はい(&Y)","aaname":"はい(Y)"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				Return
+			Else
+				
+			End If
+			
+		Next
+		
+		TPJS = TPJS+1
+	Next
+	
+End Function
+Rem 以下为商家子程序
+Function PREMOALT(URL)
+	
+	PrintToScreen.DrawText(objWindow,"开始获取PREMOA数据",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:jvhmkroj-4njt-lutb-97ms-ivr29898744f.png")
+	JAN = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"pagebody","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table","tableCol":"3","idx":1},{"tag":"TD","tableCol":"2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(JAN ,"\\d{9,}",0)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "PREMOA")
+	Else
+		
+	End If
+	Rem 
+	厂家前 = INI.Read(@res"seting.ini", "基本信息", "厂家", "")
+	title前 = INI.Read(@res"seting.ini", "基本信息", "title", "")
+	#icon("@res:g1pg2uje-lrit-03je-fuam-7dp9scc65me7.png")
+	title后綴 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"B","parentid":"pagebody"}]},{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200})
+	title后綴 = Regex.FindStr(title后綴,"(\\[.+\\])",0)
+	TracePrint(title后綴)
+	INI.Write(@res"seting.ini", "基本信息", "title后綴", title后綴)
+	网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址2 = "view-source:"&网址1
+	Clipboard.SetText(网址2)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"U",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	商品説明 = Clipboard.GetText()
+	WebBrowser.Close(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	长度 = Len(商品説明)
+	TracePrint("长度"&长度)
+	前 = InStr(商品説明,"<!-- 商品説明 ここから -->",1,False)
+	后 = InStr(商品説明,"<!-- 商品仕様 ここまで -->",1,False)
+	商品説明 = Mid(商品説明,前+18,后-前)
+	TracePrint(商品説明)
+	商品説明 = Replace(商品説明,"商品説明","<div align=\"left\"><b>■商品特徴</b>",False)
+	
+	
+	
+	商品説明 = Replace(商品説明,"スペック","<b>■主な仕様</b>",False)
+	
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "PREMOA")
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"获取完成",18,[255,0,0])
+End Function
+
+Rem EDION乐天
+Function EDIONLT(URL)
+	PrintToScreen.DrawText(objWindow,"获取EDION信息开始",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	
+	#icon("@res:tadcpd4o-8epn-gvn6-nobh-dd69h6ggaml6.png")
+	sRet = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"pagebody","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table","idx":1}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(sRet ,"\\d{9,}",0)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "エディオン")
+	Else
+		
+	End If
+	Try 1
+		#icon("@res:anap7hrq-38sd-kfnt-osfk-ejnk99mjfkpc.png")
+		商品説明 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"pagebody","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>span>div","idx":2}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		#icon("@res:6aloluu4-chfe-o322-luh9-lndt26qogeec.png")
+		商品説明 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"CenterCntBoxDowble","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>span>div>div","idx":6}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Else
+	End Try
+	商品説明 = Replace(商品説明,"\"","",False)
+	商品説明 = Replace(商品説明,"●","<br>●",False)
+	商品説明 = "<div align=\"left\"><b>■商品特徴</b><br>"&商品説明
+	Try 1
+		#icon("@res:hiuru7mt-2js9-honn-alnd-qler4k9hvkit.png")
+		主的式样 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"pagebody","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>span>div","idx":5}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		#icon("@res:6mbknbhb-c3gm-hcj2-7961-5l987q5fbjpt.png")
+		主的式样 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"CenterCntBoxDowble","css-selector":"body>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>span>div>div","idx":9}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Else
+	End Try
+	主的式样 = Replace(主的式样,"\"","",False)
+	主的式样 = Replace(主的式样,"●","<br>●",False)
+	主的式样 = "<br><br><b>■主な仕様</b><br>"&主的式样
+	商品説明 = 商品説明&主的式样
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "エディオン")
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"获取EDION信息完成",18,[255,0,0])
+	
+End Function
+Rem SOFUMA
+Function SOFUMA(URL)
+	PrintToScreen.DrawText(objWindow,"获取SOFUMA信息开始",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	#icon("@res:s43v9en2-vk7r-82pv-pl4t-933pnb5r0cq2.png")
+	JAN = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"tab2","aaname":"* JAN*"},{"tag":"TD","tableRow":"5"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(JAN ,"\\d{9,}",0)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "SOFUMA")
+	Else
+		
+	End If
+	#icon("@res:5q2trmjs-fn0e-f9c0-1ftu-c55b4fnkibln.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"tab2","aaname":"*型番*"},{"tag":"TD","tableRow":"2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "SOFUMA")
+	Else
+		
+	End If
+	Rem 
+	Keyboard.Press("U", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	// hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	// 网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	// 网址2 = "view-source:"&网址1
+	// Clipboard.SetText(网址2)
+	// hWeb1 = WebBrowser.Create("chrome","",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	// Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	// Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	// Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	// Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	商品説明 = Clipboard.GetText()
+	WebBrowser.Close(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	长度 = Len(商品説明)
+	TracePrint("长度"&长度)
+	商品説明 = Regex.FindStr(商品説明,"商品詳細 start -->[\\s\\S]*?</section>",0)
+	// iRet = InStr(商品説明,"<[\\s\\S]*商品詳細 start -->",1,False)
+	// 商品説明 = SubStr(商品説明,iRet-1,长度-iRet)
+	// iRet = InStr(商品説明,"</section>",1,False)
+	// 商品説明 = Left(商品説明,iRet-1)
+	TracePrint(商品説明)
+	商品説明 = Replace(商品説明,"商品詳細 start -->","",False)
+	商品説明 = Replace(商品説明,"商品について","<div align=\"left\"><b>■商品特徴</b>",False)
+	
+	
+	
+	sRet = Regex.FindStr(商品説明,"<p class=([\\s\\S]*?)</p>",0)
+	商品説明 = Replace(商品説明,sRet,"",False)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "SOFUMA")
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"获取SOFUMA信息完成",18,[255,0,0])
+	
+End Function
+Rem kojimaLT
+Function kojimaLT(URL)
+	
+	PrintToScreen.DrawText(objWindow,"获取KOJIMA信息开始",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址2 = "view-source:"&网址1
+	Clipboard.SetText(网址2)
+	hWeb1 = WebBrowser.Create("chrome","",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	#icon("@res:v7fulvhd-kuue-q6gt-qi5m-qr78u24mb71o.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Delete",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	商品説明 = Clipboard.GetText()
+	WebBrowser.Close(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品説明 = Regex.FindStr(商品説明,"<p class=\"itm-explanation\">([\\s\\S]*?)</p>",0)
+	
+	
+	商品説明 = Replace(商品説明,"【商品解説】","<div align=\"left\"><b>■商品特徴</b><BR><BR>",False)
+	商品説明 = Replace(商品説明,"【スペック】","<BR><BR><b>■主な仕様</b><BR><BR>",False)
+	总长 = Len(商品説明)
+	iRet = InStr(商品説明,"JANコード：",1,False)
+	sRet = Right(商品説明,总长-iRet-6)
+	
+	JAN = Mid(sRet,1,13)
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "KOJIMALT")
+	Else
+		
+	End If
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "KOJIMALT")
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"获取KOJIMA信息完成",18,[255,0,0])
+End Function
+Rem KOJIMA本店
+Function KOJIMA(URL)
+	PrintToScreen.DrawText(objWindow,"获取KOJIMA信息开始",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		#icon("@res:9j041fgl-nk87-2rd7-tbkd-9jvfepjjqbj8.png")
+		型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE"},{"tag":"TD","isleaf":"1","tableRow":"6"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "KOJIMA")
+	Else
+		
+	End If
+	网址2 = "view-source:"&网址1
+	Clipboard.SetText(网址2)
+	hWeb1 = WebBrowser.Create("chrome","",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	#icon("@res:lb6rgreg-8175-gbuo-ce13-8i7f2pkqa435.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	商品説明全部 = Clipboard.GetText()
+	WebBrowser.Close(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	长度 = Len(商品説明全部)
+	iRet = InStr(商品説明全部,"<p class=\"strong\">【商品解説】</p>",1,False)
+	商品説明 = SubStr(商品説明全部,iRet-1,长度-iRet)
+	iRet = InStr(商品説明,"</p>",40,False)
+	商品説明 = Left(商品説明,iRet-1)
+	商品説明 = Replace(商品説明,"商品解説","商品特徴",False)
+	商品説明 = Replace(商品説明,"スペック","主な仕様",False)
+	商品説明 = Replace(商品説明,"\"","",False)
+	iRet = InStr(商品説明全部,"<p class=\"strong\">【スペック】</p>",1,False)
+	主的式样 = SubStr(商品説明全部,iRet-1,长度-iRet)
+	iRet = InStr(主的式样,"</p>",40,False)
+	主的式样 = Left(主的式样,iRet-1)
+	主的式样 = Replace(主的式样,"スペック","主な仕様",False)
+	主的式样 = Replace(主的式样,"\"","",False)
+	
+	
+	
+	商品説明 = 商品説明&主的式样
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "KOJIMA")
+	Else
+		
+	End If
+	If 图片=0
+		PrintToScreen.DrawText(objWindow,"保存图片",18,[255,0,0])
+		
+		#icon("@res:hkhunfi0-nq8u-ofd6-2kse-5lm2bg6omv0f.png")
+		Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"item_slide","src":"..*.jpg"}]},10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Mouse.Click("right", "click", [],{"iDelayAfter":300,"iDelayBefore":200})
+		#icon("@res:8gj9l10n-6drj-p0sb-n75p-ap3nag71ujnc.png")
+		Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_2"}],"ctrl":[{"role":"ROLE_SYSTEM_MENUITEM","name":"名前を付けて画像を保存(V)…"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:tej9kp6b-qg96-ev7n-n2e9-f21fpit7haum.png")
+		Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},型番,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		#icon("@res:lhp7agoi-1169-lgoc-ikhk-vjch13kajj9u.png")
+		Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"Button","title":"保存(&S)","ctrlid":1,"aaname":"保存(S)"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:uir84kff-q2u6-0grk-7olg-iksfpg5ki5ci.png")
+		Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存の確認"},{"cls":"DirectUIHWND","aaname":"名前を付けて保存の確認"},{"cls":"CtrlNotifySink","idx":6},{"cls":"Button","title":"はい(&Y)","aaname":"はい(Y)"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	Else
+		
+	End If
+	
+	PrintToScreen.DrawText(objWindow,"获取KOJIMA信息完成",18,[255,0,0])
+	
+End Function
+Rem yamada
+Function yamada(URL)
+	
+	PrintToScreen.DrawText(objWindow,"开始添写YAMADA信息",18,[255,0,0])
+	TracePrint("打开ヤマダウェブコム网页")
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址2 = "view-source:"&网址1
+	PrintToScreen.DrawText(objWindow,"获取JAN，型番",18,[255,0,0])
+	#icon("@res:bcv9nfp1-igv4-ddol-ljq8-pf5970ml1kl0.png")
+	JAN = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","aaname":"型番 JAN メーカー *"},{"tag":"TD","tableCol":"2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(JAN ,"\\d{9,}",0)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "YAMADA")
+	Else
+		
+	End If
+	#icon("@res:f05dieha-f4nr-bukt-megb-u36bnavo2jj5.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","aaname":"型番 JAN メーカー 発売日 レビュー数 出荷"},{"tag":"TD"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "YAMADA")
+	Else
+		
+	End If
+	厂家前 = INI.Read(@res"seting.ini", "基本信息", "厂家", "")
+	Clipboard.SetText(网址2)
+	PrintToScreen.DrawText(objWindow,"打开源代码窗口，获取商品説明",18,[255,0,0])
+	hWeb1 = WebBrowser.Create("chrome","",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	商品説明 = Clipboard.GetText()
+	WebBrowser.Close(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品説明 = Regex.FindStr(商品説明,"(?<=(<p class=\"item-guide\">))([\\s\\S]*?) (?=(</p>))",0)
+	arrRet = Regex.FindAll(商品説明,"(<font([\\s\\S]*?)</font>)")
+	For Each value In arrRet
+		商品説明 = Replace(商品説明,value[0],"",False)
+		
+	Next
+	iRet = InStr(商品説明,"仕様",1,False)
+	商品説明 = Replace(商品説明,"商品仕様","主な仕様",False)
+	商品説明 = Replace(商品説明,"仕様","主な仕様",False)
+	商品説明 = Replace(商品説明,"\"","",False)
+	商品説明 = Replace(商品説明,"※特に記載の無い特典等はお付けできません。","",False)
+	iRet = InStr(商品説明,"<!--  動画-->",1,False)
+	商品説明 = Left(商品説明,iRet-1)
+	商品説明 = "<div align=\"left\"><b>■商品特徴</b><BR>"&商品説明
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "YAMADA")
+	Else
+		
+	End If
+	Rem 
+	图片 = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+	商品説明 = "<br>■型番：HAC-P-A3DMA	<br><br"
+	网址1 = "view-source:https://www.yamada-denkiweb.com/2817401018"
+	型番1 = Regex.FindStr(商品説明,"(?<=(■型番：))([\\s\\S]*?)(?=(<br>))",0)
+	If 图片="0" And 型番1<>Null
+		sRet = Regex.FindStr(网址1,"\\d+$",0)
+		TracePrint(sRet)
+		aa = HTTP.GetFile("https://cache.ymall.jp/webcom/item/multiimage/300/2817401018_001.jpg", "C:\\Users\\user\\Pictures\\"&型番1&".jpg", {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'}, 60000)
+		TracePrint(型番1)
+		
+		Try 1
+			iPID = App.Start("C:\\Users\\user\\Pictures\\"&型番1&".jpg", "0", "1")
+		Catch e
+			iRet = Dialog.MsgBox("图片没保存成功","UiBot","0","1",1000)
+		Else
+		End Try
+	Else
+		
+	End If
+	
+	
+	
+	
+	
+	
+End Function
+Rem nojima-JAN
+Function nojima(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取NOJIMA数据",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:c9f638cl-a2ua-ud9p-oqgf-na71q5erkb71.png")
+	JAN = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"P","parentid":"tabs-1","css-selector":"body>div>div>form>div>div>div>div>div>div>div>p"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(JAN ,"\\d{9,}",0)
+	
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "NOJIMA")
+	Else
+		
+	End If
+	#icon("@res:mocm54eo-lvcm-rfkk-s4of-b5raa1b16i9r.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"H1"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	型番 = Regex.FindStr(型番,"(\\w|\\d)+(-|/)+[A-Za-z0-9-/()]*[\\d\\w]$",0)
+	型番 = Replace(型番," ","",False)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	TracePrint(型番)
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "ノジマオンライン")
+	Else
+		
+	End If
+	网址1 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = HTTP.Get(网址1, {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36'}, 60000)
+	File.WriteFile(@res"网页源码.txt",sRet,"utf-8")
+	sRet = Regex.FindStr(sRet,"(?<=商品説明</h3>)(([\\s\\S])*?)(?=<h3 class)",0)
+	商品説明 = Replace(sRet,"<h3 class","",False)
+	sRet = Regex.FindStr(商品説明,"<P><FONT color=(([\\s\\S])*?)</FONT></P>",0)
+	商品説明 = Replace(商品説明,sRet,"",False)
+	// 网址2 = "view-source:"&网址1
+	// Clipboard.SetText(网址2)
+	// hWeb1 = WebBrowser.Create("chrome","",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	商品説明 = "<div align=\"left\"><b>■商品特徴</b><br>"&商品説明
+	File.WriteFile(@res"生成网页.html",商品説明,"utf-8")
+	iPID = App.Start(@res"生成网页.html", "0", "1")
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "ノジマオンライン")
+	Else
+		
+	End If
+	图片 = INI.Read(@res"seting.ini", "基本信息", "IMAGE", "")
+	If 图片="0"
+		sRet = HTTP.GetFile("https://online.nojima.co.jp/image/shop/1/commodity/"&JAN&"_l.jpg", "C:\\Users\\user\\Pictures\\"&型番&".jpg", {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'}, 60000)
+		
+		iPID = App.Start("C:\\Users\\user\\Pictures\\"&型番&".jpg", "0", "1")
+	Else
+		
+	End If
+	PrintToScreen.DrawText(objWindow,"NOJIMA数据获取完成",18,[255,0,0])
+End Function
+Rem giga-JAN和型番
+Function giga(URL)
+	#icon("@res:dpm73mrj-q7c6-5bre-24ii-3o79rhuh4es4.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","aaname":"メーカー*","css-selector":"body>div>div>center>table>tbody>tr>td>table>tbody>tr>td>table"},{"tag":"TD","tableRow":"2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "GIGA")
+	Else
+		
+	End If
+	
+	#icon("@res:jltal2am-usug-10ju-iagd-rsj6nukmp3ta.png")
+	商品説明 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"P","css-selector":"body>div>div>center>table>tbody>tr>td>p"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	iRet = InStr(商品説明,"基本仕様",1,False)
+	iRet1 = InStr(商品説明,"仕様",1,False)
+	If iRet>0
+		商品説明 = Replace(商品説明,"基本仕様","主な仕様",False)
+		
+	ElseIf iRet1>0
+		商品説明 = Replace(商品説明,"仕様","主な仕様",False)
+	End If
+	商品説明 = Replace(商品説明,"\n","<br>",False)
+	商品説明 = "<div align=\"\"left\"\">"&商品説明
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "GIGA")
+	Else
+		
+	End If
+End Function
+Rem TJcom-型番
+Function TJcom(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取TJcom数据",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:1kfmi134-o50c-39bh-l690-bm09s6g0gjhb.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentname":"frm_accesory","css-selector":"body>div>table>tbody>tr>td>form>div>table>tbody>tr>td>table"},{"tag":"TD","tableRow":"2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "特価COM本店")
+	Else
+		
+	End If
+	
+	TracePrint(型番)
+	PrintToScreen.DrawText(objWindow,"TJcom数据获取完成",18,[255,0,0])
+End Function
+Rem TJcomLT-JAN
+Function TJcomLT(URL)
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:2s1oquo4-tibv-9d7d-vc69-nhm8qe52n832.png")
+	型番 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"contents","css-selector":"body>div>div>div>div>div>div>table>tbody>tr>td>table>tbody>tr>td>table>tbody>tr>td>table","idx":4},{"tag":"TD","tableCol":"3"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = Regex.FindStr(型番 ,"\\d{9,}",0)
+	
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "特価COM乐天店")
+	Else
+		
+	End If
+End Function
+Rem ECGAIDO官方页
+Function ECGAIDO(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取ECcurrent的数据",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:pd6ihcqc-ppj0-jq68-ai6l-q3g863labdr1.png")
+	商品网址 = UiElement.GetValue({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"EC* Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"EC*Google Chrome"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:https://www."&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"型番",1,False)
+	sRet = Mid(源代码,iRet+15,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<td>",1,False)
+	型番 = Mid(型番,iRet+4,99)
+	iRet = InStr(源代码,"JANコード",1,False)
+	sRet = Mid(源代码,iRet+19,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	JAN = Left(sRet,iRet-1)
+	iRet = InStr(JAN,"<td>",1,False)
+	JAN = Mid(JAN,iRet+4,99)
+	iRet = InStr(源代码,"<div class=\"comment_\">",1,False)
+	sRet = Mid(源代码,iRet+30,99999)
+	iRet = InStr(sRet,"</div>",1,False)
+	商品説明 = Left(sRet,iRet-1)
+	商品説明 = "<div align=\"\"left\"\"><b>■商品特徴</b><br>"&商品説明
+	TracePrint(JAN)
+	JAN = Regex.FindStr(JAN ,"\\d{9,}",0)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "ECcurrent本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "ECcurrent本店")
+	Else
+		
+	End If
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "ECcurrent本店")
+	Else
+		
+	End If
+End Function
+Rem HIKARITV官方页
+Function HIKARITV(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取ひかりTV的数据",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Rem 
+	厂家前 = INI.Read(@res"seting.ini", "基本信息", "厂家", "")
+	title前 = INI.Read(@res"seting.ini", "基本信息", "title", "")
+	title前 = 厂家前&" "&title前
+	title前 = Replace(title前,"-","",False)
+	title前 = Replace(title前,"[","",False)
+	title前 = Replace(title前,"]","",False)
+	TracePrint(title前)
+	#icon("@res:to4s80cd-6mdp-1n0t-vh46-g5mfttu6ni3k.png")
+	title后綴 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"H1"}]},{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200})
+	iRet = InStrRev(title后綴,"\n",1,False)
+	title后綴 = Mid(title后綴,iRet+1,9999)
+	title后綴 = Replace(title后綴,"　"," ",False)
+	title后綴 = Replace(title后綴,"-","",False)
+	title后綴 = Replace(title后綴,"[","",False)
+	title后綴 = Replace(title后綴,"]","",False)
+	Dim sRet = ""
+	title后綴1 = Split(title后綴," ")
+	TracePrint(title后綴)
+	title后綴1[0] = ""
+	TracePrint(title后綴1)
+	For Each value In title后綴1
+		iRet = InStr(title前,value,1,False)
+		If iRet>0
+			
+			title后綴 = Replace(title后綴,value,"",False)
+		Else
+			
+		End If
+		
+	Next
+	TracePrint(title后綴)
+	INI.Write(@res"seting.ini", "基本信息", "title后綴", title后綴)
+	商品网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:"&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"型番",1,False)
+	sRet = Mid(源代码,iRet+15,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<td>",1,False)
+	型番 = Mid(型番,iRet+4,99)
+	iRet = InStr(源代码,"JANコード",1,False)
+	sRet = Mid(源代码,iRet+19,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	JAN = Left(sRet,iRet-1)
+	iRet = InStr(JAN,"<td>",1,False)
+	JAN = Mid(JAN,iRet+4,99)
+	iRet = InStr(源代码,"<div class=\"contentsBoxBlock\">",1,False)
+	sRet = Mid(源代码,iRet,999999)
+	iRet = InStr(sRet,"</div>",1,False)
+	商品説明 = Left(sRet,iRet-1)
+	iRet = InStr(商品説明,"<div class=\"outline\">",1,False)
+	商品説明 = Mid(商品説明,iRet,9999999)
+	商品説明 = Replace(商品説明,"商品の仕様","主な仕様",False)
+	sRet = Regex.FindStr(商品説明,"【?商品の特徴】?",0)
+	iRet = Len(sRet)
+	If iRet>0
+		商品説明 = Replace(商品説明,sRet,"<div align=\"\"left\"\"><b>■商品特徴</b><br>",False)
+		
+	Else
+		
+		商品説明 = "<div align=\"\"left\"\"><b>■商品特徴</b><br>"&商品説明
+	End If
+	iRet = InStr(商品説明,"ひかりＴＶ",1,False)
+	If iRet>0
+		商品説明 = ""
+		
+	Else
+		
+	End If
+	iRet = InStr(商品説明,".jpg",1,False)
+	If iRet>0
+		商品説明 = ""
+		
+	Else
+		
+	End If
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN )
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "ひかりTVショッピング本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "ひかりTVショッピング本店")
+	Else
+		
+	End If
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "ひかりTVショッピング本店")
+	Else
+		
+	End If
+End Function
+Rem WiNK官方页
+Function WiNK(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取WiNK的数据",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:"&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"<dt>型番",1,False)
+	sRet = Mid(源代码,iRet+15,99)
+	iRet = InStr(sRet,"</dd>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<dd>",1,False)
+	型番 = Mid(型番,iRet+4,99)
+	iRet = InStr(源代码,"商品コード",1,False)
+	sRet = Mid(源代码,iRet+19,99)
+	iRet = InStr(sRet,"</dd>",1,False)
+	JAN = Left(sRet,iRet-1)
+	iRet = InStr(JAN,"<dd>",1,False)
+	JAN = Mid(JAN,iRet+4,99)
+	JAN = Replace(JAN,"商品コード：","",False)
+	iRet = InStr(源代码,"<div class=\"main-box\">",1,False)
+	sRet = Mid(源代码,iRet,999999)
+	iRet = InStr(sRet,"</div>",1,False)
+	商品説明 = Left(sRet,iRet-1)
+	iRet = InStr(商品説明,"</h2>",1,False)
+	商品説明 = Mid(商品説明,iRet+5,999999)
+	商品説明 = Replace(商品説明,"商品の仕様","主な仕様",False)
+	商品説明 = "<div align=\"\"left\"\"><b>■商品特徴</b><br>"&商品説明
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "WiNK本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "WiNK本店")
+	Else
+		
+	End If
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "WiNK本店")
+	Else
+		
+	End If
+End Function
+Rem EDIONネットショップ
+Function EDIONGW(URL)
+	PrintToScreen.DrawText(objWindow,"开始获取EDIONネットショップ的数据",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:"&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"型番</dt>",1,False)
+	sRet = Mid(源代码,iRet+7,99)
+	iRet = InStr(sRet,"</dd>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<dd>",1,False)
+	型番 = Mid(型番,iRet+4,99)
+	iRet = InStr(源代码,"JANコード</dt>",1,False)
+	sRet = Mid(源代码,iRet+11,99)
+	iRet = InStr(sRet,"</dd>",1,False)
+	JAN = Left(sRet,iRet-1)
+	iRet = InStr(JAN,"<dd>",1,False)
+	JAN = Mid(JAN,iRet+4,99)
+	JAN = Replace(JAN,"商品コード：","",False)
+	商品説明 = Regex.FindStr(源代码,"<div id=\"featureBox\">[\\s\\S]*?</div>",0)
+	// 前 = InStr(源代码,"<div id=\"featureBox\">",1,False)
+	// sRet = Mid(源代码,前+21,999999)
+	// 后 = InStr(sRet,"</div>",1,False)
+	// 商品説明 = Mid(sRet,1,后)
+	// 前 = InStr(商品説明,"<a href=",1,False)
+	// 商品説明 = Left(商品説明,前-1)
+	TracePrint(商品説明)
+	主的式样 = Regex.FindStr(源代码,"<a href=\"\" class=\"button close\">スペックを閉じる</a>[\\s\\S]*?</dd>",0)
+	主的式样 = Replace(主的式样,"<a href=\"\" class=\"button close\">スペックを閉じる</a>","<br><b>■主な仕様</b>",False)
+	// 前 = InStr(sRet,"スペックを閉じる",1,False)
+	// 后 = InStr(sRet," </dd>",1,False)
+	// 主的式样 = Mid(sRet,前+12,后-(前+12))
+	// 主的式样 = "<br><b>■主な仕様</b><br>"&主的式样
+	TracePrint(主的式样)
+	商品説明 = 商品説明&主的式样
+	sRet = Regex.FindStr(商品説明,"<a href=[\\s\\S]*?>メーカー商品詳細ページはこちら</a>",0)
+	商品説明 = Replace(商品説明,sRet,"",False)
+	iRet = InStr(商品説明,"商品情報",1,False)
+	If iRet>0
+		
+		商品説明 = Replace(商品説明,"商品情報","<div align=\"left\"><b>■商品特徴</b><br>",False)
+	Else
+		商品説明 = "<div align=\"left\"><b>■商品特徴</b><br>"&商品説明
+		
+	End If
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "EDIONネットショップ本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "EDIONネットショップ本店")
+	Else
+		
+	End If
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "EDIONネットショップ本店")
+	Else
+		
+	End If
+End Function
+Rem 阪通
+Function fantong(URL)
+	PrintToScreen.DrawText(objWindow,"阪通",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:"&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"型番</th>",1,False)
+	sRet = Mid(源代码,iRet+7,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<td>",1,False)
+	型番 = Mid(型番,iRet+4,99)
+	iRet = InStr(源代码,"JAN</th>",1,False)
+	sRet = Mid(源代码,iRet+8,99)
+	iRet = InStr(sRet,"</td>",1,False)
+	JAN = Left(sRet,iRet-1)
+	iRet = InStr(JAN,"<td>",1,False)
+	JAN = Mid(JAN,iRet+4,99)
+	JAN = Replace(JAN,"商品コード：","",False)
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "阪通本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "阪通本店")
+	Else
+		
+	End If
+End Function
+Rem タンタン
+Function tantan(URL)
+	PrintToScreen.DrawText(objWindow,"タンタン",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	商品网址 = "view-source:"&商品网址
+	TracePrint(商品网址)
+	PrintToScreen.DrawText(objWindow,"商品网址"&商品网址,18,[255,0,0])
+	Clipboard.SetText(商品网址)
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"A",20,10000,{"bContinueOnError":False,"iDelayAfter":150,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.Press("Delete", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+	#icon("@res:jp9omu83-hrmn-ahdv-6i18-2gga6vrvkedu.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_GROUPING","idx":1}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+	#icon("@res:df6llmnk-pgei-0rog-e7de-aspaaqilkvgl.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+	Delay(1500)
+	
+	Image.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"view-source*Google Chrome","app":"chrome"}]},{"height":0,"width":0,"x":0,"y":0},@res"prunnt4d-tjg8-o7g9-bkkn-6tnklls0m1ut.png",0.9,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	objPoint=Mouse.GetPos()
+	Mouse.Move(objPoint["x"], objPoint["y"]+300, False,{"iDelayAfter":300,"iDelayBefore":200})
+	Mouse.Click("left", "dbclick", [],{"iDelayAfter":300,"iDelayBefore":200})
+	Keyboard.Press("A", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	Keyboard.Press("C", "press", ["Ctrl"],{"iDelayAfter":150,"iDelayBefore":200,"sSimulate":"simulate"})
+	源代码 = Clipboard.GetText()
+	iRet = InStr(源代码,"<strong>型番",1,False)
+	sRet = Mid(源代码,iRet,99)
+	iRet = InStr(sRet,"</strong>",1,False)
+	sRet = Mid(sRet,iRet+9,99)
+	iRet = InStr(sRet,"</p>",1,False)
+	型番 = Left(sRet,iRet-1)
+	iRet = InStr(型番,"<td>",1,False)
+	iRet = InStr(源代码,"JANコード</span>",1,False)
+	sRet = Mid(源代码,iRet,99)
+	JAN = DigitFromStr(sRet)
+	iRet = InStr(源代码,"<!--▼商品説明-->",1,False)
+	sRet = Mid(源代码,iRet,999999)
+	iRet = InStr(sRet,"</p>",1,False)
+	商品説明 = Left(sRet,iRet-1)
+	iRet = InStr(商品説明,"●【お届け時間指定】",1,False)
+	商品説明 = Left(商品説明,iRet-1)
+	iRet = InStr(商品説明,"●沖縄・離島",1,False)
+	商品説明 = Left(商品説明,iRet-1)
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "タンタン本店")
+	Else
+		
+	End If
+	TracePrint(型番)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "型番校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "型番", 型番)
+		INI.Write(@res"seting.ini", "詳細信息", "型番商家", "タンタン本店")
+	Else
+		
+	End If
+	TracePrint(商品説明)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 商品説明)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "タンタン本店")
+	Else
+		
+	End If
+End Function
+Rem ECJOY
+Function ecjoy(URL)
+	PrintToScreen.DrawText(objWindow,"ecjoy",18,[255,0,0])
+	PrintToScreen.DrawText(objWindow,"在新页面打开网页",18,[255,0,0])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:edfnsbaa-3iac-2a9k-4n4i-n6q4sfiui1iv.png")
+	sRet = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LI","parentid":"top","isleaf":"1","idx":1}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	JAN = DigitFromStr(sRet)
+	
+	TracePrint(JAN)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "JAN校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "JAN", JAN)
+		INI.Write(@res"seting.ini", "詳細信息", "JAN商家", "ecjoy本店")
+	Else
+		
+	End If
+End Function
+Rem kakaku仕样情报
+Function 仕样情报()
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = INI.Read(@res"seting.ini", "基本信息", "网址", "")
+	sRet = Regex.FindStr(sRet,"(https?://)?kakaku.com/item/([\\w\\d]*)/",0)
+	#icon("@res:default.png")
+	iRet = WebBrowser.GoURL(hWeb,sRet&"spec/#tab",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	arrayData = UiElement.DataScrap({"html":[{"tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	iRet = UBound(arrayData)
+	主的式样 = "<div align=\"\"left\"\"><b>■主な仕様</b><br>"
+	For i = 1 To iRet Step 1 
+		主的式样 = 主的式样&arrayData[i][0]&":"&arrayData[i][1]&"<br>"&arrayData[i][2]&":"&arrayData[i][3]&"<br>"
+		
+	Next
+	TracePrint(主的式样)
+	sRet = INI.Read(@res"seting.ini", "詳細信息", "商品説明校対", "")
+	If sRet="否"
+		
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明", 主的式样)
+		INI.Write(@res"seting.ini", "詳細信息", "商品説明商家", "kakaku仕样情报")
+	Else
+		
+	End If
+	
+End Function
+Rem 供给原价计算
+Function 供给原价计算(Text供给原价,Text手数料)
+	sRet = DigitFromStr(Text手数料)
+	X = CInt(Text供给原价)
+	计算结果 = X/(1-sRet/100)
+	计算结果 = CInt(计算结果)
+	TracePrint(计算结果)
+	Return 计算结果
+End Function
+Rem 查找出品
+Function 查找出品(x)
+	Text查找内容 = x
+	Text查找内容 = Left(Text查找内容,45)
+	TracePrint("Text查找内容"&Text查找内容)
+	返回查找内容 = ""
+	For Each value In arrayQ10data
+		bRet = IsSpecificStr(Text查找内容,"number")
+		If bRet
+			sRet = value[1]&value[25]
+			
+		Else
+			sRet = Join(value,",")
+			
+		End If
+		iRet = InStr(sRet,Text查找内容,1,False)
+		If iRet>0
+			返回查找内容 = 返回查找内容&value[0]&","&value[1]&","&value[7]&","&value[4]&"\n"
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	TracePrint(返回查找内容)
+	If 返回查找内容<>""
+		iRet = Dialog.MsgBox(返回查找内容,"查找结果,はい继续出品,否则..",1,"1",0)
+		If iRet=7
+			停止出品 = 1
+			
+		Else
+			
+		End If
+		
+	Else
+		
+		Dialog.Notify("没有找到相关信息", "查找结果", "0")
+	End If
+End Function
+Rem 子程序点击打开网页
+Function 打开页面(URL)
+	GWeb = WebBrowser.Create("chrome",URL,30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	#icon("@res:default.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*"}]},10000,{"bContinueOnError":False,"iDelayAfter":20,"iDelayBefore":20,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	Mouse.Click("left", "click", [],{"iDelayAfter":300,"iDelayBefore":20})
+	#icon("@res:default.png")
+	bRet = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Try 1
+		If bRet
+			
+			#icon("@res:default.png")
+			Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*"}]},10000,{"bContinueOnError":False,"iDelayAfter":20,"iDelayBefore":20,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":-65,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Mouse.Click("left", "click", [],{"iDelayAfter":20,"iDelayBefore":20})
+		Else
+			
+		End If
+	Catch e
+	Else
+	End Try
+	#icon("@res:default.png")
+	iRet = WebBrowser.WaitPage(GWeb,{},60000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	
+End Function
+Function amazon()
+	待写入行数据 = []
+	#icon("@res:utusrm0c-qdif-gaq9-74rj-uu01miso51ni.png")
+	网址 = UiElement.GetValue({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_TEXT","name":"アドレス検索バー"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	网址 = "https://www."&网址
+	#icon("@res:d0n95ts6-vmt2-er96-qgpv-t5vaghoa2lm1.png")
+	标题 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","id":"productTitle"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	标题 = Replace(标题,"\n","",False)
+	#icon("@res:t92r22dd-a4am-bi05-no9o-njnn09imn9ce.png")
+	价格 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","id":"priceblock_ourprice"}]},{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200})
+	价格 = DigitFromStr(价格)
+	价格 = CInt(价格)
+	dictRet = Dialog.UDFDialog("输入加价，运费",@res"1623739150720.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	输入加价 = dictRet["加价"]
+	输入加价 = CInt(输入加价)
+	手续料 = CNumber(dictRet["手续料"])
+	价格 = (价格+输入加价)/手续料
+	价格 = CInt(价格)
+	待写入行数据[3] = 标题
+	待写入行数据[4] = 价格
+	待写入行数据[5] = 1
+	待写入行数据[6] = 0
+	待写入行数据[7] = 5
+	待写入行数据[8] = dictRet["运费"]
+	待写入行数据[9] = 标题
+	待写入行数据[10] = 网址
+	在庫写入csv = Excel.BindBook(在库出力)
+	Excel.ActiveBook(在庫写入csv)
+	现有行数  = Excel.GetRowsCount(在庫写入csv,在库出力表名 )
+	Excel.WriteRow(在庫写入csv,在库出力表名,"A"&(现有行数+1),待写入行数据,False)
+	
+End Function
+
+
+
