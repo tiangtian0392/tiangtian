@@ -1,0 +1,674 @@
+
+Dim get_网页data = ""
+Dim K = ""
+Dim hWeb = ""
+Dim 值 = ""
+Dim 延时时长 = ""
+Dim write_data = ""
+Dim array读入原文件 = ""
+Dim 倒计时 = ""
+Dim 数据判断 = ""
+Dim 上次检查时间 = ""
+Dim resultArr = ""
+Dim arrRet1 = ""
+Dim objDatatable = ""
+Dim test = ""
+Dim value = ""
+Dim 重要商家数量 = ""
+Dim arr状态 = ""
+Dim 发送日 = ""
+Dim objExcelWorkBook = ""
+Dim 改价 = ""
+Dim JS = ""
+Dim dRet = ""
+Dim 商品加价 = ""
+Dim O均价 = ""
+Dim 商家数 = ""
+Dim csvfile = ""
+Dim arr_csvdata = ""
+Dim iPID = ""
+Dim mails = ""
+Dim bRet = ""
+Dim dTime = ""
+Dim data = ""
+Dim path = ""
+Dim arrRet = ""
+Dim 型号 = ""
+Dim temp = ""
+Dim iRet = ""
+Dim sRet = ""
+Dim arrayRet = ""
+Dim objMail = ""
+Dim objIMAP = ""
+nowtime()
+Rem 
+Function duibi_zaiku()
+	array_zaiku = CSV.Open("Z:\\bazhuayu\\在庫.csv",{"encoding":"auto"})
+	item = Shift(array_zaiku)
+	Try 3
+		objExcelpaichu = Excel.BindBook("paichu.xlsx")
+	Catch e
+		iPID = App.Start("Z:\\bazhuayu\\paichu.xlsx", 1, "1")
+		bRet = File.FileExists("Z:\\bazhuayu\\~$paichu.xlsx")
+		If bRet
+			
+			#icon("@res:q6q9c22k-o4jq-u4bg-hai2-afp6vggft0ve.png")
+			Mouse.Action({"wnd":[{"app":"EXCEL","cls":"bosa_sdm_XL9","title":"使用中のファイル"}],"ctrl":[{"role":"ROLE_SYSTEM_DIALOG","name":"使用中のファイル"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"読み取り専用(R)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			TracePrint("其它地方打开中")
+		Else
+			
+		End If
+		Try 999
+			objExcelpaichu = Excel.BindBook("paichu.xlsx")
+		Catch w
+		Else
+		End Try
+	Else
+	End Try
+	
+	array_paichu = Excel.ReadColumn(objExcelpaichu,"Sheet1","A2")
+	For Each value In test
+		test_banhao = CInt(value[0])
+		test_JAN = CInt(value[37])
+		For Each value_paichu In array_paichu
+			paichu_banhao = CInt(value_paichu)
+			If paichu_banhao=test_banhao
+				TracePrint(test_banhao,paichu_banhao)
+				test = LzwArrayExtend.TwoRemoveByItem(test,value)
+				Continue
+				
+			Else
+				
+			End If
+			
+		Next
+		
+		Rem 
+		For Each value_zaiku In array_zaiku
+			zhiku_JAN = CInt(value_zaiku[2])
+			Try 1
+				If zhiku_JAN=test_JAN
+					TracePrint(test_JAN,zhiku_JAN)
+					test = LzwArrayExtend.TwoRemoveByItem(test,value)
+					Continue
+					
+				Else
+					
+				End If
+			Catch e
+			Else
+			End Try
+			
+		Next
+	Next
+End Function
+Function get_Q10(Q10)
+	htmlcode = HTTP.Get("https://www.qoo10.jp/gmkt.inc/Goods/Goods.aspx?goodscode="&Q10[1], {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
+	arrRet = Regex.FindAll(htmlcode,"(?<=strong data-price=\").*?(?=\">)")
+	Q10价格 = DigitFromStr(arrRet[0])
+	Q10价格 = CInt(Q10价格)
+	TracePrint(Q10价格)
+	Return Q10价格
+End Function
+Function nowtime()
+	dTime = Time.Now()
+	sRet = Time.Format(dTime,"yyyy-mm-dd hh:mm:ss")
+	TracePrint(sRet)
+	
+End Function
+Function get_json(mail)
+	型号 = Regex.FindStr(mail["SUBJECT"],"(?<=【価格.com】最安変動[↑↓][\\s]).+?(?=[\\s]最安変動お知らせ)",0)
+	
+	// 型号 = Regex.FindStr(mail["Body"],"(?<=『).*(?=』)?",0)	
+	日期 = mail["DATE"]
+	涨幅 = Regex.FindStr(mail["Body"],"(?<=変動額\\\r\\\n\\+\\\\).*(?=\\(↑\\))",0)
+	
+	data = [型号,日期,涨幅]
+	Return data
+End Function
+Function get_csvdata(kaka)
+	For Each value In arr_csvdata
+		If value[2]=kaka[0]
+			Return value
+			
+		Else
+			
+		End If
+		
+	Next
+	
+End Function
+Function get_Q10data(banhao)
+	For Each value In arr_Q10data
+		If value[0]=banhao[1]
+			Return value
+			
+		Else
+			
+		End If
+		
+	Next
+	
+End Function
+Function get_kakaku(kakaku)
+	htmlcode = HTTP.Get(kakaku[22], {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
+	arr价格 = Regex.FindAll(htmlcode,"(?<=p-PTPrice_price).*?(?=</p>){1}")
+	商家数 = UBound(arr价格)
+	arr状态 = Regex.FindAll(htmlcode,"(?<=p-PTStock\">).*?(?=</p>)")
+	arr商家 = Regex.FindAll(htmlcode,"(?<=class=\"p-PTShopData_name_link\">).*?(?=<)")
+	kakaku价格 = []
+	kakaku状态 = []
+	For i = 0 To 商家数 Step 1 
+		
+		sRet_价格 = Regex.FindStr(arr价格[i],"\\d+,?\\d*",0)
+		kakaku价格 = push(kakaku价格,[sRet_价格,arr状态[i],arr商家[i]])
+		sRet_状态 = Regex.FindStr(arr状态[i],"○",0)
+		If sRet_状态="○"
+			kakaku状态 = push(kakaku状态,sRet_价格)
+			
+		Else
+			
+		End If
+	Next
+	
+	kakaku价格 = Unshift(kakaku价格,kakaku状态)
+	Return kakaku价格
+End Function
+Rem 
+延时时长 = Dialog.InputBox("输入延时时长-分钟数","输入延时时长-分钟","50",True)
+延时时长 = CInt(延时时长)
+检查邮件数 = Dialog.InputBox("早晨第一次查，建议200左右，以后20分钟，50足够","检查邮件数","50",False)
+检查邮件数 = CInt(检查邮件数)
+Do While True
+	重要商家 = ["ノジマオンライン","Amazon.co.jp","ヨドバシ.com","ビックカメラ.com","ソフマップ.com","Apple公式サイト","コジマネット"]
+	邮箱 = ["asutbp92810","brilliantkaga1","brilliantkakaku"]
+	path = INI.Read(@res"config.ini", "setting", "path", "")
+	上次检查时间 = INI.Read(@res"config.ini", "setting", "data", "")
+	mails = INI.Read(@res"config.ini", "setting", "mails", "")
+	csvfile = INI.Read(@res"config.ini", "setting", "csvfile", "")
+	bRet = File.FileExists(csvfile)
+	If bRet
+		
+		arr_csvdata = CSV.Open(csvfile,{"encoding":"auto"})
+	Else
+		
+		iRet = Dialog.MsgBox("csv文件地址配置出错，点击确定后打开INI文件，改正保存关闭文件后继续运行","csv文件出错","0","1",0)
+		iPID = App.Start(@res"config.ini", 2, "1")
+		csvfile = INI.Read(@res"config.ini", "setting", "csvfile", "")
+		arr_csvdata = CSV.Open(csvfile,{"encoding":"auto"})
+	End If
+	arr_Q10data = CSV.Open("Z:\\bazhuayu\\items_20210728161534.csv",{"encoding":"auto"})
+	dTime = Time.Now()
+	nowdata = Time.Format(dTime,"yyyy-mm-dd_hh-mm")
+	邮箱长度 = UBound(邮箱)
+	For y = 0 To 邮箱长度 Step 1 
+		上次检查时间 = INI.Read(@res"config.ini", "setting", "data"&y, "")
+		
+		objIMAP = IMAP.Connect("imap.gmail.com",邮箱[y],"123456789brilliant",993,True,邮箱[y]&"@gmail.com")
+		// arrayRet = IMAP.GetMailList(objIMAP,"[Gmail]/所有邮件",检查邮件数,True,True,"")
+		arrayRet = IMAP.GetMailList(objIMAP,"[Gmail]/所有邮件",检查邮件数,True,True,"")
+		共有邮件 = Len(arrayRet)
+		TracePrint("邮箱名："&邮箱[y]&"-共接收邮件："&共有邮件)
+		write_data = []
+		nowupdata = [["番号","网址","加价","手续料","标题","日期","涨幅","Q10现在价格","取价标准","改后价格","发送日"]]
+		data = []
+		JS = 1
+		改价 = 0
+		For Each value In arrayRet
+			iRet = InStr(value["SUBJECT"],"↑",1,False)
+			If iRet>0
+				data=get_json(value)
+				If JS=1
+					当前检查日期 = data[1]
+					JS = JS+1
+					
+				Else
+					
+				End If
+				If 上次检查时间=data[1]
+					Continue
+					
+				Else
+					
+				End If
+				banhao=get_csvdata(data)
+				Try 1
+					商品加价 = CInt(banhao[23])
+					手续料  = CNumber(banhao[24])
+				Catch e
+					TracePrint("价格网标题对比出错，确认下行的输出")
+					TracePrint(data)
+					data = Unshift(data,"")
+					data = Unshift(data,"")
+					write_data = push(write_data,data)
+					Continue
+				Else
+				End Try
+				TracePrint(手续料)
+				If 手续料<0.9
+					TracePrint("手续料小于0.9")
+					手续料 = 0.9
+					
+				Else
+					
+				End If
+				data = Unshift(data,banhao[24])
+				data = Unshift(data,banhao[23])
+				data = Unshift(data,banhao[22])
+				data = Unshift(data,banhao[1])
+				TracePrint(data)
+				Q10价格=get_Q10(banhao)
+				
+				If Q10价格>0
+					
+					kakaku价格=get_kakaku(banhao)
+					总商家数 = UBound(kakaku价格)
+					O商家数 = UBound(kakaku价格[0])
+					发送日 = "14"
+					If 总商家数<=6
+						TracePrint("商家少于6")
+						If O商家数>=3 And 总商家数>=3
+							发送日 = "14"
+							O均价 = 0
+							For i = 1 To 总商家数 Step 1 
+								sRet = DigitFromStr(kakaku价格[i][0])
+								iRet = CInt(sRet)
+								O均价 = O均价+iRet
+								
+							Next	
+							
+							O均价 = CInt(O均价/总商家数)
+							O均价 = (O均价+商品加价)/手续料
+							O均价 = CInt(O均价)
+							data = push(data,Q10价格)
+							data = push(data,"改价，O商家>=3，总商家小于6")
+							data = push(data,O均价)
+							data = push(data,发送日)
+							改价 = 改价+1
+							
+						ElseIf O商家数<3 And 总商家数>=4
+							发送日 = "14"
+							O均价 = 0
+							For i = 1 To 总商家数 Step 1 
+								sRet = DigitFromStr(kakaku价格[i][0])
+								iRet = CInt(sRet)
+								O均价 = O均价+iRet
+								
+							Next	
+							
+							O均价 = CInt(O均价/总商家数)
+							O均价 = (O均价+商品加价*2)/手续料
+							O均价 = CInt(O均价)
+							data = push(data,Q10价格)
+							data = push(data,"改价，O商家小于3，总商家大于4小于6，商品加价*2")
+							data = push(data,O均价)
+							data = push(data,发送日)
+						ElseIf 总商家数<4
+							Rem 下架
+							发送日 = "14"
+							O均价 = 99999999
+							data = push(data,Q10价格)
+							data = push(data,"下架，O商家小于3，总商家大于4")
+							data = push(data,O均价)
+							data = push(data,发送日)
+							
+						End If
+						Rem 下架
+						For i = 1 To 总商家数 Step 1 
+							data = push(data,kakaku价格[i])
+							
+						Next
+						改价 = 改价+1
+						
+						
+					Else
+						If O商家数>=5
+							发送日 = "3"
+							O均价 = 0
+							值 = 6
+							For i = 0 To 5 Step 1 
+								sRet = DigitFromStr(kakaku价格[0][i])
+								iRet = CInt(sRet)
+								O均价 = O均价+iRet
+								
+							Next	
+							
+							O均价 = CInt(O均价/6)
+							O均价 = (O均价+商品加价)/手续料
+							O均价 = CInt(O均价)
+							data = push(data,Q10价格)
+							data = push(data,"6家O的均价")
+							data = push(data,O均价)
+							data = push(data,发送日)
+							TracePrint("6家O的均价")
+							改价 = 改价+1
+							
+							
+						ElseIf O商家数>=3
+							发送日 = "7"
+							O均价 = 0
+							If 总商家数>=6
+								
+								值 = 6
+							Else
+								值 = 总商家数
+								
+							End If
+							For i = 1 To 值 Step 1 
+								sRet = DigitFromStr(kakaku价格[i][0])
+								iRet = CInt(sRet)
+								O均价 = O均价+iRet
+								
+							Next
+							O均价 = CInt(O均价/6)
+							O均价 = (O均价+商品加价)/手续料
+							O均价 = CInt(O均价)
+							data = push(data,Q10价格)
+							data = push(data,"O少于6,大于3，取前6家均价")
+							data = push(data,O均价)
+							data = push(data,发送日)
+							TracePrint("O少于6,大于3，取前6家均价")
+							改价 = 改价+1
+						ElseIf O商家数<3
+							发送日 = "14"
+							O均价 = 0
+							If 总商家数>=6
+								
+								值 = 6
+							Else
+								值 = 总商家数
+								
+							End If
+							For i = 1 To 值 Step 1 
+								sRet = DigitFromStr(kakaku价格[i][0])
+								iRet = CInt(sRet)
+								O均价 = O均价+iRet
+								
+							Next
+							O均价 = CInt(O均价/6)
+							O均价 = (O均价+商品加价*2)/手续料
+							O均价 = CInt(O均价)
+							data = push(data,Q10价格)
+							data = push(data,"O少于3，加价x2")
+							data = push(data,O均价)
+							data = push(data,发送日)
+							TracePrint("O少于3，加价x2")
+							改价 = 改价+1
+						End If
+						TracePrint(data)
+						
+						For i = 1 To 总商家数-1 Step 1 
+							data = push(data,kakaku价格[i])
+							
+						Next
+						Rem 
+						TracePrint("值："&值)
+					End If
+					
+				Else	
+					
+					TracePrint("商品没上架，跳过")
+					data = push(data,"商品没上架，跳过")
+					data = push(data,"")
+					TracePrint(data)
+				End If
+				write_data = push(write_data,data)
+			Else
+				
+			End If
+			
+		Next
+		nowupdata = concat(nowupdata,write_data)
+		Try 1
+			数据判断 = nowupdata[1][0]
+		Catch e
+			TracePrint("csv无数据不保存"&nowdata)
+		Else
+			bRet = File.FileExists(path&"\\"&nowdata&".csv")
+			If bRet
+				array读入原文件 = CSV.Open(path&"\\"&nowdata&".csv",{"encoding":"auto"})
+				array读入原文件 = concat(array读入原文件,write_data)
+				array读入原文件 = LzwArrayExtend.TwoDistinct(array读入原文件)
+				CSV.Save(array读入原文件,path&"\\"&nowdata&".csv",{"encoding":"utf-8-sig"})
+				
+			Else
+				
+				nowupdata = LzwArrayExtend.TwoDistinct(nowupdata)
+				CSV.Save(nowupdata,path&"\\"&nowdata&".csv",{"encoding":"utf-8-sig"})
+				TracePrint("保存CSV文件完成："&nowdata)
+			End If
+		End Try
+		Rem 
+		INI.Write(@res"config.ini", "setting", "data"&y, 当前检查日期)
+	Next
+	Try 1
+		数据判断读入文件 = CSV.Open(path&"\\"&nowdata&".csv",{"encoding":"auto"})
+		数据判断 = 数据判断读入文件[1][0]
+	Catch e
+		TracePrint("xlsx无数据不保存"&nowdata)
+	Else
+		save_updata()
+	End Try
+	nowtime()
+	延时时长 = 50
+	倒计时 = 延时时长
+	For i = 1 To 倒计时 Step 1 
+		iRet = Dialog.MsgBox(倒计时&"分后，程序继续，点\"キャンセル\"后，会弹出窗口软件程序，关闭窗口后程序继续",延时时长&"分钟延时",3,0,60000)
+		TracePrint(iRet)
+		If iRet=2
+			
+			iRet = Dialog.MsgBox("点击确定关闭窗口后程序继续","程序暂停中",0,"1",0)
+		Else
+			
+		End If
+		倒计时 = 倒计时-1
+		
+	Next
+	
+Loop
+Function save_updata()
+	path = INI.Read(@res"config.ini", "setting", "path", "")
+	If nowdata=""
+		sRet = Dialog.OpenFile(path,"CSV文档 (csv、log)|*.csv;*.log|任意文件|*","UiBot")
+		数据判断读入文件 = CSV.Open(sRet,{"encoding":"auto"})
+		
+	Else
+		数据判断读入文件 = CSV.Open(path&"\\"&nowdata&".csv",{"encoding":"auto"})
+		
+	End If
+	
+	Try 1
+		objExcelQ10 = Excel.BindBook("Qoo10_newdata.xlsx")
+	Catch e
+		iPID = App.Start(@res"Qoo10_newdata.xlsx", 1, "1")
+		Try 999
+			objExcelQ10 = Excel.BindBook("Qoo10_newdata.xlsx")
+			Excel.ActiveBook(objExcelQ10)
+		Catch zz
+		Else
+		End Try
+	Else
+	End Try
+	Q10行数 = Excel.GetRowsCount(objExcelQ10,"Sheet1")
+	arrayQ10 = Excel.ReadRange(objExcelQ10,"Sheet1","A1:AV"&Q10行数)
+	Try 1
+		objExceltest = Excel.BindBook("test.xlsx")
+	Catch e
+		iPID = App.Start(@res"test.xlsx", 1, "1")
+		Try 999
+			objExceltest = Excel.BindBook("test.xlsx")
+		Catch xx
+		Else
+		End Try
+	Else
+	End Try
+	test = []
+	For Each value In 数据判断读入文件
+		Try 1
+			iRet = Len(value[9])
+		Catch e
+		Else
+			For Each Q10 In arrayQ10
+				value1 = CInt(value[0])
+				Q10号 = CInt(Q10[0])
+				Rem 
+				If Q10号=value1 And value[9]<>99999999 And value[7]<value[9] 
+					Q10[8] = value[9]
+					Q10[24] = value[10]
+					Rem JAN判断
+					If Q10[37]<>""
+						Q10[36] = "JAN"
+						
+					Else
+						Q10[36] = ""
+						
+					End If
+					Rem 原产地添写
+					If (Q10[28]<>"3" And Q10[29]<>"") Or  (Q10[28]<>"3" And Q10[30]<>"")
+						
+					Else
+						Q10[28] = "3"
+						Q10[31] = "その他"
+						
+					End If
+					test = push(test,Q10)
+					
+				ElseIf Q10号=value1 And value[9]=99999999 
+					Q10[8] = value[9]
+					Q10[10] = 0
+					Q10[24] = 发送日
+					test = push(test,Q10)
+					
+				End If
+				
+			Next
+		End Try
+		
+	Next
+	test = LzwArrayExtend.TwoDistinct(test)
+	iRet = UBound(test)
+	TracePrint(iRet)
+	duibi_zaiku()
+	iRet = UBound(test)
+	TracePrint(iRet)
+	Excel.ActiveBook(objExceltest)
+	test行数 = Excel.GetRowsCount(objExceltest,"Sheet1")
+	Try 1
+		Excel.WriteRange(objExceltest,"Sheet1","A"&test行数+1,test,False)
+	Catch e
+		TracePrint("出错，无要改价格文件或数据不正确")
+	Else
+		Excel.SaveOtherFile(objExceltest,path&"\\"&nowdata)
+		Excel.CloseExcel(objExceltest,True)
+	End Try
+	整理后CSV = []
+	For Each value In test
+		整理后_banhao = CInt(value[0])
+		For Each 读入文件_value In 数据判断读入文件
+			读入文件_banhao = CInt(读入文件_value[0])
+			If 整理后_banhao=读入文件_banhao
+				整理后CSV = push(整理后CSV,读入文件_value)
+				
+			Else
+				
+			End If
+			
+		Next
+		
+	Next
+	Try 1
+		CSV.Save(整理后CSV,path&"\\"&nowdata&"_整理后.csv",{"encoding":"utf-8-sig"})
+	Catch e
+		TracePrint("整理后文件保存出错")
+	Else
+	End Try
+End Function
+Rem 在网页上改价格
+Function 命令名(属性)
+	K = 0
+	get_网页data = []
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		bRet = WebBrowser.SwitchTab(hWeb,"url","https://qsm.qoo10.jp/*",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,"https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Goods/GoodsAnalytics.aspx",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		TracePrint("出错，网页没有打开，不能改价")
+		iRet = Dialog.MsgBox("出错，网页没有打开，无法改价","错误","0",4,60000)
+		get_网页data = push(get_网页data,["出错，网页没有打开，无法改价"])
+		Return 
+	Else
+	End Try
+	For Each value In 整理后CSV
+		data = []
+		banhao = CInt(value[0])
+		Try 1
+			#icon("@res:rp2glv9q-ul4m-l79u-4afc-7r1i17s494qv.png")
+			Keyboard.InputText({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"Q analytics - Google Chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"Q analytics"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"Q analytics"},{"role":"ROLE_SYSTEM_DOCUMENT","name":"QSM (Qoo10 Sales Manager)"},{"role":"ROLE_SYSTEM_CELL","name":"複数の照会 検索"},{"role":"ROLE_SYSTEM_TEXT"}]},banhao,True,20,2000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			#icon("@res:default.png")
+			Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"Q analytics - Google Chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"Q analytics"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"Q analytics"},{"role":"ROLE_SYSTEM_DOCUMENT","name":"QSM (Qoo10 Sales Manager)"},{"role":"ROLE_SYSTEM_CELL","name":"複数の照会 検索"},{"role":"ROLE_SYSTEM_TEXT"}]},"Enter",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":[],"sSimulate":"simulate","bClickBeforeInput":False})
+			arrayData = UiElement.DataScrap({"html":[{"id":"fr_analytic","tag":"IFRAME"},{"id":"div_search_result","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text"],"selecors":[{"className":"bd_list01","index":0,"prefix":"","tag":"dl","value":"dl.bd_list01"},{"index":0,"prefix":">","tag":"dd","value":"dd"},{"className":"","index":0,"prefix":">","tag":"table","value":"table"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"className":"","index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"order","index":0,"prefix":">","tag":"td","value":"td.order"},{"className":"","index":3,"prefix":">","tag":"span","value":"span:nth-child(3)"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+			网页_banhao = CInt(arrayData[0][0])
+			If 网页_banhao=banhao
+				#icon("@res:v66idro2-cr4b-for2-81dj-80oftdt0mceo.png")
+				Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"A","parentid":"div_search_result","aaname":"価格変更"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				Do While True
+					
+					#icon("@res:65snk969-5jgl-siou-4dbe-1ntggudsb4c0.png")
+					网页_价格 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"INPUT","id":"sell_money"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+					网页_价格 = CInt(网页_价格)
+					#icon("@res:8h8o10ud-ct3g-gf85-eij6-qb7u5qcjtq6g.png")
+					网页_数量 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"INPUT","id":"order_amt"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+					网页_数量 = CInt(网页_数量)
+					If 网页_价格<value[9]
+						#icon("@res:165fif8j-egu0-u9ql-9rbc-9cobc8ulrvg2.png")
+						Keyboard.InputText({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"INPUT","id":"sell_money"}]},value[9],True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+						#icon("@res:neellliq-d056-g0gt-u0tp-n373pq9qk7qc.png")
+						Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"TABLE"},{"tag":"TH","aaname":" \t\t\t\t\t供給原価 \t\t\t\t\t (円)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						
+					Else
+						
+					End If
+					#icon("@res:65snk969-5jgl-siou-4dbe-1ntggudsb4c0.png")
+					网页_价格2 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"INPUT","id":"sell_money"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+					网页_价格 = CInt(网页_价格)
+					If 网页_价格2>网页_价格
+						Try 3
+							#icon("@res:f4l0daul-bh53-239q-ngib-lf9qmjr1ltef.png")
+							Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IFRAME","id":"frame_popup"},{"tag":"A","id":"btn_update"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						Catch e
+						Else
+							#icon("@res:k7ggvcur-ccf7-9a0e-d402-7nv8ru7hjil6.png")
+							Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"Q analytics - Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_DIALOG","name":"qsm.qoo10.jp の内容"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"OK"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+							#icon("@res:r9v2d1ki-mjan-4nqe-1kl9-73pmaoq7raqc.png")
+							Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"Q analytics - Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_DIALOG","name":"qsm.qoo10.jp の内容"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"OK"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						End Try
+						
+					Else
+						
+					End If
+				Loop
+				#icon("@res:hamouce5-derd-qkpf-m6ii-krfu47hdf4j4.png")
+				Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","id":"fr_analytic"},{"tag":"IMG","parentid":"div_popup"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				data = push(data,banhao)
+				data = push(data,网页_价格)
+				data = push(data,网页_数量)
+				
+				get_网页data = push(get_网页data,data)
+			Else
+				
+			End If
+		Catch e
+			Continue
+		Else
+			TracePrint(K)
+		End Try
+		
+		K = K+1
+	Next
+	TracePrint(get_网页data)
+	CSV.Save(get_网页data,path&"\\"&nowdata&"_网页改价.csv",{"encoding":"utf-8-sig"})
+	
+End Function
+
+
