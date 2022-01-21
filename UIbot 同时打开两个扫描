@@ -1,0 +1,1121 @@
+Import Mywinname
+Dim bRet2 = ""
+Dim runwindows = ""
+Dim 用户号 = ""
+Dim 待扫文件数 = ""
+Dim 任务1导出按钮 = ""
+Dim item = ""
+Dim 对比 = ""
+Dim 正在工作文件数 = ""
+Dim 正在工作 = ""
+Dim 目录 = ""
+Dim 时间 = ""
+Dim bRet = ""
+Dim arrayRet = ""
+Dim dTime2 = ""
+Dim C_data1 = ""
+Dim 登陆用户名 = ""
+Dim 用户 = ""
+Dim Index = ""
+Dim objControl = ""
+Dim winForm = ""
+Dim 完成文件号 = ""
+Dim bRet1 = ""
+Dim 扫描完成
+Dim x = ""
+Dim 开始文件号 = ""
+Dim MM = ""
+Dim temp = ""
+Dim objWindow = ""
+Dim iPID = ""
+Dim sRet = ""
+Dim iRet = ""
+Dim 扫描窗口 = ""
+Dim KTime = ""
+Dim objRect = ""
+Dim 文件名 = ""
+Dim 停止采集 = ""
+Dim objPoint = ""
+Dim objUiElement = ""
+Dim 重采 = ""
+Dim 结束号码 = ""
+Dim 开始号码 = ""
+Dim 用户名 = ""
+Dim ZZ = ""
+Dim 登陆框 = ""
+Dim 程序 = ""
+Dim 工作文件号 = ""
+Dim 窗口大小 = {"height" : 1056,"width" : 1936,"x" : -8,"y" : -8}
+Dim 对比文件名 = ""
+Dim 密码 = ""
+Dim 用户1 = ""
+Dim 计数 = ""
+Dim JS = ""
+Dim arrRet = ""
+Dim 工作文件名 = ""
+Dim 在打开 = ""
+Dim arrSelItem = ""
+Dim 文件夹 = ""
+Dim 原数据 = ""
+Dim 工作进度 = ""
+Dim dTime1 = ""
+Dim 时间2 = ""
+Dim 时间差 = ""
+Dim 百分比 = ""
+Dim OPEN = ""
+Dim dTime = ""
+Rem 
+Function 获取扫描完成文件号()
+	dTime = Time.Now()
+	时间 = Time.Format(dTime,"yyyy-mm-dd")
+	INI.Write(@res"seting.ini", "基本信息", "starttime", 时间)
+	目录 = "Z:\\bazhuayu\\caiji\\"&时间&"\\"
+	扫描完成 = []
+	bRet = File.FolderExists(目录)
+	If bRet=False
+		File.CreateFolder("Z:\\bazhuayu\\caiji\\"&时间)
+		目录 = "Z:\\bazhuayu\\caiji\\"&时间&"\\"
+		
+		Delay(1000)
+		bRet = File.FolderExists(目录)
+		TracePrint("没有文件夹,以创建")
+	Else
+		
+		TracePrint("有文件夹")
+		arr扫描完成文件 = File.DirFileOrFolder(目录,"file",{"hasPath":True})
+		For Each value In arr扫描完成文件
+			sRet = Regex.FindStr(value,"(?<=\\\\)\\d+(?=\\.)",0)
+			iRet = CInt(sRet)
+			扫描完成 = push(扫描完成,iRet)
+			
+		Next
+		扫描完成=冒泡排序(扫描完成)
+		TracePrint(扫描完成)
+	End If
+	Return 扫描完成
+End Function
+Function 获取正在扫描窗口()
+	正在工作 = []
+	Try 1
+		runwindows = Mywinname.window_info()
+	Catch e
+		TracePrint("获取windows窗口列表失败。")
+	Else
+		For Each value In runwindows
+			sRet = Regex.FindStr(value,"(\\d+\\.)\\D.*",0)
+			For Each 文件名1 In 文件夹
+				If sRet= 文件名1 
+					正在工作 = push(正在工作,sRet)
+					Break
+					
+				Else
+					
+				End If
+				
+			Next
+			
+		Next
+	End Try
+	Return 正在工作
+End Function
+Function 冒泡排序(arr数组)
+	iRet = UBound(arr数组)
+	For i = 0 To iRet-1 Step 1 
+		For j = 0 To iRet-1-i Step 1 
+			If arr数组[j]>arr数组[j+1]
+				temp = arr数组[j+1]
+				arr数组[j+1] = arr数组[j]
+				arr数组[j] = temp
+				
+			Else
+				
+			End If
+			
+		Next
+		
+	Next
+	Return arr数组
+End Function
+Function 异常判断()
+	Try 1
+		#icon("@res:tqareluk-npc2-ndfm-uc6p-nvrt9oapasct.png")
+		sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT"},{"role":"DIV","name":"已*"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"已*"}]},{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10})
+	Catch e
+	Else
+		If C_data1<>sRet
+			C_data1 = sRet
+			dTime1 = Time.Now()
+			
+		Else
+			C_data2 = sRet
+			dTime2 = Time.Now()
+			Try 1
+				时间差 = Time.DateDiff("n",dTime1,dTime2)
+			Catch w
+			Else
+				If 时间差>1
+					TracePrint("超3分钟无响应")
+					Sys.PlaySound("C:\\Windows\\Media\\Alarm01.wav")
+					
+				Else
+					
+				End If
+			End Try
+			
+		End If
+	End Try
+	
+	
+End Function
+Rem 登陆用户判断
+Function 登陆用户判断(用户号)
+	今日时间 = Time.Now()
+	周几 = Time.WeekDay(今日时间)
+	If 用户号=1
+		
+		If 周几=6
+			用户 = INI.Read(@res"seting.ini", "基本配置", "用户1", "")
+			
+		Else
+			用户 = INI.Read(@res"seting.ini", "基本配置", "用户3", "")
+			
+		End If
+	Else
+		If 周几=6
+			
+			用户 = INI.Read(@res"seting.ini", "基本配置", "用户2", "")
+		Else
+			用户 = INI.Read(@res"seting.ini", "基本配置", "用户4", "")
+			
+		End If
+		
+	End If
+	TracePrint(用户)
+	Return 用户
+	
+End Function
+Rem 
+Function 登陆(登陆1)
+	TracePrint("运行登陆1")
+	Rem 周五登陆用户3，全部扫描，其它时间登陆用户1，部分扫描
+	用户=登陆用户判断(1)
+	用户名 = Replace(用户,"@gmail.com","",False)
+	TracePrint(用户名)
+	密码 = INI.Read(@res"seting.ini", "基本配置", "密码", "")
+	KKdTime = Time.Now()
+	#icon("@res:p0fv1llp-s3mr-nnu7-5v8j-7hrrc0tf12iu.png")
+	bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	TracePrint(bRet)
+	If bRet
+		
+	Else
+		Keyboard.Press("B", "press", ["Ctrl","Alt"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Mouse.Move(0, 0, False,{"iDelayAfter":300,"iDelayBefore":200})
+		Try 999
+			#icon("@res:7v3fmrpg-p86n-jil4-gm0f-24vcpn4mba65.png")
+			Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"Octopus8","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"3v5inb9u-4q6v-bf9p-k4t4-j3pea9b93d7m.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+		Catch e
+		Else
+		End Try
+		
+	End If
+	#icon("@res:p0fv1llp-s3mr-nnu7-5v8j-7hrrc0tf12iu.png")
+	bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Do While bRet
+		#icon("@res:hlk67pon-jkuj-6jp1-dn10-9jksda3k54f3.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},用户,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":True,"bClickBeforeInput":False})
+		#icon("@res:bkk7n7j3-qoa7-33vv-bggn-dkalte2c1d9v.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"密码"}]},密码,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":True,"bClickBeforeInput":False})
+		#icon("@res:ig6g7eaq-b4id-1klk-hcd6-3q9kmd593t55.png")
+		Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"登 录"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(3000)
+		For z = 0 To 10 Step 1 
+			
+			#icon("@res:dbph8r86-r79u-th65-p75h-ffjsv4bhngul.png")
+			bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*请*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			Delay(1000)
+			TracePrint(bRet)
+			If bRet
+				
+				Break
+			Else
+				
+			End If
+			#icon("@res:ot5eu0tm-t8ft-ucpq-0t77-8bp50dfm3obi.png")
+			bRet2 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			If bRet2
+				Break
+				
+			Else
+				
+			End If
+		Next
+		
+		#icon("@res:ot5eu0tm-t8ft-ucpq-0t77-8bp50dfm3obi.png")
+		bRet1 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			Break
+			
+		Else
+			
+		End If
+		ZZdTime = Time.Now()
+		iRet = Time.DateDiff("s",KKdTime,ZZdTime)
+		If iRet>180
+			
+			Dialog.Notify("三分钟内没有登陆成功，系统退出", "UiBot", 3)
+			iRet = Dialog.MsgBox("三分钟内没有登陆成功，系统退出","UiBot","0",4,0)
+			exit()
+		Else
+			
+		End If
+	Loop
+	Return bRet
+End Function
+
+Rem   子程序2
+Function 登陆2(登陆2)
+	TracePrint("运行登陆2")
+	Rem 周五登陆用户2，全部扫描，其它时间登陆用户4，部分扫描
+	用户=登陆用户判断(2)
+	用户名 = Replace(用户,"@gmail.com","",False)
+	TracePrint(用户名)
+	密码 = INI.Read(@res"seting.ini", "基本配置", "密码", "")
+	KKdTime = Time.Now()
+	#icon("@res:p0fv1llp-s3mr-nnu7-5v8j-7hrrc0tf12iu.png")
+	bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	TracePrint(bRet)
+	If bRet
+		
+	Else
+		Keyboard.Press("B", "press", ["Ctrl","Alt"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Mouse.Move(0, 0, False,{"iDelayAfter":300,"iDelayBefore":200})
+		Try 999
+			#icon("@res:7v3fmrpg-p86n-jil4-gm0f-24vcpn4mba65.png")
+			Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"Octopus8","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"3v5inb9u-4q6v-bf9p-k4t4-j3pea9b93d7m.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+		Catch e
+		Else
+		End Try
+		
+	End If
+	#icon("@res:p0fv1llp-s3mr-nnu7-5v8j-7hrrc0tf12iu.png")
+	bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Do While bRet
+		#icon("@res:hlk67pon-jkuj-6jp1-dn10-9jksda3k54f3.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"用户名/手机号/邮箱"}]},用户,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":True,"bClickBeforeInput":False})
+		#icon("@res:bkk7n7j3-qoa7-33vv-bggn-dkalte2c1d9v.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"密码"}]},密码,True,20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":True,"bClickBeforeInput":False})
+		Try 1
+			#icon("@res:ig6g7eaq-b4id-1klk-hcd6-3q9kmd593t55.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"登 录"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Catch e
+		Else
+		End Try
+		Delay(3000)
+		For z = 0 To 10 Step 1 
+			
+			#icon("@res:dbph8r86-r79u-th65-p75h-ffjsv4bhngul.png")
+			bRet1 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*请*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			Delay(1000)
+			TracePrint(bRet1)
+			If bRet1
+				
+				Break
+			Else
+				
+			End If
+			#icon("@res:ot5eu0tm-t8ft-ucpq-0t77-8bp50dfm3obi.png")
+			bRet2 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			If bRet2
+				Break
+				
+			Else
+				
+			End If
+		Next
+		
+		#icon("@res:ot5eu0tm-t8ft-ucpq-0t77-8bp50dfm3obi.png")
+		bRet1 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet1
+			Break
+			
+		Else
+			
+		End If
+		ZZdTime = Time.Now()
+		iRet = Time.DateDiff("s",KKdTime,ZZdTime)
+		If iRet>180
+			
+			Dialog.Notify("三分钟内没有登陆成功，系统退出", "UiBot", 3)
+			iRet = Dialog.MsgBox("三分钟内没有登陆成功，系统退出","UiBot","0",4,0)
+			exit()
+		Else
+			
+		End If
+	Loop
+End Function
+
+Rem   主程序开始
+Dialog.Notify("程序开始运行", "UiBot", "0")
+INI.Write(@res"seting.ini", "基本信息", "OPEN", "OFF")
+INI.Write(@res"seting.ini", "基本信息", "工作进度", "正在初始化程序")
+dTime = Time.Now()
+时间 = Time.Format(dTime,"yyyy-mm-dd")
+INI.Write(@res"seting.ini", "基本信息", "starttime", 时间)
+目录 = "Z:\\bazhuayu\\caiji\\"&时间&"\\"
+INI.Write(@res"seting.ini", "基本信息", "目录", 目录)
+TracePrint("目录",目录)
+arrayRet = File.DirFileOrFolder("Z:\\bazhuayu\\采集","fileandfolder",{"hasPath":True})
+arr文件夹 = []
+For Each value In arrayRet
+	
+	value = Replace(value,"Z:\\bazhuayu\\采集\\","",False)
+	value = Replace(value,".xlsm","",False)
+	arrRet = Split(value,".")
+	iRet = Math.Int(arrRet[0]-1)
+	arr文件夹[iRet] = value
+Next
+文件夹 = arr文件夹
+iRet = Len(文件夹)
+结束号码  = iRet
+运行方向 = Dialog.InputBox("选择运行方向，正向1，返向0","选择运行方向",1,True)
+开始号码 = Dialog.InputBox(文件夹,"选择开始号码","1",True)
+结束号码 = Dialog.InputBox(文件夹,"选择结束号码",结束号码,True)
+INI.Write(@res"seting.ini", "基本信息", "运行方向", 运行方向)
+INI.Write(@res"seting.ini", "基本信息", "开始文件号", 开始号码)
+INI.Write(@res"seting.ini", "基本信息", "结束文件号", 结束号码)
+开始号码 = CInt(开始号码)
+结束号码 = CInt(结束号码)
+扫描完成 = 获取扫描完成文件号()
+正在工作 = 获取正在扫描窗口()
+正在工作文件数 = Len(正在工作)
+TracePrint("正在工作文件数&工作窗口",正在工作文件数)
+TracePrint(正在工作)
+For Each value In 正在工作
+	
+	文件号 = Regex.FindStr(value,"\\d+(?=\\.)",0)
+	文件号 = CInt(文件号)
+	扫描完成 = push(扫描完成,文件号)
+Next
+扫描完成=冒泡排序(扫描完成)
+扫描完成数 = Len(扫描完成)
+扫描完成数文本 = CStr(扫描完成数)
+TracePrint("扫描完成数："&扫描完成数)
+INI.Write(@res"seting.ini", "基本信息", "扫描完成数", 扫描完成数文本)
+// K = 0
+// 文件夹1 = []
+// 文件夹 = []
+// For Each value In arr文件夹
+
+// If value<>""
+
+// 文件夹1[k] = K&"-"&value
+// 文件夹[k] = value
+// K = K+1
+// Else
+
+// End If
+// Next
+
+
+KTime = Time.Time()
+
+Rem 下面获取开始及结束文件号，数组号码，实际号码减1
+待扫文件号 = []
+If 开始号码>结束号码
+	
+	temp = 结束号码
+	结束号码 = 开始号码
+	开始号码 = temp
+Else
+	
+End If
+TracePrint("开始号码,结束号码",开始号码,结束号码)
+For i = 开始号码 To 结束号码 Step 1 
+	i = CInt(i)
+	对比 = 0
+	For Each value In 扫描完成
+		If value=i
+			对比 = 1
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	If 对比>0
+		
+	Else
+		待扫文件号 = push(待扫文件号,i)
+		
+	End If
+Next
+待扫文件数 = Len(待扫文件号)
+TracePrint(待扫文件号)
+If CInt(开始号码)>20
+	用户=登陆用户判断(2)
+	
+Else
+	用户=登陆用户判断(1)
+End If
+用户名 = Replace(用户,"@gmail.com","",False)
+TracePrint("判断要登陆的用户名为："&用户名)
+If 正在工作文件数>0
+	是否继续 = Dialog.MsgBox("发现有扫描中的文件，按\"はい\"继续扫描。\n否则请删除caiji文件夹下相关文件，并关闭正在扫描文件，然后重新运行程序。按\"いいえ\"程序退出。","是否继续扫描",1,2,0)
+	
+	If 是否继续=6
+		
+	Else
+		exit()
+		
+	End If
+Else
+	
+End If
+结束号码 = CInt(结束号码)
+TracePrint("共有"&待扫文件数&"个文件要扫描")
+INI.Write(@res"seting.ini", "基本信息", "文件总数", "共有"&待扫文件数&"个文件要扫描")
+Do While True
+	扫描完成 = 获取扫描完成文件号()
+	正在工作 = 获取正在扫描窗口()
+	正在工作文件数 = Len(正在工作)
+	TracePrint("正在工作文件数&工作窗口"&正在工作文件数)
+	TracePrint(正在工作)
+	For Each value In 正在工作
+		
+		文件号 = Regex.FindStr(sRet,"^\\d+(?=\\.)",0)
+		文件号 = CInt(文件号)
+		扫描完成 = push(扫描完成,文件号)
+	Next
+	扫描完成=冒泡排序(扫描完成)
+	扫描完成数 = Len(扫描完成)
+	TracePrint("运行方向-",运行方向)
+	工作文件号 = 0
+	If 运行方向="1"
+		If 待扫文件数>0
+			Do While 正在工作文件数<2  
+				
+				For i = 1 To 待扫文件数 Step 1 
+					对比 = 0
+					For Each value In 扫描完成
+						If 待扫文件号[i-1]<>value
+							
+						Else
+							对比 = 1
+							
+						End If
+						
+					Next
+					If 对比=0
+						工作文件号 = 待扫文件号[i-1]
+						TracePrint("工作文件号",工作文件号)
+						Break
+						
+					Else
+						
+					End If
+					
+				Next
+				If 是否继续=6
+					是否继续 = 0
+					
+				Else
+					打开文件(工作文件号)
+					
+					item = Shift(待扫文件号)
+					待扫文件数 = Len(待扫文件号 )
+				End If
+				正在工作 = 获取正在扫描窗口()
+				正在工作文件数 = Len(正在工作)
+				If 正在工作文件数<2
+					
+				Else
+					Break
+					
+				End If
+			Loop
+			
+		Else
+			
+		End If
+		
+		扫描()
+		
+		保存()
+	Else
+		If 待扫文件数>0
+			Do While 正在工作文件数<2
+				
+				For i = 1 To 待扫文件数 Step 1 
+					对比 = 0
+					For Each value In 扫描完成
+						If 待扫文件号[待扫文件数-i]<>value
+							
+						Else
+							对比 = 1
+							
+						End If
+						
+					Next
+					If 对比=0
+						工作文件号 = 待扫文件号[待扫文件数-i]
+						TracePrint("工作文件号",工作文件号)
+						Break
+						
+					Else
+						
+					End If
+					
+				Next
+				If 是否继续=6
+					是否继续 = 0
+					
+				Else
+					打开文件(工作文件号)
+					
+					item = pop(待扫文件号)
+					待扫文件数 = Len(待扫文件号 )
+				End If
+				正在工作 = 获取正在扫描窗口()
+				正在工作文件数 = Len(正在工作)
+				If 正在工作文件数<2
+					
+				Else
+					Break
+					
+				End If
+			Loop
+			
+		Else
+			
+		End If
+		
+		扫描()
+		
+		保存()
+	End If
+Loop
+Function 打开文件(工作文件号)
+	TracePrint("运行打开函数，打开文件"&工作文件号)
+	工作文件号 = 工作文件号-1
+	If 工作文件号>=20
+		用户号 = 2
+		
+	Else
+		用户号 = 1
+		
+	End If
+	用户名 = 登陆用户判断(用户号)
+	用户名 = Replace(用户名,"@gmail.com","",False)
+	TracePrint("判断登陆用户名为："&用户名)
+	工作文件名 = 文件夹[工作文件号]
+	INI.Write(@res"seting.ini", "基本信息", "工作进度", "正在打开扫描文件")
+	INI.Write(@res"seting.ini", "基本信息", "工作文件名", 工作文件名)
+	
+	INI.Write(@res"seting.ini", "基本信息", "OPEN", "OFF")
+	Try 2
+		#icon("@res:default.png")
+		Window.Show({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},"max")
+		#icon("@res:opjofo1m-ejqu-gi4k-8bpg-ic5oal96hai4.png")
+		Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]})
+	Catch e
+	Else
+	End Try
+	
+	For w = 0 To 2 Step 1 
+		
+		#icon("@res:ep5espn8-us3l-ed68-7dhd-a7lf8t8jknf7.png")
+		程序 = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"DIV","idx":13}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	Next
+	If 程序
+		
+		If 工作文件号<20
+			#icon("@res:nlr70efh-cplu-3jcj-j7c6-37qiqg84dlk4.png")
+			登陆用户名 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+			If 登陆用户名 = "brilliantkaga1l"
+				登陆用户名 = "brilliantkaga1"
+				
+			Else
+				
+			End If
+			
+			If 登陆用户名=用户名
+				
+				TracePrint("用户1登陆中")
+			Else
+				TracePrint("用户2登陆中，开始更换用户")
+				
+				#icon("@res:6cr3q5ut-e00r-jibq-js6d-69qop8oo14oe.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+				#icon("@res:o1gn7vvi-11pe-jc4b-01i6-d4li54r03ntf.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+				Delay(1000)
+				登陆(登陆1)
+			End If
+		Else
+			#icon("@res:nlr70efh-cplu-3jcj-j7c6-37qiqg84dlk4.png")
+			登陆用户名 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"*a*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			If 登陆用户名 = "brilliantkaga1l"
+				登陆用户名 = "brilliantkaga1"
+				
+			Else
+				
+			End If
+			TracePrint(用户名)
+			If 登陆用户名<>用户名
+				
+				TracePrint("用户1登陆中，开始更换用户")
+				
+				#icon("@res:6cr3q5ut-e00r-jibq-js6d-69qop8oo14oe.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+				#icon("@res:o1gn7vvi-11pe-jc4b-01i6-d4li54r03ntf.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+				Delay(1000)
+				登陆2(登陆2)
+				
+			Else
+				TracePrint("用户2登陆中")
+			End If
+			
+		End If
+	Else
+		TracePrint("程序关闭中")
+		
+		If 工作文件号<20
+			登陆(登陆1)
+		Else
+			
+			登陆2(登陆2)
+			
+		End If
+	End If
+	#icon("@res:mkjk8733-u4p5-3kul-deeg-t8eggjb2c9c1.png")
+	Rem       判断是否全屏运行并调整
+	#icon("@res:v7hn1rjr-390f-j1jj-po78-io6qpu0g1cpp.png")
+	Window.Show({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},"max")
+	计次 = 0
+	Do While True
+		
+		#icon("@res:n9af4c0a-8mk2-bdl1-raa7-i4gm160qch4u.png")
+		Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_MENUITEM","name":"我的任务"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:3stjulmn-l7ek-ke11-n0cr-75i2j5nd0k6g.png")
+		Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"3stjulmn-l7ek-ke11-n0cr-75i2j5nd0k6g.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+		
+		TracePrint("开始扫描："&工作文件名 )
+		TracePrint("开始扫描："&目录&工作文件名 )
+		#icon("@res:7igrnm77-ij95-hvi6-jts7-so00n2f35575.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},工作文件名,True,10,10000,{"bContinueOnError":True,"iDelayAfter":200,"iDelayBefore":200,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":50,"iDelayBefore":100,"sSimulate":"simulate"})
+		For i = 0 To 2 Step 1 
+			#icon("@res:enibnt3n-igb5-sdv8-p8o9-i9uito8pvtr6.png")
+			bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":文件夹[工作文件号]}]},{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":200})
+			Delay(1000)
+			If bRet
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+		If bRet 
+			Break
+			
+		ElseIf 计次>=5
+			Sys.PlaySound("C:\\Windows\\Media\\Alarm01.wav")
+		Else
+			
+		End If
+	Loop
+	
+	Delay(1000)
+	#icon("@res:default.png")
+	sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	bRet = StrComp(sRet,工作文件名,False)
+	Do While bRet=False
+		#icon("@res:7igrnm77-ij95-hvi6-jts7-so00n2f35575.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},工作文件名,True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":500,"sSimulate":"simulate"})
+		Delay(2000)
+		#icon("@res:default.png")
+		sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		bRet = StrComp(sRet,工作文件名,False)
+		
+	Loop
+	Delay(1000)
+	#icon("@res:default.png")
+	bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"我的任务组"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Do While bRet=False
+		
+		#icon("@res:7igrnm77-ij95-hvi6-jts7-so00n2f35575.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},工作文件名,True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":500,"sSimulate":"simulate"})
+		Delay(2000)
+		#icon("@res:default.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"我的任务组"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Loop
+	#icon("@res:stjqcrnt-ra7t-5lbh-b1hk-sejqcpj1vfdq.png")
+	Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"我的任务组"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:4ombh4bn-3nnl-9iu9-qt10-1iq267cpi9ea.png")
+	Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"4ombh4bn-3nnl-9iu9-qt10-1iq267cpi9ea.png",0.9,"left","click",10000,{"bContinueOnError":True,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	#icon("@res:5mfbp6ir-su97-ukcm-p6bu-1uf40g3no5qj.png")
+	对比文件名 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"请输入任务名"}]},{"bContinueOnError":True,"iDelayAfter":100,"iDelayBefore":100})
+	#icon("@res:roc227ph-r71b-dfk7-uhtv-fn3s00idoe8e.png")
+	Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"取 消"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":100,"iDelayBefore":100,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	TracePrint("对比文件名"&对比文件名)
+	Do While 对比文件名<>工作文件名
+		#icon("@res:euiaith2-vj9q-d095-vqak-i01vbkgtbfpj.png")
+		Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_MENUITEM","name":"我的任务"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(3000)
+		
+		TracePrint("开始扫描："&目录&工作文件名 )
+		Delay(800)
+		#icon("@res:7igrnm77-ij95-hvi6-jts7-so00n2f35575.png")
+		Keyboard.InputText({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT"}]},工作文件名,True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":500,"sSimulate":"simulate"})
+		Delay(1000)
+		#icon("@res:stjqcrnt-ra7t-5lbh-b1hk-sejqcpj1vfdq.png")
+		Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"我的任务组"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:6v5ai3qm-knia-e5r8-as1b-l96o8fa7cpgt.png")
+		Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"4ombh4bn-3nnl-9iu9-qt10-1iq267cpi9ea.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+		#icon("@res:5mfbp6ir-su97-ukcm-p6bu-1uf40g3no5qj.png")
+		对比文件名 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_TEXT","name":"请输入任务名"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		#icon("@res:roc227ph-r71b-dfk7-uhtv-fn3s00idoe8e.png")
+		Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"取 消"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		
+	Loop
+	#icon("@res:stjqcrnt-ra7t-5lbh-b1hk-sejqcpj1vfdq.png")
+	Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"八爪鱼采集器"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"八爪鱼采集器"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"我的任务组"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:5fbhpolk-p3t0-4ps5-iodd-97llvpjhm49n.png")
+	Image.Click({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"八爪鱼采集器","app":"Octopus"}]},{"height":0,"width":0,"x":0,"y":0},@res"5fbhpolk-p3t0-4ps5-iodd-97llvpjhm49n.png",0.9,"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":15,"sKeyModifiers":[],"sSimulate":"simulate","sMatchType":"GrayMatch","iSerialNo":1})
+	Delay(6000)
+	
+	
+	TracePrint("开始扫描："&目录&工作文件名 )
+	Do While True
+		#icon("@res:iru4im0n-c3q9-q5td-5ab1-knj825tbnv3k.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"网络连接出错，请检查是否连上互联网"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"网络连接出错，请检查是否连上互联网"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"网络连接出错，请检查是否连上互联网"},{"role":"ROLE_SYSTEM_GROUPING","idx":2}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			#icon("@res:kqcv0ih7-qhge-1sbl-kuef-njnrvekgg9u7.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"网络连接出错，请检查是否连上互联网"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"网络连接出错，请检查是否连上互联网"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"网络连接出错，请检查是否连上互联网"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:pnhi9780-h49u-jpuu-u2d8-qb29u8e148b1.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			在打开 = 1
+			
+			Return
+			
+		Else
+			
+		End If
+		#icon("@res:fdip5jpr-d05o-2uci-nv4p-lil6b3jtkusv.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_STATICTEXT","name":"非常抱歉！无法获取有效的版本信息，八爪鱼将自动退出。"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			#icon("@res:pnhi9780-h49u-jpuu-u2d8-qb29u8e148b1.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:he61drna-gvih-nf5t-4vgh-prj9tpi0kn0c.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"网络连接出错，请检查是否连上互联网"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"网络连接出错，请检查是否连上互联网"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"网络连接出错，请检查是否连上互联网"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:h6svfn6t-1kmc-kh56-jmn7-ou06vp4bmlot.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			在打开 = 1
+			
+			Return 
+		Else
+			
+		End If
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_STATICTEXT","name":"非常抱歉！无法获取有效的版本信息，八爪鱼将自动退出。"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			#icon("@res:pnhi9780-h49u-jpuu-u2d8-qb29u8e148b1.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:he61drna-gvih-nf5t-4vgh-prj9tpi0kn0c.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"网络连接出错，请检查是否连上互联网"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"网络连接出错，请检查是否连上互联网"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"网络连接出错，请检查是否连上互联网"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:h6svfn6t-1kmc-kh56-jmn7-ou06vp4bmlot.png")
+			Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			在打开 = 1
+			
+			Return 
+		Else
+			
+		End If
+		
+		#icon("@res:l27pm7mp-ghlp-lng6-2k0n-hf5l4h7rodei.png")
+		bRet = Window.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"重新采集"}]})
+		If bRet
+			Try 10
+				#icon("@res:6rtkhsio-mi73-pr74-l9hi-63ms4n40scj7.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"重新采集"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+			End Try
+			
+		Else
+			
+		End If
+		Rem 
+		#icon("@res:ft1lr337-e7kf-eoa9-f3al-43cei57eohf8.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"前往升级"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			Try 10
+				#icon("@res:quc69hgk-p57n-so2j-r7l6-3f3imcal0o8q.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"不再提醒"}]},"left","click",1500,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+			End Try
+			
+		Else
+			
+		End If
+		#icon("@res:neb4b1mb-g4nf-llf3-if5j-o81i61q3ubcr.png")
+		Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":工作文件名,"app":"Octopus"}]})
+		#icon("@res:6fgr6l7b-1tq3-0c1r-dm1o-i7ppd06jbhm5.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"*","idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"*"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"停止采集"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			Break
+			
+		Else
+			
+		End If
+	Loop
+	INI.Write(@res"seting.ini", "基本信息", "OPEN", "ON")
+	在打开 = 0
+End Function
+Function 扫描()
+	TracePrint("运行扫描中函数")
+	INI.Write(@res"seting.ini", "基本信息", "工作进度", "正在扫描中")
+	工作文件名 = INI.Read(@res"seting.ini", "基本信息", "工作文件名", "")
+	INI.Write(@res"seting.ini", "基本信息", "OPEN", "ON")
+	x=0
+	Do While True
+		#icon("@res:5o5qb89e-rdhs-1nue-7u7c-ie5vipqclom3.png")
+		bRet = Window.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":工作文件名,"app":"Octopus"}]})
+		If bRet
+			
+		Else
+			TracePrint("退出扫描中函数")
+			
+			Return 返回值
+			
+		End If
+		暂停()
+		正在工作 = 获取正在扫描窗口()
+		For Each value In 正在工作 
+			原数据 = INI.Read(@res"seting.ini", "文件名", value, "")
+			
+			bRet = IsArray(原数据)
+			If bRet
+				
+			Else
+				原数据 = Split(原数据,",")
+				
+			End If
+			Try 1
+				原扫描数据 = CInt(原数据[0])
+			Catch e
+				原扫描数据 = 0
+			Else
+			End Try
+			Try 1
+				原记时 = Regex.FindStr(原数据[1],"\\d+分钟",0)
+				原记时 = Regex.FindStr(原记时,"\\d+",0)
+				原记时 = CInt(原记时)
+			Catch e
+				原记时 = 0
+			Else
+			End Try
+			Try 2
+				#icon("@res:6cvevffu-id28-n6jo-t82q-fj6gg22j2ibg.png")
+				现在数据 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":value},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":value,"idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":value},{"role":"DIV","name":"已采集*"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"已采集*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				现在数据 = Regex.FindStr(现在数据,"\\d+",0)
+				现在数据 = CInt(现在数据)
+				#icon("@res:80q1ea6m-nc7o-p9am-nqp8-6kn4tgv16pfu.png")
+				sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":value},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":value,"idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":value},{"role":"DIV","name":"已采集*"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"已用时*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				现记时 = Regex.FindStr(sRet,"\\d+分钟",0)
+				现记时 = Regex.FindStr(现记时,"\\d+",0)
+				现记时 = CInt(现记时)
+				// iRet = Time.DateDiff("n",原记时,现记时)
+				剩余时间 = 原记时-现记时
+			Catch e
+				现在数据 = 0
+			Else
+			End Try
+			显示内容 = "正在扫描-"&value
+			百分比 = 现在数据/原扫描数据*100
+			百分比 = CInt(百分比)
+			If 现在数据=0
+				扫描进度 = "扫描进度~0%"
+				
+			Else
+				扫描进度 = "扫描进度~"&百分比&"%"&"  预估剩余时间："&剩余时间&"分"
+				
+			End If
+			Dialog.Notify(扫描进度, 显示内容, 0)
+			Delay(3000)
+			异常判断()
+			#icon("@res:67logpvg-2pnk-fhea-ot0p-acvso5n4vptn.png")
+			bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"导出数据"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			If bRet
+				INI.Write(@res"seting.ini", "基本信息", "OPEN", "OFF")
+				TracePrint("退出扫描中函数")
+				Return 返回值
+				
+			Else
+				
+			End If
+		Next
+		Delay(30000)
+	Loop
+	
+End Function
+Function 保存()
+	TracePrint("运行保存函数")
+	INI.Write(@res"seting.ini", "基本信息", "工作进度", "正在保存扫描文件")
+	目录 = INI.Read(@res"seting.ini", "基本信息", "目录", "")
+	正在工作 = 获取正在扫描窗口()
+	TracePrint(正在工作)
+	For Each value In 正在工作 
+		#icon("@res:neb4b1mb-g4nf-llf3-if5j-o81i61q3ubcr.png")
+		Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":value,"app":"Octopus"}]})
+		TracePrint("激活待保存窗口-"&value)
+		#icon("@res:l6qq1c6c-4l3o-eau4-hclg-mi25mod4qc73.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_STATICTEXT","name":value}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			保存文件名 = value
+			Try 3
+				#icon("@res:kmsghsv2-868n-bntl-0q1k-14ed2ahuijig.png")
+				sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":保存文件名},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":保存文件名,"idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":保存文件名},{"role":"DIV","name":"已采集*"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"已采集*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				sRet = Regex.FindStr(sRet,"\\d+",0)
+				
+				#icon("@res:j57j49n1-4m70-1dt1-o120-n0qbl9f0ad7m.png")
+				记时 = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":保存文件名},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":保存文件名,"idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":保存文件名},{"role":"DIV","name":"已采集**"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"已用时*"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				记时 = Regex.FindStr(记时,"\\d+分钟\\d+秒",0)
+				INI.Write(@res"seting.ini", "文件名", 保存文件名, sRet&","&记时)
+				#icon("@res:5q3cr1mc-cmf4-itef-npc2-evkgvss0pe8v.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"导出数据"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+			End Try
+			Try 9
+				#icon("@res:m4nn4h8l-15h6-4qt5-bfkf-luv3mdv2f5i9.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"所有数据"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+			End Try
+			#icon("@res:default.png")
+			bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"网络连接出错，请检查是否连上互联网"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			If bRet
+				#icon("@res:default.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":1}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				在循环 = 1
+				Return
+			Else
+				
+			End If
+			Try 9
+				#icon("@res:ntlte2e0-tr0g-0m85-2lpq-sku2hpdjd3kf.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_TEXT","idx":1}]},"left","click",30000,{"bContinueOnError":False,"iDelayAfter":20,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				#icon("@res:mfn4l2gc-v3gv-454f-n5re-ve3u5bl51pdd.png")
+				sRet = UiElement.GetValue({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"导出本地数据（*）"}]},{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100})
+				保存文件名 = Regex.FindStr(sRet,"(?<=导出本地数据\\（)\\d.+(?=\\）)",0)
+				TracePrint("匹配到的文件名："&保存文件名)
+			Catch e
+			Else
+			End Try
+			Try 9
+				#icon("@res:tqmgh5n0-47ol-4v15-odr0-jiepo3ihtcfl.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+			End Try
+			Try 3
+				Clipboard.SetText(目录&保存文件名)
+				#icon("@res:fo2gla1f-eacu-76i6-vt6p-7hkblvq8s5ur.png")
+				Keyboard.PressKey({"wnd":[{"app":"Octopus","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},"A",20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+				#icon("@res:fo2gla1f-eacu-76i6-vt6p-7hkblvq8s5ur.png")
+				Keyboard.PressKey({"wnd":[{"app":"Octopus","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},"V",20,10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+				Delay(1000)
+			Catch e
+			Else
+			End Try
+			Try 1
+				#icon("@res:v4dqvrgu-o7ga-7orh-b57m-e53lbk2ikd1h.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"#32770","title":"名前を付けて保存"},{"cls":"Button","title":"保存(&S)","ctrlid":1,"aaname":"保存(S)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+				TracePrint("点击完保存")
+			End Try
+			
+			Do While True
+				#icon("@res:hqc681ff-mgcj-h6gs-k45v-e4ovkgkrolsp.png")
+				bRet = UiElement.Exists({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"打开文件"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				If bRet
+					
+					Try 9
+						#icon("@res:tmb1gh99-99ek-kfjj-h4qo-82vceesb8j95.png")
+						Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"导出本地数据（*）"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":"导出本地数据（*）"}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":"导出本地数据（*）"},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":1}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					Catch e
+					Else
+						Break
+					End Try
+				Else
+					
+				End If
+				
+			Loop
+			TracePrint(保存文件名)
+			
+			Try 99
+				#icon("@res:ooaglij3-vjau-jvi1-s85l-9lmea1se3fpm.png")
+				Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":保存文件名},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window","aaname":保存文件名,"idx":1}],"ctrl":[{"role":"ROLE_SYSTEM_DOCUMENT","name":保存文件名},{"role":"ROLE_SYSTEM_PUSHBUTTON","idx":2}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			Catch e
+			Else
+				Try 99
+					#icon("@res:lgfccvk8-fv8g-u8eu-t5e6-drcgtihhnuj6.png")
+					Mouse.Action({"wnd":[{"app":"Octopus","cls":"Chrome_WidgetWin_1","title":"Octopus8"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"ctrl":[{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"确 定"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				Catch e
+				Else
+				End Try
+			End Try
+			
+		Else
+			
+		End If
+		
+	Next
+	在循环 = 0
+	TracePrint("保存函数运行完成")
+End Function
+JTime = Time.Time()
+用时 = Time.DateDiff("n",KTime,JTime)
+Function 暂停()
+	计数  = 0
+	Do While True
+		#icon("@res:8a5ekd75-aibh-edab-ol7q-u2849mpe3vcg.png")
+		bRet = Image.Exists({"wnd":[{"cls":"Shell_TrayWnd","app":"explorer"}]},{"height":0,"width":0,"x":0,"y":0},@res"1bc7phfs-lats-44p4-njrs-dq927kbr3h9g.png",0.9,1000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sMatchType":"GrayMatch"})
+		If bRet = True 
+			Try 1
+				PrintToScreen.CleanText(objWindow)
+				PrintToScreen.CloseWindow(objWindow)
+			Catch e
+			Else
+			End Try
+			
+			Break
+		Else
+			If 计数=0
+				objWindow = PrintToScreen.CreateWindow({"height":96,"resolution":{"height":1080,"width":1920},"width":316,"x":1601,"y":843},True)
+				PrintToScreen.DrawText(objWindow,"左下角小娜图标不在，暂停中",18,[255,0,0])
+				计数  = 1
+				
+			Else
+				
+			End If
+			Delay(60000)
+			
+		End If
+		
+	Loop
+	
+End Function
+
+
+
