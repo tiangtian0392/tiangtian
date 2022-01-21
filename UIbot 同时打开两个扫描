@@ -537,6 +537,7 @@ Do While True
 			Loop
 			
 		Else
+			Break
 			
 		End If
 		
@@ -588,6 +589,7 @@ Do While True
 			Loop
 			
 		Else
+			Break
 			
 		End If
 		
