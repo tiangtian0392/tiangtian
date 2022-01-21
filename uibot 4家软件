@@ -1,4 +1,9 @@
 
+Dim 目录 = ""
+Dim data = ""
+Dim 已采集 = ""
+Dim 临时 = ""
+Dim 商家URL = ""
 Dim iPID = ""
 Dim yodobashi源码 = ""
 Dim amazon源码 = ""
@@ -61,6 +66,7 @@ Do While True
 	bRet = File.FolderExists(目录)
 	If bRet
 		TracePrint("有文件夹")
+		目录 = 目录&"\\"
 		Break
 		
 	Else
@@ -101,7 +107,7 @@ For Each 选择文件 In 选择文件号
 		保存文件名 = Regex.FindStr(元文件_value,"[^\\\\]+(?!.*\\\\)",0)
 		arrRet = Split(保存文件名,".")
 		元文件名号码 = CInt(arrRet[0])
-		TracePrint(元文件名号码,元文件_value)
+		TracePrint(保存文件名,元文件名号码,元文件_value)
 		If 元文件名号码=扫描文件号
 			暂停()
 			
@@ -112,28 +118,31 @@ For Each 选择文件 In 选择文件号
 			采集数 = UBound(arrayRet)
 			TracePrint("共要扫描"&采集数&"个文件")
 			If 是否继续=6
-				是否继续 = 8
-				已扫描文件夹列表 = File.DirFileOrFolder(目录,"fileandfolder",{"hasPath":True})
-				For Each 已扫描文件夹列表value In 已扫描文件夹列表
-					已扫描文件名 = Regex.FindStr(已扫描文件夹列表value,"[^\\\\]+(?!.*\\\\)",0)
-					If 已扫描文件名=保存文件名
-						写入 = CSV.Open(已扫描文件夹列表value,{"encoding":"auto"})
+				已采集 = CSV.Open(目录&保存文件名,{"encoding":"auto"})
+				计数 = 0
+				data = ""
+				For Each value In 已采集
+					If data<>value[0]
+						data = value[0]
+						计数 = 计数+1
 						
-						已采集数 = INI.Read(@res"seting.ini", "基本信息", "采集数", "")
-						已采集数 = CInt(已采集数)
-						If 已采集数=0
-							计数 = 1
-							
-						Else
-							
-							计数 = 已采集数+1
-						End If
 					Else
+						Continue
 						
 					End If
 					
 				Next
+				TracePrint("已采集-"&计数&"条")
+				已采集数 = 计数
+				If 已采集数=0
+					计数 = 1
+					
+				Else
+					
+					计数 = 已采集数+1
+				End If
 				
+				写入 = 已采集
 			Else
 				写入 = []
 				
@@ -243,6 +252,11 @@ For Each 选择文件 In 选择文件号
 					Rem 
 					商家  = Regex.FindStr(arrRet[i],"(?<=<p class=\"p-PTShopData_name\">)[\\s\\S]+?(?=<)",0)
 					商家  = Regex.FindStr(商家,"(?<=>)[\\s\\S]+",0)
+					商家URL  = Regex.FindStr(arrRet[i],"((<a onclick=\\D.*?href=\\\"))\\D.*?(?<=\")",0)
+					临时  = Regex.FindStr(商家URL,"(<a onclick=)\\D.*href=\\\"",0)
+					商家URL = Replace(商家URL,临时,"",False)
+					商家URL = Replace(商家URL,"&amp;","&",False)
+					url = Replace(商家URL,"\"","",False)
 					Try 1
 						tempdata = push(tempdata,商家)
 					Catch e
@@ -250,7 +264,6 @@ For Each 选择文件 In 选择文件号
 					Else
 					End Try
 					tempdata = concat(前4,tempdata)
-					url  = Regex.FindStr(arrRet[i],"(?<=a href=\")[\\s\\S]+?(?=\" class=\"p-PTShopData_name_link\")",0)
 					商家data下标 = UBound(商家data)
 					If 商家data下标=-1
 						有无 = 0
@@ -319,11 +332,11 @@ Function amazon(url)
 	End Try
 	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
 	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
-	#icon("@res:default.png")
-	iRet = WebBrowser.GoURL(hWeb,"https://kakaku.com"&url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
 	Try 1
-		#icon("@res:c7adtgcd-ed16-bh7l-suef-agc1v4jvjs93.png")
-		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*売り場へ行く"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	Catch e
 		Return amazon_data
 	Else
@@ -378,11 +391,11 @@ Function Joshin(url)
 	End Try
 	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
 	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
-	#icon("@res:default.png")
-	iRet = WebBrowser.GoURL(hWeb,"https://kakaku.com"&url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
 	Try 1
-		#icon("@res:c7adtgcd-ed16-bh7l-suef-agc1v4jvjs93.png")
-		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*売り場へ行く"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	Catch e
 		Return Joshin_data
 	Else
@@ -425,11 +438,11 @@ Function yodobashi(url)
 	End Try
 	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
 	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
-	#icon("@res:default.png")
-	iRet = WebBrowser.GoURL(hWeb,"https://kakaku.com"&url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
 	Try 1
-		#icon("@res:c7adtgcd-ed16-bh7l-suef-agc1v4jvjs93.png")
-		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*売り場へ行く"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	Catch e
 		Return yodobashi_data
 	Else
@@ -474,11 +487,11 @@ Function Rbukusi(url)
 	End Try
 	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
 	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
-	#icon("@res:default.png")
-	iRet = WebBrowser.GoURL(hWeb,"https://kakaku.com"&url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
 	Try 1
-		#icon("@res:c7adtgcd-ed16-bh7l-suef-agc1v4jvjs93.png")
-		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"shopMain","aaname":"*売り場へ行く"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	Catch e
 		Return Rbukusi_data
 	Else
@@ -515,7 +528,7 @@ Function 暂停()
 	Do While True
 		sRet = INI.Read(@res"seting.ini", "基本信息", "OPEN", "")
 		#icon("@res:ujsr25jn-o1e3-c1f4-01ht-kvj3kifsi0ik.png")
-		bRet = Image.Exists({"wnd":[{"cls":"Shell_TrayWnd","app":"explorer"}]},{"height":0,"width":0,"x":0,"y":0},@res"ujsr25jn-o1e3-c1f4-01ht-kvj3kifsi0ik.png",0.9,1000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sMatchType":"GrayMatch"})
+		bRet = Image.Exists({"wnd":[{"cls":"Shell_TrayWnd","app":"explorer"}]},{"height":0,"width":0,"x":0,"y":0},@res"1bc7phfs-lats-44p4-njrs-dq927kbr3h9g.png",0.9,1000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sMatchType":"GrayMatch"})
 		If sRet<>"OFF" And bRet = True 
 			
 			Break
