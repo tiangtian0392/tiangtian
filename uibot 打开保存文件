@@ -1,4 +1,16 @@
 
+Dim 工作文件 = ""
+Dim 文件夹选择 = ""
+Dim arrayRet_caiji = ""
+Dim sNameExtension = ""
+Dim Text对比排除 = ""
+Dim obj对比排除 = ""
+Dim 读入日期 = ""
+Dim TEST = ""
+Dim 在庫 = ""
+Dim 路径 = ""
+Dim value_值 = ""
+Dim nike = ""
 Dim dTime1 = ""
 Dim item = ""
 Dim temp = ""
@@ -86,7 +98,6 @@ Dim arrayDATA文件 = ""
 Dim 总行数 = ""
 Dim array是否上传 = ""
 Dim objExcelWorkBook = ""
-Dim test = ""
 Dim sRet = ""
 Dim csv文件 = ""
 Dim 在庫csv = ""
@@ -221,15 +232,15 @@ Function Paichu_TS()
 	objDatatable = Datatable.SliceDataTable(objDatatable,[],["Q10価格","计算后価格","日期","商品数量","低于本社","商家数","颜色标示："])
 	arrayPc = Datatable.GetDataTableByArray(objDatatable,False)
 	Excel.WriteRange(paichu,"Sheet1","J2",arrayPc,False)
-	#icon("@res:hi7r2m9f-gvq1-682h-9ppp-c6h91gmp3168.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx*","app":"EXCEL"}]},"min")
 	TracePrint("结束排除子程序")
 End Function
 Rem 
 Function Dsaizi()
 	TracePrint("执行Dsaizi子程序")
-	arraySaizi = CSV.Open("Z:\\bazhuayu\\超大サイズ商品.csv",{"encoding":"auto"})
-	item = Shift(arraySaizi)
+	paichu = Excel.BindBook("paichu.xlsx")
+	Excel.ActiveBook(paichu)
+	saizi_row = Excel.GetRowsCount(paichu,"サイズ")
+	arraySaizi = Excel.ReadRange(paichu,"サイズ","A2:E"&saizi_row)
 	Try 1
 		objExcelWorkBook = Excel.BindBook(文件名&".xlsm")
 	Catch e
@@ -244,13 +255,21 @@ Function Dsaizi()
 	arrayAA  = Excel.ReadColumn(objExcelWorkBook,"Sheet1","A2")
 	AA行数 = UBound(arrayAA)
 	For Each value In arraySaizi
-		value = CInt(value[0])
+		value_值  = CInt(value[0])
 		For i = 0 To AA行数 Step 1 
 			
 			AA = CInt(arrayAA[i])
-			If AA=value And AA<>0
+			If AA=value_值 And AA<>0
 				TracePrint(AA)
-				Excel.SetCellColor(objExcelWorkBook,"Sheet1","U"&i+2,[0,176,80],False)
+				value[4]  = CInt(value[4])
+				If value[4]>4999
+					
+					Excel.WriteCell(objExcelWorkBook,"Sheet1","T"&i+2,value[4],False)
+				Else
+					Excel.WriteCell(objExcelWorkBook,"Sheet1","T"&i+2,5000,False)
+					
+				End If
+				Excel.SetCellColor(objExcelWorkBook,"Sheet1","T"&i+2,[0,176,80],False)
 				Break
 				
 			Else
@@ -263,9 +282,74 @@ Function Dsaizi()
 	TracePrint("结束Dsaizi子程序")
 End Function
 Rem 主程序开始
+Do While True
+	文件夹选择 = 0
+	
+	dictRet = Dialog.UDFDialog("设置工作路径",@res"1643249201952.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	caiji路径 = dictRet["设置.csv文档路径_caiji文件夹-価格网数据"]
+	采集路径 = dictRet["设置.xlsm文档路径_采集文件夹-改价文档"]
+	Try 1
+		arrayRet_caiji = File.DirFileOrFolder(caiji路径,"fileandfolder",{"hasPath":True})
+		For Each value In arrayRet_caiji
+			sNameExtension = File.ExtensionName(value)
+			If sNameExtension=".csv"
+				文件夹选择 = 文件夹选择+1
+				Break
+				
+			Else
+				iRet = Dialog.MsgBox("路径中包涵非csv文件，点击确定使用当前文件夹，否则重新选择文件夹","文件夹选择错误",1,"1",0)
+				If iRet = 6
+					文件夹选择 = 文件夹选择+1
+					Break
+					
+				Else
+					Break
+					
+				End If
+				
+			End If
+			
+		Next
+	Catch e
+	Else
+	End Try
+	Try 1
+		arrayRet_采集 = File.DirFileOrFolder(采集路径,"fileandfolder",{"hasPath":True})
+		For Each value In arrayRet_采集
+			sNameExtension = File.ExtensionName(value)
+			If sNameExtension=".xlsm"
+				文件夹选择 = 文件夹选择+1
+				Break
+				
+			Else
+				iRet = Dialog.MsgBox("路径中包涵非xlsm文件，点击确定使用当前文件夹，否则重新选择文件夹","文件夹选择错误",1,"1",0)
+				If iRet = 6
+					文件夹选择 = 文件夹选择+1
+					Break
+					
+				Else
+					Break
+					
+				End If
+				
+			End If
+			
+		Next
+	Catch e
+	Else
+	End Try
+	Delay(1000)
+	If 文件夹选择>=2
+		Break
+		
+	Else
+		
+	End If
+Loop
+TracePrint(caiji路径,采集路径)
 objWindow = PrintToScreen.CreateWindow({"height":69,"resolution":{"height":1080,"width":1920},"width":238,"x":1670,"y":967},True)
 INI.Write(@res"uibot.ini", "XX", "Openfile", "")
-arrayRet = File.DirFileOrFolder("Z:\\bazhuayu\\采集","fileandfolder",{"hasPath":True})
+arrayRet = File.DirFileOrFolder(采集路径,"fileandfolder",{"hasPath":True})
 arr文件夹 = []
 For Each value In arrayRet
 	iRet = InStr(value,"~$",1,False)
@@ -276,7 +360,7 @@ For Each value In arrayRet
 		
 	End If
 	
-	value = Replace(value,"Z:\\bazhuayu\\采集\\","",False)
+	value = Replace(value,采集路径&"\\","",False)
 	value = Replace(value,".xlsm","",False)
 	arrRet = Split(value,".")
 	iRet = Math.Int(arrRet[0]-1)
@@ -322,57 +406,57 @@ Do While True
 	objControl = myUI.CreateControl(winForm,"Label","结果",30,24,190,6)
 	obj结果 = myUI.CreateControl(winForm,"TextBox",计算结果,60,24,220,1)
 	objButton = myUI.CreateButton(winForm,"Yes","计算",70,24,282,0)
-	objControl = myUI.CreateControl(winForm,"Label","查找",30,24,0,36)
-	obj查找内容 = myUI.CreateControl(winForm,"TextBox",查找内容,88,24,30,31)
-	objControl = myUI.CreateControl(winForm,"Label","返回",30,24,118,36)
-	obj返回查找内容 = myUI.CreateControl(winForm,"TextBox",返回查找内容,104,24,148,31)
-	obj选择清 = myUI.CreateControl(winForm,"CheckBox","清",28,24,254,31)
+	obj批量加价百分比 = myUI.CreateControl(winForm,"TextBox","百分比",42,24,309,33)
+	obj选择批量加价 = myUI.CreateControl(winForm,"CheckBox","勾选批量加价(输入百分比整数,原价格*(1+百分比))",305,24,3,32)
 	// objButton = myUI.CreateButton(winForm,"No","清",24,24,272,31)
-	objButton = myUI.CreateButton(winForm,"No","查找",70,24,282,31)
 	Index = myUI.AddComboBoxItem(obj手数料,"6%")
 	Index = myUI.AddComboBoxItem(obj手数料,"8%")
 	Index = myUI.AddComboBoxItem(obj手数料,"9%")
 	Index = myUI.AddComboBoxItem(obj手数料,"10%")
-	obj自动打开 = myUI.CreateControl(winForm,"CheckBox","自动打开",70,24,3,60)
+	obj自动上传 = myUI.CreateControl(winForm,"CheckBox","自动上传",70,24,3,60)
 	obj百分比 = myUI.CreateControl(winForm,"TextBox","0.05",30,15,75,62)
 	objControl = myUI.CreateControl(winForm,"Label","降价百分比",68,20,106,65)
 	obj少于商家 = myUI.CreateControl(winForm,"TextBox","3",15,15,175,62)
 	objControl = myUI.CreateControl(winForm,"Label","少于商家数",66,20,190,65)
 	obj选择传 = myUI.CreateControl(winForm,"CheckBox","传",28,24,254,60)
-	objButton = myUI.CreateButton(winForm,"Ignore","记录",70,24,282,60)
+	objButton = myUI.CreateButton(winForm,"Ignore","批量改价",70,24,282,60)
 	objControl = myUI.CreateControl(winForm,"Label","函数选择：",70,24,3,90)
 	obj对比在库 = myUI.CreateControl(winForm,"CheckBox","对比在库",70,24,73,85)
 	obj对比定单 = myUI.CreateControl(winForm,"CheckBox","对比定单",70,24,146,85)
 	obj对比排除 = myUI.CreateControl(winForm,"CheckBox","对比排除",70,24,219,85)
+	obj打开宏 = myUI.CreateControl(winForm,"CheckBox","打开-宏",70,24,292,85)
 	objControl = myUI.CreateControl(winForm,"Label","标记厂家",55,24,355,120)
 	obj厂家代码 = myUI.CreateControl(winForm,"TextBox","28092",88,24,410,115)
 	objButton = myUI.CreateButton(winForm,"Confirm","打开文件",91,24,3,115)
 	objButton = myUI.CreateButton(winForm,"Cancel","保存CSV",91,24,99,115)
 	objButton = myUI.CreateButton(winForm,"Suspend","NEXT("&存贮文件名+1&")",81,24,196,115)
 	objButton = myUI.CreateButton(winForm,"Retry","退出",70,24,282,115)
-	objControl = myUI.CreateControl(winForm,"Label","A列:绿色为在库有同时是14:00\n橙色为在库有但不是14:00\n紫色为在库无但却是14:00\nB列:蓝色为现在有定单\nC列:有颜色为临时跳过商品\nU列:橙色为提示商品为超大サイズ\n排除文件会提示现在和计算后的价",200,100,360,3)
+	objControl = myUI.CreateControl(winForm,"Label","A列:绿色为在库有同时是14:00\n橙色为在库有但不是14:00\n紫色为在库无但却是14:00\nB列:蓝色为现在有定单\nT列:橙色为提示商品为超大サイズ\n排除文件会提示现在和计算后的价",200,100,360,3)
 	myUI.ShowModal(winForm)
 	Delay(500)
-	自动打开 = myUI.GetValue(obj自动打开)
+	自动上传 = myUI.GetValue(obj自动上传)
+	自动上传 = CInt(自动上传)
 	Text百分比 = myUI.GetControlText(obj百分比)
 	Text少于商家 = myUI.GetControlText(obj少于商家)
 	Text手数料 = myUI.GetControlText(obj手数料)
 	Text供给原价 = myUI.GetControlText(obj供给原价)
 	Text厂家代码 = myUI.GetControlText(obj厂家代码)
-	Text查找内容 = myUI.GetControlText(obj查找内容)
+	Text批量加价百分比 = myUI.GetControlText(obj批量加价百分比)
+	Text批量加价百分比 = CInt(Text批量加价百分比)
 	Text对比在库 = myUI.GetValue(obj对比在库)
 	Text对比定单 = myUI.GetValue(obj对比定单)
 	Text对比排除 = myUI.GetValue(obj对比排除)
-	选择清 = myUI.GetValue(obj选择清)
+	Text打开宏 = myUI.GetValue(obj打开宏)
+	选择批量加价 = myUI.GetValue(obj选择批量加价)
 	选择传 = myUI.GetValue(obj选择传)
 	ButtonID = myUI.GetButtonID()
 	INI.Write(@res"uibot.ini", "XX", "百分比", Text百分比)
 	INI.Write(@res"uibot.ini", "XX", "少于几家", Text少于商家)
-	TracePrint(选择清)
-	TracePrint("自动打开"&自动打开)
-	TracePrint(Text百分比)
-	TracePrint(Text少于商家)
-	TracePrint(Text厂家代码)
+	TracePrint("选择批量加价",选择批量加价,"批量加价百分比",Text批量加价百分比)
+	TracePrint("自动上传"&自动上传)
+	TracePrint("计算加价百分比",Text百分比)
+	TracePrint("计算少于商家数",Text少于商家)
+	TracePrint("不在出品厂家代码",Text厂家代码)
 	If Text厂家代码="28092"
 		TracePrint("相同")
 		
@@ -390,11 +474,6 @@ Do While True
 		TracePrint("保存CSV")
 		PrintToScreen.DrawText(objWindow,"保存CSV",18,[255,0,0])
 		保存CSV(save)
-		If Value=1
-			记录()
-		Else
-			
-		End If
 	ElseIf ButtonID=3 
 		PrintToScreen.DrawText(objWindow,"上传",18,[255,0,0])
 		TracePrint("next")
@@ -404,13 +483,7 @@ Do While True
 		TracePrint("退出")
 		exit()
 	ElseIf ButtonID=5
-		If 选择传=1
-			autoup()
-		Else
-			
-			TracePrint("记录")
-			记录()
-		End If
+		批量改价()
 		
 	ElseIf ButtonID=6
 		TracePrint("计算供给原价")
@@ -440,9 +513,19 @@ Function 打开文件(open)
 	PrintToScreen.DrawText(objWindow,"选择要改价的文件",18,[255,0,0])
 	
 	
-	sRet = Dialog.OpenFile("C:\\bazhuayu\\caiji","excel|*.csv|任意文件|*","选择CSV文件")
-	CSV文件 = App.Start(sRet, 0, "1")
-	文件名 = RTrim(sRet,".csv")
+	sRet = Dialog.OpenFile(采集路径,"excel|*.csv|*.xlsm|任意文件|*","选择CSV文件")
+	CSV文件 = Regex.FindStr(文件名,"[^\\\\]+(?!.*\\\\)",0)
+	文件名 = RTrim(sRet,".xlsm")
+	路径 = Regex.FindStr(文件名,".*\\\\",0)
+	文件名 = Regex.FindStr(文件名,"[^\\\\]+(?!.*\\\\)",0)
+	TracePrint(路径,文件名)
+	Try 1
+		打开csv = Excel.BindBook(文件名&".csv")
+		PrintToScreen.DrawText(objWindow,"绑定csv",18,[255,0,0])
+	Catch e
+		CSV文件 = App.Start(caiji路径&"\\"&文件名&".csv", 0, "1")
+	Else
+	End Try
 	csv文件 = ["CSV UTF-8 (コンマ区切り) (*.csv)"]
 	iRet = Dialog.MsgBox("更新Q10data，更新扫描数据，确认在库数","确认","0",3,1000)
 	Try 1
@@ -451,20 +534,25 @@ Function 打开文件(open)
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开paichu",18,[255,0,0])
 		paichu = App.Start("Z:\\bazhuayu\\paichu.xlsx", 1, "1")
+		Try 999
+			paichu = Excel.BindBook("paichu.xlsx")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	Rem 先打开排除文档在打开工作文档，防止公式出错，用异常重试延时
-	Try 999
-		paichu = Excel.BindBook("paichu.xlsx")
-	Catch e
-	Else
-	End Try
 	Try 1
 		在庫 = Excel.BindBook("在庫.csv")
 		PrintToScreen.DrawText(objWindow,"绑定在库",18,[255,0,0])
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开在库",18,[255,0,0])
 		在庫csv = App.Start("Z:\\bazhuayu\\在庫.csv", 1, "1")
+		Try 99
+			在庫 = Excel.BindBook("在庫.csv")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	Try 1
@@ -472,18 +560,30 @@ Function 打开文件(open)
 		PrintToScreen.DrawText(objWindow,"绑定TEXT",18,[255,0,0])
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开TEXT",18,[255,0,0])
-		iPID = App.Start("C:\\tool\\TEST.xlsx", "0", "1")
+		iPID = App.Start("Z:\\bazhuayu\\TEST.xlsx", "0", "1")
+		Try 99
+			TEST = Excel.BindBook("TEST.xlsx")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	PrintToScreen.DrawText(objWindow,"正在打开-"&文件名,18,[255,0,0])
-	文件名 = LTrim(文件名,"C:\\bazhuayu\\caiji\\")
-	excle = App.Start("C:\\bazhuayu\\采集\\"&文件名&".xlsm", 0, "1")
+	TracePrint(采集路径&"\\"&文件名&".xlsm")
+	Try 1
+		工作文件  = Excel.BindBook(文件名&".xlsm")
+	Catch e
+		excle = App.Start(采集路径&"\\"&文件名&".xlsm", 0, "1")
+	Else
+	End Try
 	Do While True
 		
 		Try 1
 			工作文件  = Excel.BindBook(文件名&".xlsm")
 		Catch e
 			TracePrint("绑定出错")
+			#icon("@res:1luqnbsa-9t40-fbq9-vvhe-6pb90oaeqq0r.png")
+			Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"続行(&C)","ctrlid":2,"aaname":"続行(C)"}]},"left","click",1500,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
 			#icon("@res:s1eep5gf-1eub-cfp1-kocc-s466r66cs15k.png")
 			Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",1500,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
 			#icon("@res:af0eq2uf-22e3-rr0d-jjmi-qc1ukapmgrnc.png")
@@ -497,10 +597,10 @@ Function 打开文件(open)
 	
 	
 	#icon("@res:tk6ug1ae-bh7k-jfqm-m9d5-ao9tkcvs2afm.png")
-	Window.SetSize({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},1600,933)
+	Window.SetSize({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},1800,933)
 	
 	#icon("@res:pjj5fqef-c4fq-qe7s-1u2n-20vshn8o9a77.png")
-	Window.Move({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},285,85)
+	Window.Move({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},105,85)
 	Excel.ActiveBook(工作文件)
 	Excel.ActiveSheet(工作文件,"Sheet1")
 	#icon("@res:nghhafkq-4nhu-l4pf-6coj-stefmh96kgq4.png")
@@ -519,22 +619,31 @@ Function 打开文件(open)
 			TracePrint("日期不一致",日期,sRet)
 			
 			objExcelWorkBook_hong = Excel.BindBook("personal.xlsb")
-			objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"XieRu",[])
+			If Text打开宏=1
+				
+				objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"XieRu",[])
+			Else
+				
+			End If
 		End If
 	End Try
-	#icon("@res:h0cuaemr-3qdh-d5rs-0cbr-14d2l8ggk2og.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx*","app":"EXCEL"}]},"min")
-	#icon("@res:silru769-a22u-t4fj-molp-4uf3p7ja9jj5.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"*.csv - Excel","app":"EXCEL"}]},"min")
-	#icon("@res:58s0runj-leh3-u167-ssin-6boftfe257uf.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"在庫.csv*","app":"EXCEL"}]},"min")
-	#icon("@res:gai90gqa-5sio-qivp-24ok-4tqsv0rmusnq.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"TEST.* - Excel","app":"EXCEL"}]},"min")
+	Try 1
+		#icon("@res:h0cuaemr-3qdh-d5rs-0cbr-14d2l8ggk2og.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx*","app":"EXCEL"}]},"min")
+		#icon("@res:silru769-a22u-t4fj-molp-4uf3p7ja9jj5.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"*.csv - Excel","app":"EXCEL"}]},"min")
+		#icon("@res:58s0runj-leh3-u167-ssin-6boftfe257uf.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"在庫.csv*","app":"EXCEL"}]},"min")
+		#icon("@res:gai90gqa-5sio-qivp-24ok-4tqsv0rmusnq.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"TEST.* - Excel*","app":"EXCEL"}]},"min")
+	Catch e
+	Else
+	End Try
 	TracePrint("Text对比在库"&Text对比在库)
 	If Text对比在库=1
 		
 		在库(对比)
-		jump(文件名)
+		
 	Else
 		
 	End If
@@ -565,7 +674,13 @@ Function nextfile(open)
 	
 	
 	TracePrint(文件夹[存贮文件名])
-	CSV文件 = App.Start("C:\\bazhuayu\\caiji\\"&文件夹[存贮文件名]&".csv", 0, "1")
+	Try 1
+		打开csv = Excel.BindBook(文件夹[存贮文件名]&".csv")
+		PrintToScreen.DrawText(objWindow,"绑定csv",18,[255,0,0])
+	Catch e
+		CSV文件 = App.Start(caiji路径&"\\"&文件夹[存贮文件名]&".csv", 0, "1")
+	Else
+	End Try
 	iRet = Dialog.MsgBox("更新Q10data，更新扫描数据，确认在库数","确认","0",3,1000)
 	Try 5
 		paichu = Excel.BindBook("paichu.xlsx")
@@ -573,6 +688,11 @@ Function nextfile(open)
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开paichu",18,[255,0,0])
 		paichu = App.Start("Z:\\bazhuayu\\paichu.xlsx", 1, "1")
+		Try 99
+			paichu = Excel.BindBook("paichu.xlsx")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	Try 5
@@ -581,6 +701,11 @@ Function nextfile(open)
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开在库",18,[255,0,0])
 		在庫csv = App.Start("Z:\\bazhuayu\\在庫.csv", 1, "1")
+		Try 99
+			在庫 = Excel.BindBook("在庫.csv")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	Rem 
@@ -589,19 +714,33 @@ Function nextfile(open)
 		PrintToScreen.DrawText(objWindow,"绑定TEXT",18,[255,0,0])
 	Catch e
 		PrintToScreen.DrawText(objWindow,"打开TEXT",18,[255,0,0])
-		iPID = App.Start("C:\\tool\\TEST.xlsx", "0", "1")
+		iPID = App.Start("Z:\\bazhuayu\\TEST.xlsx", "0", "1")
+		Try 99
+			TEST = Excel.BindBook("TEST.xlsx")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	PrintToScreen.DrawText(objWindow,"选择要改价的文件",18,[255,0,0])
 	文件名 = 文件夹[存贮文件名]
 	文件名 = RTrim(文件名,".csv")
+	路径 = Regex.FindStr(文件名,".*\\\\",0)
+	文件名 = Regex.FindStr(文件名,"[^\\\\]+(?!.*\\\\)",0)
+	TracePrint("继续打开",路径,文件名)
 	PrintToScreen.DrawText(objWindow,"正在打开-"&文件名,18,[255,0,0])
-	文件名 = LTrim(文件名,"C:\\bazhuayu\\caiji\\")
-	excle = App.Start("C:\\bazhuayu\\采集\\"&文件名&".xlsm", 0, "1")
+	Try 1
+		工作文件 = Excel.BindBook(文件名&".xlsm")
+	Catch e
+		excle = App.Start(采集路径&"\\"&文件名&".xlsm", 0, "1")
+	Else
+	End Try
 	Do While True
-		Try 5
+		Try 2
 			工作文件 = Excel.BindBook(文件名&".xlsm")
 		Catch e
+			#icon("@res:1luqnbsa-9t40-fbq9-vvhe-6pb90oaeqq0r.png")
+			Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"続行(&C)","ctrlid":2,"aaname":"続行(C)"}]},"left","click",1500,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
 			#icon("@res:s1eep5gf-1eub-cfp1-kocc-s466r66cs15k.png")
 			Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",1500,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
 			#icon("@res:af0eq2uf-22e3-rr0d-jjmi-qc1ukapmgrnc.png")
@@ -616,10 +755,10 @@ Function nextfile(open)
 	
 	
 	#icon("@res:tk6ug1ae-bh7k-jfqm-m9d5-ao9tkcvs2afm.png")
-	Window.SetSize({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},1600,933)
+	Window.SetSize({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},1800,933)
 	
 	#icon("@res:pjj5fqef-c4fq-qe7s-1u2n-20vshn8o9a77.png")
-	Window.Move({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},285,85)
+	Window.Move({"wnd":[{"cls":"XLMAIN","title":"*.xlsm - Excel","app":"EXCEL"}]},105,85)
 	Excel.ActiveBook(工作文件)
 	Excel.ActiveSheet(工作文件,"Sheet1")
 	#icon("@res:nghhafkq-4nhu-l4pf-6coj-stefmh96kgq4.png")
@@ -638,22 +777,31 @@ Function nextfile(open)
 			TracePrint("日期不一致，执行XieRu宏",日期,sRet)
 			
 			objExcelWorkBook_hong = Excel.BindBook("personal.xlsb")
-			objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"XieRu",[])
+			If Text打开宏=1
+				
+				objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"XieRu",[])
+			Else
+				
+			End If
 		End If
 	End Try
-	#icon("@res:h0cuaemr-3qdh-d5rs-0cbr-14d2l8ggk2og.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx*","app":"EXCEL"}]},"min")
-	#icon("@res:silru769-a22u-t4fj-molp-4uf3p7ja9jj5.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"*.csv - Excel","app":"EXCEL"}]},"min")
-	#icon("@res:gai90gqa-5sio-qivp-24ok-4tqsv0rmusnq.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"TEST.xlsx - Excel*","app":"EXCEL"}]},"min")
-	#icon("@res:58s0runj-leh3-u167-ssin-6boftfe257uf.png")
-	Window.Show({"wnd":[{"cls":"XLMAIN","title":"在庫.csv*","app":"EXCEL"}]},"min")
+	Try 1
+		#icon("@res:h0cuaemr-3qdh-d5rs-0cbr-14d2l8ggk2og.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx*","app":"EXCEL"}]},"min")
+		#icon("@res:silru769-a22u-t4fj-molp-4uf3p7ja9jj5.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"*.csv - Excel","app":"EXCEL"}]},"min")
+		#icon("@res:gai90gqa-5sio-qivp-24ok-4tqsv0rmusnq.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"TEST.xlsx - Excel*","app":"EXCEL"}]},"min")
+		#icon("@res:58s0runj-leh3-u167-ssin-6boftfe257uf.png")
+		Window.Show({"wnd":[{"cls":"XLMAIN","title":"在庫.csv*","app":"EXCEL"}]},"min")
+	Catch e
+	Else
+	End Try
 	
 	If Text对比在库=1
 		
 		在库(对比)
-		jump(文件名)
+		
 	Else
 		
 	End If
@@ -683,17 +831,23 @@ Function 保存CSV(save)
 	Try 1
 		TEST = Excel.BindBook("TEST.xlsx")
 	Catch e
-		iPID = App.Start("C:\\tool\\TEST.xlsx", "0", "1")
+		iPID = App.Start("Z:\\bazhuayu\\TEST.xlsx", "0", "1")
+		Try 99
+			TEST = Excel.BindBook("TEST.xlsx")
+		Catch ee
+		Else
+		End Try
 	Else
 	End Try
 	Try 1
 		objExcelWorkBook = Excel.BindBook(文件名&".xlsm")
 	Catch e
 		PrintToScreen.DrawText(objWindow,"选择要保存上传的文件",18,[255,0,0])
-		sRet = Dialog.OpenFile("C:\\bazhuayu\\采集","excel (xlsx、log)|*.xlsx;*.xlsm|任意文件|*","指定文件错误，重新指定要上传的文件")
-		文件名 = Regex.FindStr(sRet,"\\d.*.xlsm",0)
+		sRet = Dialog.OpenFile(采集路径,"excel (xlsx、log)|*.xlsx;*.xlsm|任意文件|*","指定文件错误，重新指定要上传的文件")
+		临时文件名 = Regex.FindStr(sRet,"\\d.*.xlsm",0)
+		文件名 = Replace(临时文件名,".xlsm","",False)
 		TracePrint(文件名)
-		objExcelWorkBook = Excel.BindBook(文件名)
+		objExcelWorkBook = Excel.BindBook(文件名&".xlsm")
 	Else
 	End Try
 	Excel.ActiveBook(objExcelWorkBook)
@@ -722,7 +876,6 @@ Function 保存CSV(save)
 				TracePrint("保存上传出错跳出i",i)
 				Break
 			Else
-				TracePrint(arrayDATA文件_banhao)
 			End Try
 			For Each value In Q10DATA文件
 				newQ10data_banhao = CInt(value[0])
@@ -759,15 +912,47 @@ Function 保存CSV(save)
 					End If
 					Rem 販売終了日添写
 					dTime = Time.Date()
-					dTime1 = Time.CDate(value[7], "yyyy.mm.dd")
-					If array是否排除[i]="★" And dTime1>dTime
+					读入日期 = arrayDATA文件[i][13]
+					bRet = IsNumeric(读入日期)
+					If bRet
 						
+						读入日期 = CInt(读入日期)
+						读入日期 = CStr(读入日期)
+						读入日期长度 = Len(读入日期)
+						TracePrint(读入日期)
+						If 读入日期长度=8
+							年 = Left(读入日期,4)
+							月 = Mid(读入日期,5,2)
+							日 = Right(读入日期,2)
+							販売終了日 = 年&"-"&月&"-"&日
+							dTime2 = Time.CDate(販売終了日, "yyyy.mm.dd")
+							If dTime2<=dTime
+								iRet = Dialog.MsgBox("添入日期小于等于今天，程序结束，检查后重新保存\n"&販売終了日&"\n"&newQ10data_banhao&"\n"&i+2&"行","販売終了日出错","0",4,0)
+								exit()
+								
+							Else
+								
+							End If
+							
+						Else
+							iRet = Dialog.MsgBox("添入日期出错，程序结束，检查后重新保存\n"&販売終了日&"\n"&newQ10data_banhao&"\n"&i+2&"行","販売終了日出错","0",4,0)
+							exit()
+							
+						End If
 					Else
+						dTime1 = Time.CDate(arrayDATA文件[i][13], "yyyy.mm.dd")
+						If array是否排除[i]="★" And dTime1>dTime
+							販売終了日 = arrayDATA文件[i][13]
+							
+						Else
+							
+							販売終了日 = "2022-07-22"
+						End If
 						
-						value[7] = "2022-07-22"
 					End If
+					value[7] = 販売終了日
 					arr上传文件 = push(arr上传文件,value)
-					Continue
+					Break
 					
 				Else
 					
@@ -803,13 +988,31 @@ Function 保存CSV(save)
 	
 	PrintToScreen.DrawText(objWindow,"写入TEXT数据",18,[255,0,0])
 	行数 = UBound(arr上传文件)
-	test = Excel.BindBook("TEST.xlsx")
-	Excel.ActiveBook(test)
-	#icon("@res:1u01jmku-jh7o-damf-qd7u-44vlal1arueo.png")
-	Window.SetActive({"wnd":[{"cls":"XLMAIN","title":"TEST.xlsx - Excel","app":"EXCEL"}]})
-	Excel.WriteRange(test,"TEST","A1",arr上传文件,False)
 	dTime = Time.Date()
 	shijian = Time.Format(dTime,"yyyymmdd")
+	If 文件名="16.スマートウォッチ"
+		nike = []
+		temp_arr上传文件 = []
+		For Each value In arr上传文件
+			iRet = InStr(value[4],"Nike",1,False)
+			If iRet>0
+				nike = push(nike,value)
+				
+			Else
+				temp_arr上传文件 = push(temp_arr上传文件,value)
+				
+			End If
+			
+		Next
+		
+		arr上传文件 = temp_arr上传文件
+		CSV.Save(nike,"C:\\bazhuayu\\Q10上传\\"&shijian&"-nike.csv",{"encoding":"utf-8-sig"})
+	Else
+		
+	End If
+	test = Excel.BindBook("TEST.xlsx")
+	Excel.ActiveBook(test)
+	Excel.WriteRange(test,"TEST","A1",arr上传文件,False)
 	PrintToScreen.CleanText(objWindow)
 	PrintToScreen.DrawText(objWindow,"开始保存",18,[255,0,0])
 	保存文件名 = "C:\\bazhuayu\\Q10上传\\"&shijian&"-"&文件名
@@ -823,6 +1026,12 @@ Function 保存CSV(save)
 	End If
 	TracePrint(保存文件名)
 	Excel.SaveOtherFile(test,保存文件名)
+	If 文件名="16.スマートウォッチ"
+		
+		iPID = App.Start("C:\\bazhuayu\\Q10上传\\"&shijian&"-nike.csv", "0", "1")
+	Else
+		
+	End If
 	PrintToScreen.DrawText(objWindow,"保存完成",18,[255,0,0])
 	PrintToScreen.DrawText(objWindow,行数+1&"行文件上传",18,[255,0,0])
 	TracePrint(行数+1&"行文件上传")
@@ -859,10 +1068,19 @@ Function 保存CSV(save)
 	Catch e
 	Else
 	End Try
-	autoup()
+	If 自动上传=1
+		autoup()
+		
+	Else
+		
+	End If
 	Excel.CloseExcel(objExcelWorkBook,True)
-	objExcelWorkBook2 = Excel.BindBook(shijian&"-"&文件名&".xlsx")
-	Excel.CloseExcel(objExcelWorkBook2,True)
+	Try 1
+		objExcelWorkBook2 = Excel.BindBook(shijian&"-"&文件名&".xlsx")
+	Catch e
+	Else
+		Excel.CloseExcel(objExcelWorkBook2,True)
+	End Try
 	iRet = Dialog.MsgBox("是否执行上传","UiBot",1,"1",100)
 	If iRet=6
 	Else
@@ -875,7 +1093,7 @@ Function 保存CSV(save)
 	End If
 End Function
 Rem 
-Function 记录()
+Function 批量改价()
 	记录日期 = Time.Date()
 	记录日期 = Time.Format(记录日期,"yyyymmdd")
 	name = INI.Read(@res"uibot.ini", "XX", "name", "")
@@ -892,8 +1110,8 @@ Function 记录()
 	Try 1
 		xlsm文件 = Excel.BindBook(name&".xlsm")
 	Catch e
-		sRet = Dialog.OpenFile("C:\\bazhuayu\\采集","EXCEL文档 (txt、log)|*.xlsm;*.log|任意文件|*","UiBot")
-		xlsm文件 = Replace(sRet,"C:\\bazhuayu\\采集\\","",False)
+		sRet = Dialog.OpenFile(采集路径,"EXCEL文档 (txt、log)|*.xlsm;*.log|任意文件|*","UiBot")
+		xlsm文件 = Replace(sRet,采集路径&"\\","",False)
 		xlsm文件 = Excel.BindBook(xlsm文件)
 	Else
 	End Try
@@ -960,7 +1178,7 @@ Function 查找出品()
 		
 	Loop
 	TracePrint("Text查找内容"&Text查找内容)
-	arrayQ10data = CSV.Open("Z:\\bazhuayu\\bak\\Q10data.csv",{"encoding":"auto"})
+	arrayQ10data = CSV.Open("Z:\\bazhuayu\\标题和番号.csv",{"encoding":"auto"})
 	返回查找内容 = ""
 	Try 1
 		For Each value In arrayQ10data
@@ -1019,6 +1237,8 @@ Function 在库(对比)
 		Excel.SelectRange(xlsm文件,"Sheet1","A:C")
 		objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"DYG",[])
 		Excel.SelectRange(xlsm文件,"Sheet1","E:F")
+		objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"DYG",[])
+		Excel.SelectRange(xlsm文件,"Sheet1","T:T")
 		objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"DYG",[])
 	Catch e
 	Else
@@ -1087,14 +1307,25 @@ Function 在库(对比)
 End Function
 Rem 自动上传
 Function autoup()
-	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
-	bRet = WebBrowser.SwitchTab(hWeb,"url","https://qsmupload.qoo10.jp/GMKT.INC.Gsm.Web/Product/DataExcelManagement.aspx",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	Else
+	End Try
+	Try 1
+		bRet = WebBrowser.SwitchTab(hWeb,"url","https://qsmupload.qoo10.jp/GMKT.INC.Gsm.Web/Product/DataExcelManagement.aspx",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,"https://qsmupload.qoo10.jp/GMKT.INC.Gsm.Web/Product/DataExcelManagement.aspx",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Else
+	End Try
 	
 	#icon("@res:81slphim-rv30-ho3v-9uoe-3n06f8dicp9a.png")
 	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"edit_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
-	#icon("@res:ifoo64v1-7ht5-qh0a-gp8d-qdeilu3tjr53.png")
-	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","parentid":"qsm_product","aaname":"*商品情報の修正* "}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
-	#icon("@res:mdbuorp4-b666-rdqa-67g4-ec92kbk6kgsp.png")
+	#icon("@res:daug80q8-oii0-klc0-msl0-flfi4s8mkunh.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","parentid":"qsm_bulk_content","aaname":" *商品情報の修正*              "}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:s8cd472h-p8k7-1kp5-gt4q-67ek15en93ti.png")
 	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","id":"label_file_qoo10_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
 	#icon("@res:fb9lkos5-dpau-s72l-bbj8-rckqbipg6dkr.png")
 	// Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
@@ -1125,7 +1356,7 @@ Function autoup()
 	
 	#icon("@res:stdel0jk-5lcm-j4vm-lt9l-5gihl4pdrh7v.png")
 	Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
-	Delay(2000)
+	Delay(1500)
 	// Do While True
 	#icon("@res:jbdfunvb-jva1-qhqo-44ds-5r258socpaua.png")
 	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"button_file_qoo10_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
@@ -1203,6 +1434,7 @@ Function DDQ10()
 	
 	Excel.WriteRow(xlsm文件,"Sheet2","G1",定单数,False)
 End Function
+
 
 
 
