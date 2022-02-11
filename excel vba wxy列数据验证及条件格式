@@ -1,0 +1,37 @@
+Sub Y_yanzhen()
+'
+' Y_yanzhen Macro
+'以下添加Y列数据验证
+
+    Sheets("Sheet1").Select
+    Columns("Y:Y").Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateTextLength, AlertStyle:=xlValidAlertStop, _
+        Operator:=xlEqual, Formula1:="8"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = "添写格式错误"
+        .InputMessage = ""
+        .ErrorMessage = "添写8位日期格式：yyyymmdd,例：20220306"
+        .IMEMode = xlIMEModeNoControl
+        .ShowInput = True
+        .ShowError = True
+    End With
+' 以下添加WXY列条件格式并改背景字体颜色
+    Sheets("Sheet1").Select
+    Columns("W:Y").Select
+    Selection.FormatConditions.Delete
+    With Selection.FormatConditions.Add(Type:=xlExpression, Formula1:="=OR($W1<>"""",$X1<>"""",$Y1<>"""")")
+    With .Interior
+        .Color = RGB(237, 125, 49)
+    End With
+    With .Font
+        .ColorIndex = 2
+    End With
+        
+    
+    End With
+
+End Sub
