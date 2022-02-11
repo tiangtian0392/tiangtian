@@ -1,0 +1,269 @@
+Import getfilelist
+Dim 标记 = ""
+Dim objDatatable = ""
+Dim objRet = ""
+Dim iPID = ""
+Dim bRet = ""
+Dim objExcelWorkBook = ""
+Dim arrayData = ""
+Dim arrRet = ""
+Dim sRet = ""
+Dim dTime = ""
+Dim iRet = ""
+Dim hWeb = ""
+Dim arrayRet = ""
+Dim temp = ""
+Rem 子程序下载定单文件移动到指定文件夹
+Function down_dingdian(oldpath,newpath)
+	TracePrint("定单下载子程序运行开始")
+	oldpath = "C:\\Users\\user\\Downloads\\"
+	newpath = "C:\\Users\\user\\Documents\\UiBot\\Projects\\打开保存文件\\Q10DD\\"
+	Rem 删除原定单文件
+	arrayRet = File.DirFileOrFolder(newpath,"fileandfolder",{"hasPath":True})
+	For Each value In arrayRet
+		File.DeleteFile(value)
+		
+	Next
+	
+	Rem 下载两个定单文件
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:default.png")
+	iRet = WebBrowser.GoURL(hWeb,"https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Delivery/DeliveryManagement.aspx",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:9nqeq388-vq8c-3id9-fgbp-lrq332ooicqo.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送/キャンセル/未受取"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:at1lsaak-l1lk-msij-fuda-8mok6hne7t3g.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_new_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:default.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:ttm7v3tq-242o-ppa6-est3-c1vd7rhmpdne.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:default.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_awaiting_orders1"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:gan3a7kk-8q73-k9s4-vfp2-ivhkk3636ii8.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_awaiting_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:default.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:ttm7v3tq-242o-ppa6-est3-c1vd7rhmpdne.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	Delay(2000)
+	dTime = Time.Now()
+	sRet = Time.Format(dTime,"hhmm")
+	nowtime = CInt(sRet)
+	files = getfilelist.get_file_list("C:\\Users\\user\\Downloads\\")
+	iRet = UBound(files)
+	For i = iRet To iRet-1 Step -1 
+		
+		arrRet = Regex.Find(files[i],"\\d{4}(?=[\\s*(\\d)]*.csv)")
+		TracePrint(files[i],arrRet)
+		filetime = CInt(arrRet[0])
+		If nowtime-filetime<2
+			File.MoveFile("C:\\Users\\user\\Downloads\\"&files[i],"C:\\Users\\user\\Documents\\UiBot\\Projects\\打开保存文件\\Q10DD\\",False)
+			Dialog.Notify("定单下载并移动完成", "UiBot", "0")
+			TracePrint("定单下载并移动完成")
+			
+		Else
+			iRet = Dialog.MsgBox("定单下载并移动出错，检查","UiBot","0","1",0)
+			TracePrint("定单下载并移动出错，检查")
+			
+		End If
+	Next
+	TracePrint("定单下载子程序运行完成")
+End Function
+Rem 下载Q10全商品数据并处理子程序
+Function getQ10data(oldpath)
+	TracePrint("下载Q10数据子程序运行开始")
+	oldpath = "C:\\Users\\user\\Downloads\\"
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:default.png")
+	iRet = WebBrowser.GoURL(hWeb,"https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Product/ProductListSummary.aspx",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	#icon("@res:tfl4agfl-poku-v5ev-5a7d-tql7qtdrmm3d.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":" 商品管理 "}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:5ngoqgmm-fj4r-b75b-ku6v-lfa5js7fg572.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"__grid_DataDwonload_Grid","aaname":"ダウンロードファイル"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	dTime = Time.Now()
+	sRet = Time.Format(dTime,"yyyy年mm月dd日")
+	参考时间 = Time.CDate(sRet&" 15:00:00", "yyyy.mm.dd.hh.mm.ss")
+	arrayData = UiElement.DataScrap({"html":[{"idx":1,"parentid":"__grid_DataDwonload_Grid","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	Rem 时间大于今日15点，数量大于11732的被下载
+	For Each value In arrayData
+		If value[5]<>" "
+			sRet = DigitFromStr(value[6])
+			数量 = CInt(sRet)
+			dTime = Time.CDate(value[5], "yyyy-mm-dd hh:mm:ss")
+			TracePrint(dTime,数量 )
+			If dTime>参考时间 And 数量>=11732 
+				Q10下载文件名 = value[3]
+				TracePrint("Q10下载文件名",Q10下载文件名)
+				bRet = File.FileExists(oldpath&Q10下载文件名)
+				If bRet
+					Break
+					
+				Else
+					
+				End If
+				#icon("@res:bfi6arsl-pcrb-ov86-1gsj-igigpetcr9ff.png")
+				Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"__grid_DataDwonload_Grid","aaname":Q10下载文件名}]},10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				#icon("@res:default.png")
+				Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"__grid_DataDwonload_Grid","aaname":Q10下载文件名}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				TracePrint(value[5],dTime,value[6],数量)
+				Break
+				
+			Else
+				
+			End If
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	Do While True
+		bRet = File.FileExists(oldpath&Q10下载文件名)
+		If bRet
+			Break
+			
+		Else
+			
+		End If
+		
+	Loop
+	iPID = App.Start(oldpath&Q10下载文件名, "0", "1")
+	TracePrint(Q10下载文件名)
+	Try 999
+		objExcelWorkBook = Excel.BindBook(Q10下载文件名)
+	Catch e
+	Else
+	End Try
+	Try 10
+		Excel.DeleteRange(objExcelWorkBook,"Sheet1","A2:AV4",False)
+	Catch e
+	Else
+	End Try
+	Try 99
+		objExcelWorkBook1 = Excel.BindBook("personal.xlsb")
+	Catch e
+	Else
+	End Try
+	objRet = Excel.ExecuteMacro(objExcelWorkBook1,"zaishen",[])
+	Excel.Save(objExcelWorkBook)
+	Excel.CloseExcel(objExcelWorkBook,True)
+	Try 1
+		App.Kill(iPID)
+	Catch e
+	Else
+	End Try
+	iPID = App.Start("Z:\\bazhuayu\\Q10_up.accdb", "0", "1")
+	#icon("@res:s85a8c55-iced-4atm-dp14-poba9hdujubk.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"OMain","title":"Access - Q10_up : データベース- Z:\\bazhuayu\\Q10_up.accdb (Access 2007 - 2016 ファイル形式)"},{"cls":"NetUINativeHWNDHost","title":"ナビゲーション ウィンドウのホスト","aaname":"ナビゲーション ウィンドウのホスト"},{"cls":"NetUIHWND","aaname":"ナビゲーション ウィンドウ"}],"ctrl":[{"role":"ROLE_SYSTEM_CLIENT","name":"ナビゲーション ウィンドウ"},{"role":"ROLE_SYSTEM_GROUPING","name":"フォーム"},{"role":"ROLE_SYSTEM_CLIENT","name":"フォーム"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"updata"},{"role":"ROLE_SYSTEM_STATICTEXT","name":"updata"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:jh4jf01g-ds1h-60nh-fifm-0svtn5ndpmaa.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"OMain","title":"Access - Q10_up : データベース- Z:\\bazhuayu\\Q10_up.accdb (Access 2007 - 2016 ファイル形式)"},{"cls":"MDIClient","aaname":"作業領域"},{"cls":"OForm","title":"updata","aaname":"updata"}],"ctrl":[{"role":"ROLE_SYSTEM_CLIENT","name":"updata"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"詳細 セクション, 1-delete"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:hdqu40fi-2ch7-hkoi-80ri-3tsd8ucs3s66.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"#32770","title":"Microsoft Access"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	Delay(1000)
+	#icon("@res:lklh9lua-72nv-c9ib-uq1n-3jtospokl91n.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"OMain","title":"Access - Q10_up : データベース- Z:\\bazhuayu\\Q10_up.accdb (Access 2007 - 2016 ファイル形式)"},{"cls":"MDIClient","aaname":"作業領域"},{"cls":"OForm","title":"updata","aaname":"updata"}],"ctrl":[{"role":"ROLE_SYSTEM_CLIENT","name":"updata"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"2-updata"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:718680j1-j5vd-5u6p-rl75-f7th6rf28quo.png")
+	Keyboard.InputText({"wnd":[{"app":"MSACCESS","cls":"#32770","title":"ファイルを開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},oldpath&Q10下载文件名,True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+	#icon("@res:eumt7ahv-hjp0-tb5b-6jlc-fnheg6kbn4t8.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"#32770","title":"ファイルを開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:hdqu40fi-2ch7-hkoi-80ri-3tsd8ucs3s66.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"#32770","title":"Microsoft Access"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:sk73kjsv-7k1f-a61j-mh8d-fsj2cq01lao7.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"OMain","title":"Access - Q10_up : データベース- Z:\\bazhuayu\\Q10_up.accdb (Access 2007 - 2016 ファイル形式)"},{"cls":"MsoCommandBarDock","title":"MsoDockTop","aaname":"MsoDockTop"},{"cls":"MsoCommandBar","title":"Ribbon"},{"cls":"MsoWorkPane","title":"Ribbon","aaname":"Ribbon"},{"cls":"NUIPane"},{"cls":"NetUIHWND","aaname":"Ribbon"}],"ctrl":[{"role":"ROLE_SYSTEM_TOOLBAR","name":"クイック アクセス ツール バー"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"上書き保存"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:pka0soq4-tdcj-pnsr-02nc-1v3mo7f5abdt.png")
+	Mouse.Action({"wnd":[{"app":"MSACCESS","cls":"OMain","title":"Access - Q10_up : データベース- Z:\\bazhuayu\\Q10_up.accdb (Access 2007 - 2016 ファイル形式)"},{"cls":"MsoCommandBarDock","title":"MsoDockTop","aaname":"MsoDockTop"},{"cls":"MsoCommandBar","title":"Ribbon"},{"cls":"MsoWorkPane","title":"Ribbon","aaname":"Ribbon"},{"cls":"NUIPane"},{"cls":"NetUIHWND","aaname":"Ribbon"}],"ctrl":[{"role":"ROLE_SYSTEM_PROPERTYPAGE","name":"Ribbon"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"閉じる"}]},"left","dbclick",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	TracePrint("下载Q10数据子程序运行完成")
+End Function
+Rem 复制扫描文件
+Function copy_scan()
+	dTime = Time.Now()
+	今日日期 = Time.Format(dTime,"yyyy-mm-dd")
+	caiji = "Z:\\bazhuayu\\caiji\\"&今日日期
+	arrayRet = File.DirFileOrFolder("C:\\bazhuayu\\caiji","fileandfolder",{"hasPath":True})
+	For Each value In arrayRet
+		Try 1
+			File.DeleteFile(value)
+		Catch e
+			iRet = Dialog.MsgBox("以下文件不能删除\n"&value,"删除文件出错","0","1",0)
+			File.DeleteFile(value)
+		Else
+		End Try
+		
+	Next
+	
+	arrayRet = File.DirFileOrFolder(caiji,"fileandfolder",{"hasPath":True})
+	文件号  = []
+	For Each value In arrayRet
+		arrRet = Split(value,".")
+		sRet = Regex.FindStr(arrRet[0],"[^\\\\]+(?!.*\\\\)",0)
+		sRet = CInt(sRet)
+		文件号 = push(文件号,sRet)
+		
+		File.CopyFile(value,"C:\\bazhuayu\\caiji",False)
+	Next
+	Rem 
+	objDatatable = Datatable.BuildDataTable(文件号,["sheet"])
+	objDatatable = Datatable.SortDataTable(objDatatable,"sheet",True)
+	文件号 = Datatable.GetDataTableByArray(objDatatable,False)
+	缺失文件号 = []
+	For i = 1 To 39 Step 1 
+		标记 = 0
+		For Each value In 文件号
+			If value[0]=i
+				标记 = 1
+				
+			Else
+				
+			End If
+			
+		Next
+		
+		Rem 
+		If 标记=1
+			
+		Else
+			缺失文件号 = push(缺失文件号,i)
+			
+		End If
+	Next
+	iRet = Len(缺失文件号)
+	TracePrint(iRet)
+	If iRet>0
+		iRet = Dialog.MsgBox(缺失文件号,"以下文件没有复制","0","1",0)
+		
+	Else
+		TracePrint('以复制全部文件')
+		
+	End If
+End Function
+Rem 主程序
+iRet = Dialog.MsgBox("是否执行前置程序","UiBot",1,"1",0)
+If iRet=6
+	iRet = Dialog.MsgBox("是否执行定单下载程序","5秒后自动关闭",1,"1",5000)
+	If iRet=6
+		
+		down_dingdian(a,b)
+	Else
+		
+	End If
+	iRet = Dialog.MsgBox("是否执行Q10数据下载程序","5秒后自动关闭",1,"1",5000)
+	If iRet=6
+		getQ10data(a)
+		
+	Else
+		
+	End If
+	iRet = Dialog.MsgBox("是否执行caiji复制程序","5秒后自动关闭",1,"1",5000)
+	If iRet=6
+		
+		copy_scan()
+	Else
+		
+	End If
+Else
+	Return retValue
+	
+End If
+
+
