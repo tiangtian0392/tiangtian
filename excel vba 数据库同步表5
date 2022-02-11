@@ -1,0 +1,56 @@
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    mytime = Sheets("Sheet1").[K1]
+    nowtime = Date + Time
+    If nowtime - mytime > 0.041666667 Then
+        
+    Else
+        Exit Sub
+    End If
+   
+    Dim cnn As Object
+    Dim strcnn As String
+    Dim mydata As String
+    Dim mytable As String
+    Dim sql As String
+    Dim rs As Object
+    Dim i As Integer
+    
+    Set Sh1 = Sheets("Sheet1")
+    Set Sh5 = Sheets("Sheet5")
+    Sh5.Range("A2:AV65536").ClearContents
+
+   
+    Set cnn = CreateObject("ADODB.Connection")
+    mydata = "Z:\bazhuayu\Q10_up.accdb"
+
+    Select Case Application.Version * 1
+        Case Is <= 11
+            strcnn = "Provider=Microsoft.Jet.Oledb.4.0;Jet OLEDB:Database Password='123456';Data Source=" & mydata
+        Case Is >= 12
+            strcnn = "Provider=Microsoft.ACE.OLEDB.12.0;Jet OLEDB:Database Password='123456';Data Source=" & mydata
+    End Select
+
+    cnn.Open strcnn
+     
+    mytable = "Sheet1"
+    Set rs = CreateObject("ADODB.Recordset")
+ 
+
+    sql = "select B.* from [Excel 8.0;Database=" & ThisWorkbook.FullName & "].[" & Sh1.Name & "$A1:A500] a left join Sheet1 AS B on a.彜昳斣崋 = B.item_number"
+    'sql = "select top 10 * from Sheet1"
+    Set rs = cnn.Execute(sql)
+    
+    Sheets("Sheet5").Range("A2").CopyFromRecordset rs
+    Sheets("Sheet5").Columns("A:AV").ColumnWidth = 15
+    Sheets("Sheet5").Columns("A:AV").RowHeight = 15
+    rs.Close
+    cnn.Close
+    Set rs = Nothing
+    Set cnn = Nothing
+    
+
+    Sheets("Sheet1").[K1] = Date + Time
+
+End Sub
+
+
