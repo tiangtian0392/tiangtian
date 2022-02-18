@@ -1,4 +1,14 @@
 
+Dim 定数 = ""
+Dim 中间号码 = ""
+Dim 待扫号码 = ""
+Dim 范围前 = ""
+Dim 计数 = ""
+Dim objRet = ""
+Dim dRet = ""
+Dim array_SH1 = ""
+Dim item = ""
+Dim objDatatable = ""
 Dim dictRet = ""
 Dim iPID = ""
 Dim objExcelWorkBook = ""
@@ -32,24 +42,105 @@ TracePrint(dictRet["功能"])
 For Each value In dictRet["功能"]
 	If value= "0"
 		Top整理()
+		iRet = Dialog.MsgBox("点击确定，开始保存上传文件，否则退出程序","是否上传",1,"1",0)
+		If iRet = 6
+			保存上传()
+			
+		Else
+			exit()
+			
+		End If
 	ElseIf value= "1"
 		保存上传()
 	End If
 	
 Next
 Function Top整理()
+	待扫文件名 = []
+	arrayRet_Top10 = CSV.Open("Z:\\bazhuayu\\Top10\\Top10大分類.csv",{"encoding":"auto"})
+	For Each value In arrayRet_Top10
+		待扫文件名 = push(待扫文件名,value[0])
+		
+	Next
+	待扫号码  = Dialog.InputBox(待扫文件名,"输入要扫描的文件号,0为全部,~日文字母状态下输入","0",False)
+	iRet = InStr(待扫号码,"~",1,False)
+	If iRet>0
+		范围号码 = Regex.FindStr(待扫号码,"\\d+~\\d+",0)
+		待扫号码 = Replace(待扫号码,范围号码,"",False)
+		待扫号码 = Regex.FindAll(待扫号码,"\\d+")
+		范围前 = Regex.FindStr(范围号码,"\\d+(?=~)",0)
+		范围后 = Regex.FindStr(范围号码,"(?<=~)\\d+",0)
+		TracePrint("范围号码",范围前,范围后 )
+		范围前 = CInt(范围前)
+		范围后 = CInt(范围后)
+		If 范围前>范围后
+			temp = 范围前
+			范围前 = 范围后
+			范围后 = temp
+			
+		Else
+			
+		End If
+		
+		TracePrint("范围号码",范围前,范围后 )
+		中间号码 = []
+		定数 = 0
+		For Each value In 待扫号码
+			value = CInt(value)
+			If 范围前<value  
+				If 定数=0
+					
+					For i = 范围前 To 范围后 Step 1 
+						中间号码 = push(中间号码,i)
+						
+						定数 = 1
+					Next
+				Else
+					
+				End If
+				
+				中间号码 = push(中间号码,value)
+			Else
+				
+				中间号码 = push(中间号码,value)
+			End If
+			
+		Next
+		TracePrint(中间号码)
+		待扫号码 = 中间号码
+	Else
+		
+		If 待扫号码 = "0"
+			计数 = 0
+			待扫号码 = []
+			For Each value In arrayRet_Top10
+				sRet = CStr(计数+1)
+				待扫号码 = push(待扫号码,sRet)
+				计数 = 计数+1
+				
+			Next
+			
+		Else
+			
+			待扫号码 = Regex.FindAll(待扫号码,"\\d+")
+		End If
+	End If
+	TracePrint("待扫号码",待扫号码)
 	Top值 = Dialog.InputBox("输入Top值，范围1-40,携帯電話最多20","输入Top值","10",True)
-	Top10csv = [["商品番号","販売者商品コード","価格Title","価格URL"]]
+	Top10csv = [["商品番号","販売者商品コード","価格Title","価格URL","可用番号"]]
 	dTime = Time.Now()
 	今天日期 = Time.Format(dTime,"yyyy-mm-dd")
 	特殊字符 = {"&#39;":"'","&amp;":"&","&#215;":"×"}
-	arrayRet_Top10 = CSV.Open("Z:\\bazhuayu\\Top10.csv",{"encoding":"auto"})
 	array_标题和番号 = CSV.Open("Z:\\bazhuayu\\标题和番号.csv",{"encoding":"auto"})
-	For Each value_Top10 In arrayRet_Top10
+	Rem 以遍历数组待扫号码内的值为数组arrayRet_Top10的下标，号码要减1
+	For Each value_待扫号码 In 待扫号码
+		value_待扫号码 = CInt(value_待扫号码)
+		value_待扫号码 = value_待扫号码-1
+		
 		写入1行数据 = []
-		htmlcode = HTTP.Get(value_Top10[1], {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
-		If value_Top10[0]="携帯電話"
-			TracePrint("查找-"&value_Top10[0])
+		htmlcode = HTTP.Get(arrayRet_Top10[value_待扫号码][1], {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
+		If arrayRet_Top10[value_待扫号码][0]="1.携帯電話"
+			TracePrint("查找-"&arrayRet_Top10[value_待扫号码][0])
 			Rem 下面这句测试时用于获取手机网页code写完后要删除,循环到要改成Top值-1。
 			arrRet_标题 = Regex.FindAll(htmlcode,"(?<=<a href=\")/keitai/smartphone/model/M\\d+")
 			For i = 0 To Top值-1 Step 1 
@@ -97,9 +188,9 @@ Function Top整理()
 				
 			Next
 			
-			CSV.Save(Top10csv,"Z:\\bazhuayu\\"&今天日期&"-Top10.csv",{"encoding":"utf-8-sig"})
+			CSV.Save(Top10csv,"Z:\\bazhuayu\\data\\"&今天日期&"-Top10.csv",{"encoding":"utf-8-sig"})
 		Else
-			TracePrint("查找-"&value_Top10[0])
+			TracePrint("查找-"&arrayRet_Top10[value_待扫号码][0])
 			
 			arrRet_标题 = Regex.FindAll(htmlcode,"((<td class=\"ckitemLink\">)[\\s\\S]+?(</td>))")
 			For i = 0 To Top值-1 Step 1 
@@ -204,42 +295,181 @@ Function Top整理()
 				End If
 				
 			Next
-			CSV.Save(Top10csv,"Z:\\bazhuayu\\"&今天日期&"-Top10.csv",{"encoding":"utf-8-sig"})
+			增加列 = []
+			For Each value In Top10csv
+				iRet = CInt(value[0])
+				If iRet>0
+					增加列 = push(增加列,[value[0]])
+					
+				Else
+					
+				End If
+				
+			Next
+			增加列下标  = UBound(增加列)
+			For i = 0 To 增加列下标 Step 1 
+				Top10csv[i+1][4] = 增加列[i][0]
+				
+			Next
+			Try 3
+				CSV.Save(Top10csv,"Z:\\bazhuayu\\Top10\\data\\"&今天日期&"-Top10.csv",{"encoding":"utf-8-sig"})
+			Catch e
+				iRet = Dialog.MsgBox("写入csv文件出错，确认后重新保存","保存CSV文件出错","0","1",0)
+				Try 3
+					CSV.Save(Top10csv,"Z:\\bazhuayu\\Top10\\data\\"&今天日期&"-Top10.csv",{"encoding":"utf-8-sig"})
+				Catch ee
+					iRet = Dialog.MsgBox("在次保存出错。程序退出","保存出错","0","1",0)
+					exit()
+				Else
+				End Try
+			Else
+			End Try
 		End If
+	Next
+	For Each value_Top10 In arrayRet_Top10
 		
 	Next
 	
+	Rem 
+	Try 3
+		iPID = App.Start("Z:\\bazhuayu\\paichu.xlsx", "0", "1")
+	Catch e
+		iRet = Dialog.MsgBox("排除文档打开出错，检查后手动打开","UiBot","0","1",5000)
+	Else
+	End Try
+	Try 3
+		iPID = App.Start("Z:\\bazhuayu\\Top10\\Top10.xlsm", "0", "1")
+		Try 999
+			objExcelWorkBook = Excel.BindBook("Top10.xlsm")
+		Catch ee
+			iRet = Dialog.MsgBox("Top10.xlsm文档打开出错，检查后手动打开","打开出错","0","1",5000)
+		Else
+			Excel.ClearRange(objExcelWorkBook,"源","A1:J500",True,True)
+		End Try
+		Rem 
+		dTime = Time.Now()
+		现在时间 = Time.Format(dTime,"yyyy-mm-dd hh:mm:ss")
+		Try 3
+			temp = Top10csv[0]
+		Catch ee
+			iRet = Dialog.MsgBox("写入源表出错，手动选择文件重试","源表写入失败","0","1",5000)
+			sRet = Dialog.OpenFile("Z:\\bazhuayu\\Top10\\data","Top10扫描文档(csv、log)|*.csv*.log|任意文件|*","UiBot")
+			Top10csv = CSV.Open(sRet,{"encoding":"auto"})
+			item = Shift(Top10csv)
+			TracePrint(Top10csv)
+			Try 3
+				Excel.WriteRange(objExcelWorkBook,"源","A5",Top10csv,False)
+				Excel.WriteCell(objExcelWorkBook,"Sheet1","I2",现在时间,False)
+			Catch eee
+				iRet = Dialog.MsgBox("源表更新出错，打开今天扫描文档后，选择文件更新","源表正常失败","0","1",5000)
+				iPID = App.Start("Z:\\bazhuayu\\Top10\\data\\"&今天日期&"-Top10.csv", "0", "1")
+			Else
+				iRet = Dialog.MsgBox("源表更新正常，不用打开今天扫描文档，点击-源表更新。从源表获取数据","源表正常","0","1",5000)
+			End Try
+		Else
+			item = Shift(Top10csv)
+			Excel.WriteRange(objExcelWorkBook,"源","A5",Top10csv,False)
+			Excel.WriteCell(objExcelWorkBook,"Sheet1","I2",现在时间,False)
+		End Try
+	Catch e
+	Else
+	End Try
 End Function
 Rem 以下为保存上传文件
 Function 保存上传()
+	dTime = Time.Date()
 	
-	上传文件 = []
-	Try 1
-		iRet = CInt(Top10csv[0][0])
+	Try 3
+		objExcelWorkBook = Excel.BindBook("Top10.xlsm")
 	Catch e
-		sRet = Dialog.OpenFile("Z:\\bazhuayu","Top文档 (csv、log)|*.csv;*.log|任意文件|*","选择Topcsv文档")
-		Top10csv = CSV.Open(sRet,{"encoding":"auto"})
+		sRet = Dialog.OpenFile("Z:\\bazhuayu\\采集","Top改价文档 (xlsm、log)|*.xlsm;*.log|任意文件|*","选择Top改价文档")
+		文件名 = Regex.FindStr(sRet,"[^\\\\]+\\.xlsm",0)
+		iPID = App.Start(sRet, "0", "1")
+		Try 999
+		Catch ee
+			objExcelWorkBook = Excel.BindBook(文件名)
+		Else
+		End Try
 	Else
-	End Try
-	arrayRet_Q10data = CSV.Open("Z:\\bazhuayu\\Qoo10_Data.csv",{"encoding":"auto"})
-	For Each value In Top10csv
-		Topbanhao = CInt(value[0])
-		For Each value_Q10 In arrayRet_Q10data
-			Q10banhao = CInt(value_Q10[0])
-			If Q10banhao = Topbanhao And Topbanhao>0
-				上传文件 = push(上传文件,value_Q10)
+		总行数 = Excel.GetRowsCount(objExcelWorkBook,"Sheet1")
+		array_SH1 = Excel.ReadRange(objExcelWorkBook,"Sheet1","A5:P"&总行数)
+		array_SH5 = Excel.ReadRange(objExcelWorkBook,"Sheet5","A5:AV"&总行数)
+		上传数据 = []
+		For Each value In array_SH1
+			SH1_banhao = CInt(value[0])
+			For Each value_SH5 In array_SH5
+				SH5_banhao = CInt(value_SH5[0])
+				If SH1_banhao = SH5_banhao And SH5_banhao > 0
+					If value[12]<>""
+						value_SH5[8] = value[12]
+						
+					Else
+						
+					End If
+					If value[13]<>""
+						value_SH5[24] = value[13]
+						
+					Else
+						
+					End If
+					If value[14]<>""
+						读入日期 = value[14]
+						bRet = IsNumeric(读入日期)
+						If bRet
+							
+							读入日期 = CInt(读入日期)
+							读入日期 = CStr(读入日期)
+							读入日期长度 = Len(读入日期)
+							TracePrint(读入日期)
+							If 读入日期长度=8
+								年 = Left(读入日期,4)
+								月 = Mid(读入日期,5,2)
+								日 = Right(读入日期,2)
+								販売終了日 = 年&"-"&月&"-"&日
+								dTime2 = Time.DateSerial(年, 月, 日)
+								TracePrint(dTime2,dTime)
+								If dTime2<=dTime
+									iRet = Dialog.MsgBox("添入日期小于等于今天，程序结束，检查后重新保存\n"&販売終了日&"\n"&newQ10data_banhao&"\n"&i+2&"行","販売終了日出错","0",4,0)
+									exit()
+									
+								Else
+									
+								End If
+								
+							Else
+								iRet = Dialog.MsgBox("添入日期出错，程序结束，检查后重新保存\n"&販売終了日&"\n"&newQ10data_banhao&"\n"&i+2&"行","販売終了日出错","0",4,0)
+								exit()
+								
+							End If
+						Else
+							iRet = Dialog.MsgBox("添入日期出错，程序结束，检查后重新保存\n"&販売終了日&"\n"&newQ10data_banhao&"\n"&i+2&"行","販売終了日出错","0",4,0)
+							exit()
+							
+						End If
+						value_SH5[7] = 販売終了日
+						
+					Else
+						
+					End If
+					If value[15]<>""
+						value_SH5[10] = value[15]
+					Else	
+					End If
+					
+					上传数据 = push(上传数据,value_SH5)
+				Else
+					
+				End If
 				
-			Else
-				
-			End If
+			Next
 			
 		Next
-		
-	Next
+	End Try
+	Rem 
 	Try 1
 		objExcelWorkBook = Excel.BindBook("TEST.xlsx")
 	Catch e
-		iPID = App.Start("Z:\\bazhuayu\\TEST.xlsx", "0", "1")
+		iPID = App.Start("Z:\\bazhuayu\\Top10\\TEST.xlsx", "0", "1")
 		Try 999
 			objExcelWorkBook = Excel.BindBook("TEST.xlsx")
 		Catch ee
@@ -249,16 +479,29 @@ Function 保存上传()
 	Else
 	End Try
 	Try 1
-		Excel.WriteRow(objExcelWorkBook,"TEST","A5",上传文件,False)
+		Excel.WriteRow(objExcelWorkBook,"TEST","A5",上传数据,False)
 	Catch e
 		iRet = Dialog.MsgBox(e,"上传文件保存出错","0","1",0)
-		Excel.WriteRow(objExcelWorkBook,"TEST","A5",上传文件,False)
+		Excel.WriteRow(objExcelWorkBook,"TEST","A5",上传数据,False)
 	Else
 		dTime = Time.Now()
 		今天日期 = Time.Format(dTime,"yyyy-mm-dd")
-		Excel.SaveOtherFile(objExcelWorkBook,"Z:\\bazhuayu\\"&今天日期&"-Top10.xlsx")
+		Try 3
+			Excel.SaveOtherFile(objExcelWorkBook,"Z:\\bazhuayu\\Top10\\Q10UP\\"&今天日期&"-Top10.xlsx")
+		Catch e
+			iRet = Dialog.MsgBox(今天日期&"-Top10.xlsx，可能打开或其它错误，确认后重新保存","保存文件出错","0","1",0)
+			Excel.SaveOtherFile(objExcelWorkBook,"Z:\\bazhuayu\\Top10\\Q10UP\\"&今天日期&"-Top10.xlsx")
+			Try 3
+			Catch eee
+				iRet = Dialog.MsgBox("在次保存出错，程序退出","保存文件出错","0","1",0)
+				exit()
+			Else
+			End Try
+		Else
+		End Try
 	End Try
 End Function
+
 
 
 
