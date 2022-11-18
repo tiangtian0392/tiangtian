@@ -1,0 +1,405 @@
+Public filename As String, filenub As String, text As String
+Public filedict As Variant
+Public Path_xlsm As String, Path_csv As String
+Public arr_zaiku
+Public zaikudict As Object
+Public arr As Variant
+
+Private Sub UserForm_Initialize()
+'窗ロ初使化，windows_format
+    paichu = PD_filename("paichu_new.xlsm", "Z:\bazhuayu")
+    zaiku = PD_filename("在庫.csv", "Z:\bazhuayu")
+    'Set zaikudict = CreateObject("Scripting.Dictionary")
+    '引用dict不区分大小写
+    'zaikudict.comparemode = vbTextCompare
+    'arr_zaiku = Workbooks("在庫.csv").Sheets("在庫").[A1].CurrentRegion
+    'Debug.Print arr_zaiku(1, 2)
+    UserForm1.Move 0, 0
+End Sub
+
+Private Sub CommandButton1_Click()
+    'Click_"Open"
+    
+    If Label1.Caption = "" Or Label2.Caption = "" Then
+        MsgBox "Label=None"
+        Exit Sub
+    End If
+    Dim x As Integer
+    With Application.FileDialog(msoFileDialogFilePicker)
+        'default paht
+        .InitialFileName = UserForm1.Label1.Caption
+    'FileDialog.show OK=-1 Cancel=0
+        If .Show = -1 Then
+            path_file = .SelectedItems(1)
+            file = Right(path_file, Len(path_file) - InStrRev(path_file, "\"))
+            filename = Left(file, InStrRev(file, ".") - 1)
+            'Debug.Print path_file, file, filename
+        End If
+    End With
+    
+    Open_file
+    
+
+    
+End Sub
+
+Private Sub CommandButton2_Click()
+'Click_"Save"
+    Debug.Print filename
+    filenub = CStr(Int(Left(filename, InStr(filename, ".") - 1)) + 1)
+    'Debug.Print "filenumber=" & filenub, VarType(filenub)
+    file = filedict(filenub)
+    Save_file
+    Workbooks(filename & ".csv").Close
+    Workbooks(filename & ".xlsm").Save
+    Workbooks(filename & ".xlsm").Close
+   
+    
+    filename = Left(file, InStrRev(file, ".") - 1)
+    CommandButton3.Caption = "Next(" & filenub & ")"
+End Sub
+
+Private Sub CommandButton3_Click()
+'"Click_"Next"
+    Debug.Print filename
+    Open_file
+   
+End Sub
+
+Private Sub CommandButton4_Click()
+    
+
+End Sub
+
+Private Sub CommandButton5_Click()
+'Click_"Path_xlsm:"
+On Error GoTo a
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .InitialFileName = "C:\bazhuayu\"
+        .Title = "請選工作のXLSMフォルダ"
+    'FileDialog.show OK=-1 Cancel=0
+        If .Show = -1 Then
+            Path_xlsm = .SelectedItems(1)
+            'Debug.Print Path_xlsm
+            UserForm1.Label1.Caption = Path_xlsm
+        End If
+    End With
+    dict = getfiledict(Path_xlsm)
+    Show_label3 "set path = " & Path_xlsm
+a:
+    Show_label3 "XLSMフォルダ = Null"
+End Sub
+
+Private Sub CommandButton6_Click()
+'Click_Path_csv
+On Error GoTo a
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .InitialFileName = "Z:\bazhuayu\caiji"
+        .Title = "請選掃描完成のCSVフォルダ"
+    'FileDialog.show OK=-1 Cancel=0
+        If .Show = -1 Then
+            Path_csv = .SelectedItems(1)
+            'Debug.Print Path_csv
+            UserForm1.Label2.Caption = Path_csv
+        End If
+    End With
+    Show_label3 "set path = " & Path_csv
+a:
+    Show_label3 "CSVフォルダ = Null"
+End Sub
+Private Sub CommandButton7_Click()
+'Click_Path_DD,生成定単数組
+    On Error GoTo a
+    Dim cnn As Object, SQL$, MyPath$, MyFile$, m&
+    With Application.FileDialog(msoFileDialogFolderPicker)
+        .InitialFileName = "Z:\bazhuayu"
+        .Title = "請選Q10_定単のフォルダ"
+    'FileDialog.show OK=-1 Cancel=0
+        If .Show = -1 Then
+            Path_DD = .SelectedItems(1)
+            'Debug.Print Path_DD
+            UserForm1.Label4.Caption = Path_DD
+        End If
+    End With
+    
+    MyPath = Path_DD & "\"
+    Set cnn = CreateObject("adodb.connection")
+    If Dir(MyPath & "total.csv") <> "" Then Kill MyPath & "total.csv"
+    MyFile = Dir(MyPath & "*.csv")
+    Do While MyFile <> ""
+        Name MyPath & MyFile As MyPath & "000" & m & ".csv"
+        MyFile = "000" & m & ".csv"
+        m = m + 1
+        If SQL = "" Then SQL = "select * from " & MyFile Else SQL = SQL & " union all select * from " & MyFile
+        MyFile = Dir()
+    Loop
+    cnn.Open "Provider=Microsoft.ACE.OLEDB.12.0;Extended Properties='text;FMT=DELIMITED';Data Source=" & MyPath
+    SQL = "select * into [total.csv] from (" & SQL & ")"
+    'Debug.Print SQL
+    Dim rs As Object
+    cnn.Execute (SQL)
+    SQL = "select 商品番号, 数量 from total.csv"
+    Set rs = cnn.Execute(SQL)
+    drr = rs.getrows
+    L1 = LBound(drr): U1 = UBound(drr)
+    L2 = LBound(drr, 2): U2 = UBound(drr, 2)
+    ReDim arr(L2 To U2, L1 To U1)
+    For i = L1 To U1
+        For J = L2 To U2
+            arr(J, i) = drr(i, J)
+        Next
+    Next
+    cnn.Close
+    Set cnn = Nothing
+    Kill MyPath & "schema.ini"
+    Show_label3 m & "个Q10 files 以合并成total.csv"
+a:
+    Show_label3 "Q10_定単のフォルダ path = Null"
+End Sub
+Private Sub CommandButton8_Click()
+'Click_Setsh5_u,footer_html
+    On Error GoTo a
+    With Application.FileDialog(msoFileDialogFilePicker)
+        .InitialFileName = "C:\Users\user\Pictures\html"
+        .Title = "請選footer_htmlのtxt"
+    'FileDialog.show OK=-1 Cancel=0
+        If .Show = -1 Then
+            SetSH5_U = .SelectedItems(1)
+            'Debug.Print Path_csv
+            UserForm1.Label5.Caption = SetSH5_U
+        End If
+    End With
+        
+    f = SetSH5_U
+    Open f For Input As #1
+    Do Until EOF(1)
+        Line Input #1, src
+        text = text & src
+        
+    Loop
+    Debug.Print text
+    Close #1
+    Show_label3 "SetSH5_U = " & SetSH5_U
+a:
+    
+    Show_label3 "footer_htmlのtxt = Null"
+End Sub
+
+Function PD_filename(filename, path, Optional workname As Workbook)
+    Dim x As Integer
+    For x = 1 To Workbooks.Count
+        If Workbooks(x).name = filename Then
+            'Debug.Print "File is Opening"
+            Exit Function
+        End If
+    Next
+    'Debug.Print path, filename, workname
+    Set workname = Workbooks.Open(path & "\" & filename)
+    'Debug.Print workname
+    
+End Function
+Function getfiledict(path)
+    'Debug.Print path
+    Set filedict = CreateObject("Scripting.dictionary")
+    Application.ScreenUpdating = False
+    file = Dir(path & "\*.xlsm")
+    Do While file <> ""
+        If file <> "." And file <> ".." Then
+            
+            nub = Left(file, InStr(file, ".") - 1)
+            'Debug.Print file, nub
+            filedict.Add nub, file
+            file = Dir
+        End If
+        
+    Loop
+    
+    Debug.Print "file in filedict =" & filedict.Count
+End Function
+
+Function setwindow()
+'Max windows
+    With Application
+        .WindowState = xlNormal
+        On Error Resume Next
+        .Top = 10
+        .Left = 10
+        .WindowState = xlMaximized
+    End With
+
+End Function
+Function Open_file()
+    paichu = PD_filename("paichu_new.xlsm", "Z:\bazhuayu")
+    zaiku = PD_filename("在庫.csv", "Z:\bazhuayu")
+    test = PD_filename("TEST.xlsx", "Z:\bazhuayu")
+    file_csv = PD_filename(filename & ".csv", UserForm1.Label2.Caption)
+    file_xlsm = PD_filename(filename & ".xlsm", UserForm1.Label1.Caption)
+    Workbooks(filename & ".xlsm").Activate
+    y = ActiveSheet.UsedRange.Rows.Count
+    setwindow
+    'Debug.Print filename
+    With Workbooks(filename & ".xlsm")
+        .Sheets("Sheet1").Select
+        .Sheets("Sheet1").Range("E1").Select
+        .Sheets("Sheet1").Range("AC1").Select
+        .Sheets("Sheet1").Range("AC2:AC" & y).Value = ""
+        .Sheets("Sheet1").Range("AC:AC").Style = "Normal"
+        .Sheets("Sheet1").Range("T:T").Style = "Normal"
+    End With
+    'Application.Wait (Now + TimeValue("0:00:005"))
+    If CheckBox2.Value = True Then DB_dingdian
+    If CheckBox4.Value = True Then Shoushuliao
+   
+    Show_label3 "Open file Ok " & filename
+End Function
+Function Save_file()
+    Dim upBanhao As Variant, Sh3_arr As Variant, Sh5_arr As Variant, updata_arr As Variant
+    y = Workbooks(filename & ".xlsm").Sheets("Sheet1").UsedRange.Rows.Count
+    upBanhao = Workbooks(filename & ".xlsm").Sheets("Sheet2").Range("N2:N" & y).Value
+    Sh3_arr = Workbooks(filename & ".xlsm").Sheets("Sheet3").Range("A2:AC" & y).Value
+    Sh5_arr = Workbooks(filename & ".xlsm").Sheets("Sheet5").Range("A2:AV" & y).Value
+    ReDim updata_arr(1 To Application.Sum(upBanhao), 1 To UBound(Sh5_arr, 2))
+    J = 1
+    For i = 1 To UBound(upBanhao, 1)
+        'Debug.Print upBanhao(i, 1)
+        If upBanhao(i, 1) = 1 Then
+            For x = 1 To UBound(Sh5_arr, 2)
+                If x = 8 Then
+                    updata_arr(J, x) = Sh3_arr(i, 14)
+                ElseIf x = 9 Then
+                    updata_arr(J, x) = Sh3_arr(i, 12)
+                ElseIf x = 11 Then
+                    updata_arr(J, x) = Sh3_arr(i, 13)
+                ElseIf x = 21 And Len(Sh5_arr(i, x)) > 0 And CheckBox5.Value = True Then
+                    
+                    updata_arr(J, x) = text
+                ElseIf x = 25 Then
+                    updata_arr(J, x) = Sh3_arr(i, 29)
+                Else
+                    updata_arr(J, x) = Sh5_arr(i, x)
+                End If
+            Next x
+            J = J + 1
+        End If
+        
+    Next i
+    xlname = Format(Date, "YYYYMMDD-") & filename & ".xlsx"
+    Application.DisplayAlerts = False
+    With Workbooks("TEST.xlsx")
+        .Sheets("TEST").Range("A5").Resize(UBound(updata_arr, 1), UBound(updata_arr, 2)).Value = updata_arr
+        .SaveAs ("C:\bazhuayu\Q10up\" & xlname)
+    End With
+    Workbooks(xlname).Close
+    Application.DisplayAlerts = True
+    If CheckBox4.Value = True Then xieru
+    Show_label3 "Save file Ok " & filename
+End Function
+Function DB_dingdian()
+'定単処理
+    Dim ddarr As Variant
+    y = Workbooks(filename & ".xlsm").Sheets("Sheet1").UsedRange.Rows.Count
+    'Debug.Print y
+    ReDim ddarr(y - 2)
+    banhao_arr = Workbooks(filename & ".xlsm").Sheets("Sheet1").Range("A2:A" & y).Value
+    For i = 1 To UBound(banhao_arr, 1)
+        'Debug.Print banhao_arr(i, 1)
+        jishu = 0
+        For J = 0 To UBound(arr, 1)
+            If Int(banhao_arr(i, 1)) = Int(arr(J, 0)) Then
+                jishu = jishu + Int(arr(J, 1))
+                'Debug.Print banhao_arr(i, 1), jishu
+            End If
+            
+        Next J
+        ddarr(i - 1) = jishu
+    Next i
+    Workbooks(filename & ".xlsm").Sheets("Sheet2").Range("G2:G" & y).Value = Application.WorksheetFunction.Transpose(ddarr)
+    Show_label3 "Ding dian dui bi OK"
+End Function
+Function Show_label3(text)
+    Label3.Caption = text
+End Function
+Function Shoushuliao()
+'手数料,不在出品,大サイズ
+    
+    
+    num_paichu = Workbooks("paichu_new.xlsm").Worksheets(3).Range("G65536").End(xlUp).Row
+    ss_paichu = Workbooks("paichu_new.xlsm").Worksheets(3).Range("G2:H" & num_paichu)
+    num_Sh3A = Workbooks("paichu_new.xlsm").Worksheets(3).Range("A65536").End(xlUp).Row
+    ss_buzaichupin = Workbooks("paichu_new.xlsm").Worksheets(3).Range("A2:D" & num_Sh3A)
+    num_saizi = Workbooks("paichu_new.xlsm").Worksheets(4).Range("A65536").End(xlUp).Row
+    ss_saizi = Workbooks("paichu_new.xlsm").Worksheets(4).Range("A2:E" & num_saizi)
+    
+    '工作表操作部分，非激活ERR
+    Workbooks(filename & ".xlsm").Sheets("Sheet1").Activate
+    num_row = Sheets("Sheet1").UsedRange.Rows.Count
+    'Debug.Print num_row
+    She5_arr = Workbooks(filename & ".xlsm").Sheets("Sheet5").Range("C2:C" & num_row)
+    She5_D = Workbooks(filename & ".xlsm").Sheets("Sheet5").Range("D2:D" & num_row)
+    She5_A = Workbooks(filename & ".xlsm").Sheets("Sheet5").Range("A2:A" & num_row)
+    For i = 1 To UBound(She5_arr, 1)
+        '手数料
+        For J = 1 To UBound(ss_paichu, 1)
+             If ss_paichu(J, 1) = She5_arr(i, 1) Then
+                 She5_arr(i, 1) = 1 - ss_paichu(J, 2)
+                 'Debug.Print ss_paichu(J, 2), She5_arr(i, 1), i
+                 Exit For
+             End If
+         Next J
+         '不在出品
+         For x = 1 To UBound(ss_buzaichupin, 1)
+             If Str(ss_buzaichupin(x, 1)) = Str(She5_D(i, 1)) And ss_buzaichupin(x, 1) <> "" Then
+                 'Debug.Print ss_buzaichupin(J, 1), She5_D(i, 1), i
+                 She5_D(i, 1) = 1
+                 Exit For
+             End If
+         Next x
+         If She5_D(i, 1) <> 1 Then
+             She5_D(i, 1) = 0
+         End If
+         '大サイズ
+         For S = 1 To UBound(ss_saizi, 1)
+             If ss_saizi(S, 1) = She5_A(i, 1) Then
+                 Workbooks(filename & ".xlsm").Sheets("Sheet1").Range("AD" & i + 1).Value = ss_saizi(S, 5)
+                 'Debug.Print ss_paichu(J, 2), She5_arr(i, 1), i
+                 Exit For
+             End If
+         Next S
+    Next i
+    'list写入区域
+    With Workbooks(filename & ".xlsm")
+        .Sheets("Sheet2").Range("R2").Resize(UBound(She5_arr, 1), UBound(She5_arr, 2)).Value = She5_arr
+        .Sheets("Sheet2").Range("M2").Resize(UBound(She5_D, 1), UBound(She5_D, 2)).Value = She5_D
+    End With
+    Show_label3 "Show shu liao write Ok "
+End Function
+Function xieru()
+    If Workbooks(filename & ".xlsm").Sheets("Sheet4").Range("AU1").Value = Date Then Exit Function
+    
+    Workbooks(filename & ".xlsm").Sheets("Sheet1").Activate
+    y = ActiveSheet.UsedRange.Rows.Count
+    
+    Worksheets("sheet4").Range("M1:P" & y).Value = Worksheets("sheet4").Range("n1:" & "Q" & y).Value
+    Worksheets("sheet4").Range("Q2:Q" & y).Value = Worksheets("sheet4").Range("L2:L" & y).Value
+    Sheets("Sheet4").[Q1] = Date
+    
+    Worksheets("sheet4").Range("Y1:AB" & y).Value = Worksheets("sheet4").Range("Z1:AC" & y).Value
+    Worksheets("sheet4").Range("AC2:AC" & y).Value = Worksheets("sheet4").Range("X2:X" & y).Value
+    Sheets("Sheet4").[AC1] = Date
+    
+    Worksheets("sheet4").Range("AE1:AH" & y).Value = Worksheets("sheet4").Range("AF1:AI" & y).Value
+    Worksheets("sheet4").Range("AI2:AI" & y).Value = Worksheets("sheet4").Range("AD2:AD" & y).Value
+    Sheets("Sheet4").[AI1] = Date
+        
+    Worksheets("sheet4").Range("AK1:AN" & y).Value = Worksheets("sheet4").Range("AL1:AO" & y).Value
+    Worksheets("sheet4").Range("AO2:AO" & y).Value = Worksheets("sheet4").Range("AJ2:AJ" & y).Value
+    Sheets("Sheet4").[AO1] = Date
+    
+    Worksheets("sheet4").Range("AQ1:AT1").Value = Worksheets("sheet4").Range("AR1:AU1").Value
+    Worksheets("sheet4").[AU1] = Date
+    
+    Worksheets("sheet2").Range("H12:K15").Value = Worksheets("sheet2").Range("H13:K16").Value
+    Worksheets("sheet2").Range("H16:J16").Value = Worksheets("sheet2").Range("H2:J2").Value
+    Sheets("Sheet2").[k16] = Date
+    Show_label3 "Sh4 write Ok "
+End Function
