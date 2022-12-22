@@ -1,0 +1,121 @@
+Import image_size
+Dim data_list = ""
+Dim 表名 = ""
+Dim dictRet = ""
+Dim iPID = ""
+Dim arrRet = ""
+Dim 图片地址 = ""
+Dim dRet = ""
+Dim 高 = ""
+Dim 宽 = ""
+Dim x = ""
+Dim temp = ""
+Dim copy = ""
+Dim bRet = ""
+Dim K = ""
+Dim TQ = ""
+Dim QQ = ""
+Dim arrayRet = ""
+Dim sRet = ""
+Dim item = ""
+Dim arrayEXCEL = ""
+Dim iRet = ""
+Dim objExcelWorkBook = ""
+dictRet = Dialog.UDFDialog("配置",@res"1656985035118.json", { "return" : 1, "列名" : "A", "范围" : "all", "表名" : "Sheet1", "选择文件" : "Z:\\1重要：文件夹说明\\2022-06-29\\11.カメラ、ミラーレス一眼、デジタル一眼、コンパクトデジタルカメラ.csv" },{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+TracePrint("dictRet",dictRet)
+待添加的文件 = dictRet["选择文件"]
+表名 = dictRet["表名"]
+列名 = dictRet["列名"]
+待添加的文件 = Regex.FindStr(待添加的文件,"[^\\\\]+(?!.*\\\\)",0)
+TracePrint(待添加的文件)
+Try 3
+	objExcelWorkBook = Excel.BindBook(待添加的文件)
+Catch e
+	iRet = Dialog.MsgBox("要绑定的文件没有打开，程序退出","错误","0","1",0)
+	exit()
+Else
+End Try
+Excel.ActiveBook(objExcelWorkBook)
+iRet = Excel.GetRowsCount(objExcelWorkBook,表名)
+TracePrint(iRet)
+arrayEXCEL = Excel.ReadRange(objExcelWorkBook,表名,列名&"1:"&列名&iRet)
+item = Shift(arrayEXCEL)
+data_list = []
+If dictRet["范围" ]<>'all' 
+	范围 = Regex.FindAll(dictRet["范围"],"\\d+")
+	范围下标 = UBound(范围)
+	TracePrint("范围,范围下标",范围,范围下标)
+	If 范围下标=0
+		范围[1] = 范围[0]
+		
+	Else
+		
+	End If
+	TracePrint("范围",范围)
+	For i = CINT(范围[0])-2 To CINT(范围[1])-2 Step 1 
+		data_list = push(data_list,arrayEXCEL[i])
+		
+	Next
+	
+	arrayEXCEL = data_list
+Else
+	
+End If
+excel长度 = UBound(arrayEXCEL)
+TracePrint("excel长度",excel长度)
+K = []
+For Each value In arrayEXCEL
+	图片地址 = ""
+	iRet = CInt(value[0])
+	If iRet>0
+		// TracePrint("K-"&K)
+		copy = "Z:\\bazhuayu\\Q10_image\\"&iRet&".jpg"
+		bRet = File.FileExists(copy)
+		If bRet
+			
+		Else
+			bRet1 = File.FileExists("C:\\Users\\user\\Pictures\\"&iRet&".jpg")
+			If bRet1
+				copy = "C:\\Users\\user\\Pictures\\"&iRet&".jpg"
+				
+			Else
+				TracePrint(iRet,"图片没有找到，使用NO.jpg")
+				copy = "Z:\\bazhuayu\\Q10_image\\NO.jpg"
+				
+			End If
+			
+		End If
+		// TracePrint(copy)
+		Try 3
+			xx=image_size.get_image_size(copy)
+		Catch e
+			图片地址 = "<table><img src=\"Z:\\bazhuayu\\Q10_image\\NO.jpg\" width=\""&宽&"\"height=\""&高&"\">"
+			K = push(K,图片地址)
+		Else
+			If xx[0]>=xx[1]
+				宽 = 45
+				高 = 45/xx[0]*xx[1]
+				
+			Else
+				宽 = 45/xx[1]*xx[0]
+				高 = 45
+				
+			End If
+			图片地址 = "<table><img src=\""&copy&"\" width=\""&宽&"\"height=\""&高&"\">"
+			K = push(K,图片地址)
+		End Try
+	Else
+		
+	End If
+	
+Next
+paichuexcel = Excel.BindBook("paichu.xlsx")
+Excel.DeleteColumn(paichuexcel,"删除商品","K1",False)
+Excel.WriteColumn(paichuexcel,"删除商品","K1",K,False)
+iPID = App.Run("notepad.exe", "0", "1")
+Excel.ActiveBook(paichuexcel)
+
+
+
+
+
