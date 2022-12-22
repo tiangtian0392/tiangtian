@@ -1,0 +1,560 @@
+Import image_size
+Dim iRet1 = ""
+Dim set_dict = ""
+Dim 绑定 = ""
+Dim data_list = ""
+Dim copy = ""
+Dim paichuexcel = ""
+Dim excel长度 = ""
+Dim 列名 = ""
+Dim 表名 = ""
+Dim dictRet = ""
+Dim 查找对比 = ""
+Dim Q10data文件名 = ""
+Dim 番号 = ""
+Dim 找到 = ""
+Dim arrRet = ""
+Dim iPID = ""
+Dim bRet = ""
+Dim Q10行数 = ""
+Dim arrayQ10JAN = ""
+Dim Value = ""
+Dim arrayEXCEL = ""
+Dim objExcelWorkBook = ""
+Dim excel文件名 = ""
+Dim 待写入行数 = ""
+Dim arr待写入行号 = ""
+Dim 总行数 = ""
+Dim arr添加标题 = ""
+Dim 行号止 = ""
+Dim 确认 = ""
+Dim Text起 = ""
+Dim Text = ""
+Dim 在庫出力文件表名 = ""
+Dim 待添加的文件 = ""
+Dim 源表名 = ""
+Dim 源表文件 = ""
+Dim arr源表CSV = ""
+Dim objControl = ""
+Dim ButtonID = ""
+Dim objButton = ""
+Dim winForm = ""
+Dim dRet = ""
+Dim dTime = ""
+Dim objWindow = ""
+Dim Q10data文件 = ""
+Dim 在庫出力文件 = ""
+Dim arrayRet = ""
+Dim arr以有番号 = ""
+Dim K = ""
+Dim iRet = ""
+Dim temp = ""
+Dim arr待写入源表 = ""
+Dim objRet = ""
+Dim arr添加网址 = ""
+Dim arr添加行号 = ""
+Dim 行号起 = ""
+Dim b = ""
+Dim zz = ""
+Dim item = ""
+Dim 文件 = ""
+Dim sRet = ""
+
+
+全局循环 = 6
+objWindow = PrintToScreen.CreateWindow({"height":111,"resolution":{"height":1080,"width":1920},"width":316,"x":1576,"y":922},True)
+Rem 主程序
+Do While True
+	myUI.RestoreControls()
+	winForm = myUI.CreateForm("在库出力添加到扫描文件",370,210)
+	objButton = myUI.CreateButton(winForm,"Confirm","选择Q10data文件",100,24,0,3)
+	objControl = myUI.CreateControl(winForm,"Label",Q10data文件,260,24,105,8)
+	objControl = myUI.CreateControl(winForm,"Label",源表文件,260,24,105,38)
+	objButton = myUI.CreateButton(winForm,"Suspend","要添加的文件",100,24,0,57)
+	objControl = myUI.CreateControl(winForm,"Label",显示待添加的文件,260,24,105,65)
+	objButton = myUI.CreateButton(winForm,"Retry","打开在库出力",100,24,0,84)
+	objControl = myUI.CreateControl(winForm,"Label",在庫出力文件,260,24,105,92)
+	objControl = myUI.CreateControl(winForm,"Label","指定添加范围",80,24,5,118)
+	objControl起 = myUI.CreateControl(winForm,"TextBox","P",24,24,85,115)
+	objControl = myUI.CreateControl(winForm,"Label","至",15,24,110,118)
+	objControl止 = myUI.CreateControl(winForm,"TextBox","P",24,24,125,115)
+	objButton = myUI.CreateButton(winForm,"Yes","1-添加番号",88,24,3,150)
+	objButton = myUI.CreateButton(winForm,"Ignore","2-开始",88,24,94,150)
+	objButton1 = myUI.CreateButton(winForm,"Cancel","生成图片地址",88,24,186,150)
+	objButton = myUI.CreateButton(winForm,"No","退出",88,24,278,150)
+	myUI.ShowModal(winForm)
+	Text起 = myUI.GetControlText(objControl起)
+	Text止 = myUI.GetControlText(objControl止)
+	ButtonID = myUI.GetButtonID()
+	TracePrint(ButtonID)
+	If ButtonID=7
+		Return retValue
+		
+	ElseIf ButtonID=1
+		Q10data文件 = Dialog.OpenFile("C:\\Users\\user\\Downloads","Q10data (xlsx)|*.xlsx|任意文件|*","指定Q10data")
+		If Q10data文件 = ""
+			
+		Else
+			
+			Q10data文件名  = Regex.FindStr(Q10data文件,"Qoo10_.*.xlsx$",0)
+			Try 3
+				Q10data = Excel.BindBook(Q10data文件名)
+			Catch e
+				文件 = App.Start(Q10data文件, "0", "1")
+			Else
+			End Try
+			
+			INI.Write(@res"config.ini", "seting", "窗口", "1")
+		End If
+	ElseIf ButtonID=2
+		添图()
+		
+	ElseIf ButtonID=3
+		待添加的文件 = Dialog.OpenFile("C:\\bazhuayu\\采集","要添加的文件 (xlsm、log)|*.xlsm|任意文件|*","指定要添加的文件")
+		If 待添加的文件 = ""
+			
+		Else
+			
+			excel文件名 = Regex.FindStr(待添加的文件,"[^\\\\]+(?!.*\\\\)",0)
+			sRet = Regex.FindStr(待添加的文件,"(\\d[\\s\\S]*?)(?=.xlsm)",0)
+			Try 1
+				iPID = App.Start("C:\\bazhuayu\\caiji\\"&sRet&".csv", "0", "1")
+			Catch e
+				待打开的CSV = Dialog.OpenFile("C:\\bazhuayu\\caiji","要添加的文件 (csv、log)|*.csv|任意文件|*","指定要添加的文件")
+				iPID = App.Start(待打开的CSV, "0", "1")
+			Else
+			End Try
+			文件 = App.Start(待添加的文件, "0", "1")
+			iRet1 = InStrRev(待添加的文件,"\\",1,False)
+			待添加的文件 = Mid(待添加的文件,iRet1+1,99)
+			TracePrint(待添加的文件)
+			显示待添加的文件 = Left(待添加的文件,15)
+			显示待添加的文件 = 显示待添加的文件&"..."
+			INI.Write(@res"config.ini", "seting", "窗口", "1")
+		End If
+		
+	ElseIf ButtonID=4
+		在庫出力文件 = Dialog.OpenFile("Z:\\YS登録\\在庫出力","在库出力 (csv、csv)|*.csv|任意文件|*","指定在库出力")
+		If 在庫出力文件=""
+			
+		Else
+			
+			array在庫出力 = CSV.Open(在庫出力文件,{"encoding":"auto"})
+			文件 = App.Start(在庫出力文件, "0", "1")
+			iRet1 = InStrRev(在庫出力文件,"\\",1,False)
+			在庫出力文件 = Mid(在庫出力文件,iRet1+1,99)
+			TracePrint(在庫出力文件)
+			在庫出力文件表名 = Replace(在庫出力文件,".csv","",False)
+			INI.Write(@res"config.ini", "seting", "窗口", "1")
+		End If
+		
+	ElseIf ButtonID=5
+		添加(Text起,Text止)
+		INI.Write(@res"config.ini", "seting", "窗口", "1")
+		
+	ElseIf ButtonID=6
+		商品番号()
+		INI.Write(@res"config.ini", "seting", "窗口", "1")
+		
+		
+	End If
+	
+	Rem 
+Loop
+Rem 添加子程序
+Function 添加(Text起,Text止)
+	PrintToScreen.DrawText(objWindow,"开始添加",18,[255,0,0])
+	TracePrint(源表文件)
+	待添加 = Excel.BindBook(待添加的文件)
+	Try 1
+		Q10data = Excel.BindBook(Q10data文件名)
+	Catch e
+	Else
+	End Try
+	Try 1
+		在庫出力 = Excel.BindBook(在庫出力文件)
+	Catch e
+		Excel.ActiveBook(在庫出力)
+	Else
+	End Try
+	arr添加行号 = Excel.ReadRange(在庫出力,在庫出力文件表名,Text起&":"&Text止)
+	TracePrint(arr添加行号)
+	行号起 = DigitFromStr(Text起)
+	行号止 = DigitFromStr(Text止)
+	TracePrint(行号起)
+	TracePrint(行号止)
+	PrintToScreen.DrawText(objWindow,"读取在库文件数据",18,[255,0,0])
+	arr在库数据 = Excel.ReadRange(在庫出力,在庫出力文件表名,"A"&行号起&":"&"P"&行号止)
+	Excel.ActiveBook(待添加)
+	总行数 = Excel.ReadColumn(待添加,"Sheet1","A1")
+	K = 0
+	For Each value In 总行数
+		
+		If value<>""
+			K = K+1
+			
+		Else
+			
+			Break
+		End If
+	Next
+	总行数 = K
+	TracePrint(总行数)
+	PrintToScreen.DrawText(objWindow,"计算待添加文件行数",18,[255,0,0])
+	arr以有番号 = Excel.ReadColumn(待添加,"Sheet3","A2")
+	arr添加网址 = []
+	arr添加型番 = []
+	arr添加标题 = []
+	arr待写入源表 = []
+	arr待写入行号 = []
+	K = 0
+	相同番号 = []
+	TracePrint("arr添加行号,arr以有番号",arr添加行号,arr以有番号)
+	For Each value In arr添加行号
+		查找对比 = 0
+		
+		For Each 以有番号 In arr以有番号
+			
+			If 以有番号<>"" And value[0]=以有番号 
+				相同番号 = push(相同番号,value)
+				查找对比 = 1
+				
+			Else
+				
+			End If
+		Next
+		If 查找对比=0
+			arr待写入行号 = push(arr待写入行号,value)
+			For Each value_在库数据 In arr在库数据
+				If value_在库数据[15]=value[0]
+					arr添加网址 = push(arr添加网址,[value_在库数据[10]])
+					arr添加型番 = push(arr添加型番,[value_在库数据[1]])
+					arr添加标题 = push(arr添加标题,[value_在库数据[9]])
+					
+					Break
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		K = K+1
+	Next
+	待写入行数 = K
+	TracePrint(待写入行数)
+	iRet = Dialog.MsgBox("要写入表格共计"&总行数&"行，待写入"&K&"行，核对总行数及待写入行数，是否正确","核对总行数",1,"1",0)
+	If iRet=6
+		
+	Else
+		
+		iRet = Dialog.MsgBox("内容有误，按确定后关闭程序","条件不一致","0",4,0)
+		exit()
+	End If
+	Rem  以下操作源表
+	PrintToScreen.DrawText(objWindow,"开始写入源表数据",18,[255,0,0])
+	TracePrint("arr添加标题",arr添加标题)
+	Excel.ActiveBook(待添加)
+	Excel.WriteRange(待添加,"源","A"&总行数+1,arr待写入行号,False)
+	Excel.WriteRange(待添加,"源","B"&总行数+1,arr添加标题,False)
+	Excel.WriteRange(待添加,"源","V"&总行数+1,arr添加网址,False)
+	Rem  以下操作表3内容
+	PrintToScreen.DrawText(objWindow,"写入表3数据",18,[255,0,0])
+	Excel.ActiveBook(待添加)
+	Excel.WriteRange(待添加,"Sheet3","A"&总行数+1,arr待写入行号,False)
+	Excel.WriteRange(待添加,"Sheet3","B"&总行数+1,arr添加型番,False)
+	Excel.SelectRange(待添加,"Sheet3","C"&总行数&":AD"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Delay(3000)
+	Catch e
+	Else
+	End Try
+	Rem  以下为操作表4
+	PrintToScreen.DrawText(objWindow,"写入表4数据",18,[255,0,0])
+	Excel.ActiveBook(待添加)
+	Excel.WriteRange(待添加,"Sheet4","A"&总行数+1,arr待写入行号,False)
+	Excel.WriteRange(待添加,"Sheet4","B"&总行数+1,arr添加标题,False)
+	Excel.SelectRange(待添加,"Sheet4","D"&总行数&":L"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		#icon("@res:c66ko1uo-3gn3-9bec-jgra-i6sg51h5e8i0.png")
+		Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",2000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(3000)
+	Catch e
+	Else
+	End Try
+	Excel.SelectRange(待添加,"Sheet4","X"&总行数&":X"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Delay(3000)
+	Catch e
+	Else
+	End Try
+	Excel.SelectRange(待添加,"Sheet4","AD"&总行数&":AD"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Delay(3000)
+	Catch e
+	Else
+	End Try
+	Excel.SelectRange(待添加,"Sheet4","AJ"&总行数&":AJ"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Delay(1000)
+	Catch e
+	Else
+	End Try
+	Rem  以下为操作表2
+	PrintToScreen.DrawText(objWindow,"写入表2数据",18,[255,0,0])
+	Excel.ActiveBook(待添加)
+	Excel.SelectRange(待添加,"Sheet2","A"&总行数&":F"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		#icon("@res:c66ko1uo-3gn3-9bec-jgra-i6sg51h5e8i0.png")
+		Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",2000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(1000)
+	Catch e
+	Else
+	End Try
+	Excel.SelectRange(待添加,"Sheet2","L"&总行数&":U"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		#icon("@res:c66ko1uo-3gn3-9bec-jgra-i6sg51h5e8i0.png")
+		Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",2000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(1000)
+	Catch e
+	Else
+	End Try
+	Rem  以下为操作表1
+	PrintToScreen.DrawText(objWindow,"写入表1数据",18,[255,0,0])
+	Excel.ActiveBook(待添加)
+	Excel.WriteRange(待添加,"Sheet1","A"&总行数+1,arr待写入行号,False)
+	Excel.WriteRange(待添加,"Sheet1","B"&总行数+1,arr添加标题,False)
+	Excel.SelectRange(待添加,"Sheet1","C"&总行数&":C"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Delay(3000)
+	Catch e
+	Else
+	End Try
+	Excel.SelectRange(待添加,"Sheet1","E"&总行数&":AB"&总行数+待写入行数 )
+	Try 3
+		Delay(1000)
+		Keyboard.Press("D", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		#icon("@res:c66ko1uo-3gn3-9bec-jgra-i6sg51h5e8i0.png")
+		Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"Microsoft Excel"},{"cls":"Button","title":"OK","ctrlid":2,"aaname":"OK"}]},"left","click",2000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Delay(1000)
+	Catch e
+	Else
+	End Try
+	
+End Function
+Rem 在库文件添加商品番号
+Function 商品番号()
+	PrintToScreen.DrawText(objWindow,"开始添加商品番号",18,[255,0,0])
+	dTime = Time.Time()
+	在庫出力 = Excel.BindBook(在庫出力文件)
+	在庫出力行数 = Excel.GetRowsCount(在庫出力,在庫出力文件表名)
+	arrayJAN = Excel.ReadRange(在庫出力,在庫出力文件表名,"A2:K"&在庫出力行数)
+	Q10data = Excel.BindBook(Q10data文件名)
+	Q10行数 = Excel.GetRowsCount(Q10data,"Sheet1")
+	arrayQ10JAN = Excel.ReadRange(Q10data,"Sheet1","A1:AL"&Q10行数)
+	番号 = []
+	For Each value In arrayJAN
+		找到 = 0
+		For Each Q10 In arrayQ10JAN
+			Q10_JAN = CInt(Q10[37])
+			If Q10_JAN=value[0] And Q10_JAN >0 
+				番号 = push(番号,Q10[0])
+				找到 = 1
+				
+				Break
+			Else
+				
+			End If
+			
+		Next
+		
+		If 找到=0
+			番号 = push(番号,"")
+			
+		Else
+			
+		End If
+	Next
+	
+	Excel.ActiveBook(在庫出力)
+	iRet = Excel.GetRowsCount(在庫出力,在庫出力文件表名)
+	Excel.WriteColumn(在庫出力,在庫出力文件表名,"P2",番号,False)
+	objRet = Excel.ReadCell(在庫出力,在庫出力文件表名,"A2:M"&iRet)
+	K = 0
+	For Each value In objRet
+		For Each Q10JAN In arrayQ10JAN
+			Q10番号 = CInt(Q10JAN[0])
+			If Q10番号=value[12]
+				If Q10JAN[1]=value[1]
+					
+				Else
+					TracePrint(Q10JAN[0]&"/在库-"&value[1]&"/Q10-"&Q10JAN[1]&"/不同，检查")
+					K = K+1
+					
+				End If
+				
+			Else
+				
+			End If
+			
+		Next
+		
+	Next
+	If K>0
+		PrintToScreen.DrawText(objWindow,"有-"&K&"个不同，查看",18,[255,0,0])
+		
+	Else
+		
+		PrintToScreen.DrawText(objWindow,"用时"&iRet&"秒",18,[255,0,0])
+	End If
+End Function
+Rem excel添图
+Function 添图()
+	arrayRet = File.DirFileOrFolder("C:\\bazhuayu\\采集","fileandfolder",{"hasPath":True})
+	绑定 = ""
+	For Each value In arrayRet
+		文件名 = Regex.FindStr(value,"\\d.*",0)
+		Try 1
+			tiantuWorkBook = Excel.BindBook(文件名)
+		Catch e
+		Else
+			绑定 = "OK"
+			Break
+		End Try
+		
+	Next
+	TracePrint(绑定,文件名)
+	If 绑定<>""
+		set_dict = Format("{ \"return\" : 1, \"列名\" : \"A\", \"范围\" : \"all\", \"表名\" : \"Sheet1\", \"选择文件\" : \"%s 绑定成功\" }",文件名)
+		
+	Else
+		set_dict = "{ \"return\" : 1, \"列名\" : \"A\", \"范围\" : \"all\", \"表名\" : \"Sheet1\", \"选择文件\" : \"绑定不成功，手动选择.xlsm文件\" }"
+		
+	End If
+	dictRet = Dialog.UDFDialog("配置",@res"1656985035118.json", set_dict,{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	If dictRet["return"]=0
+		Return 
+	Else
+		
+	End If
+	待添加的文件 = dictRet["选择文件"]
+	表名 = dictRet["表名"]
+	列名 = dictRet["列名"]
+	If 绑定<>""
+		
+	Else
+		
+		待添加的文件 = Regex.FindStr(待添加的文件,"[^\\\\]+(?!.*\\\\)(?=\\.)",0)
+		TracePrint(待添加的文件)
+		Try 1
+			tiantuWorkBook = Excel.BindBook(待添加的文件&".xlsm")
+		Catch e
+		Else
+		End Try
+	End If
+	Excel.ActiveBook(tiantuWorkBook)
+	iRet = Excel.GetRowsCount(tiantuWorkBook,表名)
+	TracePrint(iRet)
+	arrayEXCEL = Excel.ReadRange(tiantuWorkBook,表名,列名&"1:"&列名&iRet)
+	item = Shift(arrayEXCEL)
+	data_list = []
+	If dictRet["范围" ]<>'all' 
+		范围 = Regex.FindAll(dictRet["范围"],"\\d+")
+		范围下标 = UBound(范围)
+		TracePrint("范围,范围下标",范围,范围下标)
+		If 范围下标=0
+			范围[1] = 范围[0]
+			
+		Else
+			
+		End If
+		TracePrint("范围",范围)
+		For i = CINT(范围[0])-2 To CINT(范围[1])-2 Step 1 
+			data_list = push(data_list,arrayEXCEL[i])
+			
+		Next
+		
+		arrayEXCEL = data_list
+	Else
+		
+	End If
+	excel长度 = UBound(arrayEXCEL)
+	K = []
+	For Each value In arrayEXCEL
+		图片地址 = ""
+		iRet = CInt(value[0])
+		If iRet>0
+			// TracePrint("K-"&K)
+			copy = "Z:\\bazhuayu\\Q10_image\\"&iRet&".jpg"
+			bRet = File.FileExists(copy)
+			If bRet
+				
+			Else
+				bRet1 = File.FileExists("C:\\Users\\user\\Pictures\\"&iRet&".jpg")
+				If bRet1
+					copy = "C:\\Users\\user\\Pictures\\"&iRet&".jpg"
+					
+				Else
+					TracePrint(iRet,"图片没有找到，跳过")
+					copy = "Z:\\bazhuayu\\Q10_image\\NO.jpg"
+					
+				End If
+				
+			End If
+			// TracePrint(copy)
+			Try 3
+				xx=image_size.get_image_size(copy)
+			Catch e
+				图片地址 = "<table><img src=\"Z:\\bazhuayu\\Q10_image\\NO.jpg\" width=\""&宽&"\"height=\""&高&"\">"
+				K = push(K,图片地址)
+			Else
+				If xx[0]>=xx[1]
+					宽 = 45
+					高 = 45/xx[0]*xx[1]
+					
+				Else
+					宽 = 45/xx[1]*xx[0]
+					高 = 45
+					
+				End If
+				图片地址 = "<table><img src=\""&copy&"\" width=\""&宽&"\"height=\""&高&"\">"
+				K = push(K,图片地址)
+			End Try
+		Else
+			
+		End If
+		
+	Next
+	Try 1
+		paichuexcel = Excel.BindBook("paichu.xlsx")
+	Catch e
+		iRet = Dialog.MsgBox("排除文件绑定不成功，程序退出","UiBot","0","1",0)
+		Return 
+	Else
+	End Try
+	Excel.DeleteColumn(paichuexcel,"删除商品","K1",False)
+	Excel.WriteColumn(paichuexcel,"删除商品","K1",K,False)
+	iPID = App.Run("notepad.exe", "0", "1")
+	Excel.ActiveBook(paichuexcel)
+End Function
+
+
+
