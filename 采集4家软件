@@ -1,0 +1,613 @@
+
+Dim 今日日期 = ""
+Dim objRect = ""
+Dim objWindow = ""
+Dim 目录 = ""
+Dim data = ""
+Dim 已采集 = ""
+Dim 临时 = ""
+Dim 商家URL = ""
+Dim iPID = ""
+Dim yodobashi源码 = ""
+Dim amazon源码 = ""
+Dim 元文件名号码 = ""
+Dim 保存文件名 = ""
+Dim 文件夹列表 = ""
+Dim 已采集数 = ""
+Dim 是否继续 = ""
+Dim 元文件名 = ""
+Dim 显示文件号 = ""
+Dim 地址 = ""
+Dim 时间 = ""
+Dim dTime = ""
+Dim bRet = ""
+Dim arrayRet = ""
+Dim dictRet = ""
+Dim 商家data = ""
+Dim url = ""
+Dim tempdata = ""
+Dim yodobashi状态 = ""
+Dim yodobashi_data = ""
+Dim Rbukusi状态 = ""
+Dim 内部计数 = ""
+Dim amazon状态 = ""
+Dim amazon_data = ""
+Dim 网页源码 = ""
+Dim 商家 = ""
+Dim 计数 = ""
+Dim 状态 = ""
+Dim 价格 = ""
+Dim 序列 = ""
+Dim 写入 = ""
+Dim 日期 = ""
+Dim 前4 = ""
+Dim 标题 = ""
+Dim arrRet = ""
+Dim temp = ""
+Dim sRet = ""
+Dim objDatatable = ""
+Dim hWeb = ""
+Dim iRet = ""
+扫描元文件 = "Z:\\bazhuayu\\ソフト\\"
+元文件 = File.DirFileOrFolder(扫描元文件,"fileandfolder",{"hasPath":True})
+元文件名 = []
+显示文件号  = ""
+For Each value In 元文件
+	sRet = Regex.FindStr(value,"[^\\\\]+(?!.*\\\\)",0)
+	元文件名 = push(元文件名,sRet)
+	arrRet = Split(sRet,".")
+	显示文件号  = 显示文件号&arrRet[0]&","
+	
+Next
+TracePrint(元文件名)
+TracePrint(显示文件号)
+地址  = "Z:\\bazhuayu\\caiji\\ソフト\\"
+dTime = Time.Now()
+今日日期 = Time.Format(dTime,"yyyy-mm-dd")
+目录  = "Z:\\bazhuayu\\caiji\\ソフト\\"&今日日期
+Do While True
+	bRet = File.FolderExists(目录)
+	If bRet
+		TracePrint("有文件夹")
+		目录 = 目录&"\\"
+		Break
+		
+	Else
+		File.CreateFolder(地址&今日日期)
+		目录 = 地址&今日日期&"\\"
+		
+		Delay(1000)
+		bRet = File.FolderExists(目录)
+		TracePrint("已创建文件夹")
+	End If
+	
+Loop
+文件夹列表 = File.DirFileOrFolder(目录,"fileandfolder",{"hasPath":True})
+文件数量 = Len(文件夹列表)
+选择文件号 = Dialog.InputBox(元文件名,"选择扫描文件",显示文件号,False)
+选择文件号 = Split(选择文件号,",")
+TracePrint(选择文件号)
+If 文件数量>0
+	是否继续 = Dialog.MsgBox("只能继续采集上次关闭的文件，采集非上次关闭文件会出错。","是否继续扫描",1,2,0)
+	
+Else
+	
+End If
+For Each 选择文件 In 选择文件号
+	INI.Write(@res"seting.ini", "基本信息", "辅助程序", "NO")
+	暂停()
+	扫描文件号 = CInt(选择文件)
+	If 扫描文件号=0
+		Continue
+		
+	Else
+		
+	End If
+	
+	TracePrint(扫描文件号)
+	计数 = 1
+	For Each 元文件_value In 元文件 
+		暂停()
+		保存文件名 = Regex.FindStr(元文件_value,"[^\\\\]+(?!.*\\\\)",0)
+		arrRet = Split(保存文件名,".")
+		元文件名号码 = CInt(arrRet[0])
+		TracePrint(保存文件名,元文件名号码,元文件_value)
+		If 元文件名号码=扫描文件号
+			暂停()
+			
+			arrayRet = CSV.Open(元文件_value,{"encoding":"auto"})
+			iRet_下标 = UBound(arrayRet[0])
+			If iRet_下标>-1
+				title_list = []
+				For i = 0 To iRet_下标 Step 1 
+					title_list = push(title_list,i)
+					
+				Next
+				
+			Else
+				
+			End If
+			TracePrint("title_list",title_list)
+			objDatatable = Datatable.BuildDataTable(arrayRet,title_list)
+			objDatatable = Datatable.DropDuplicatesDataTable(objDatatable,title_list[0],"first")
+			arrayRet = Datatable.GetDataTableByArray(objDatatable,False)
+			采集数 = UBound(arrayRet)
+			TracePrint("共要扫描"&采集数&"个文件")
+			If 是否继续=6
+				Try 3
+					已采集 = CSV.Open(目录&保存文件名,{"encoding":"auto"})
+				Catch e
+					写入 = []
+					
+					计数 = 1
+					已采集数 = 0
+				Else
+					计数 = 0
+					data = ""
+					For Each value In 已采集
+						If data<>value[0]
+							data = value[0]
+							计数 = 计数+1
+							
+						Else
+							Continue
+							
+						End If
+						
+					Next
+					TracePrint("已采集-"&计数&"条")
+					已采集数 = 计数
+					If 已采集数<=采集数
+						计数 = 已采集数+1
+						已采集数 = 计数+1
+						
+					Else
+						计数 = 已采集数+1
+						
+					End If
+					
+					写入 = 已采集
+				End Try
+			Else
+				写入 = []
+				
+				计数 = 1
+				已采集数 = 0
+			End If
+			Rem 
+			For s = 已采集数 To 采集数 Step 1 
+				暂停()
+				Dialog.Notify("采集第"&计数&"个，共"&采集数&"个", "采集-"&保存文件名, "0")
+				iRet = Len(arrayRet[s][0])
+				If iRet<10
+					Continue
+					
+				Else
+					
+				End If
+				Try 1
+					读入时间 = Time.CDate(arrayRet[s][1], "yyyy.mm.dd")
+				Catch e
+				Else
+					If dTime<读入时间
+						Continue
+						
+					Else
+						
+					End If
+				End Try
+				前4 = []
+				Try 1
+					hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				Catch e
+					hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+				Else
+				End Try
+				#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
+				Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
+				#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+				Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
+				#icon("@res:default.png")
+				iRet = WebBrowser.GoURL(hWeb,arrayRet[s][0],True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				网页源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				Try 1
+				Catch e
+					File.WriteFile(@res"uibot源码.txt",网页源码,"utf-8")
+				Else
+				End Try
+				标题 = Regex.FindStr(网页源码,"(?<=<h2 itemprop=\"name\">)(.*?)(?=</h2>)",0)
+				标题 = Replace(标题,"&amp;","&",False)
+				前4 = push(前4,标题)
+				日期 = Regex.FindStr(网页源码,"(?<=<span class=\"releaseDate\">)[\\s\\S]+?(?=[\\n]</span>)",0)
+				Try 1
+					前4 = push(前4,日期)
+				Catch e
+					前4 = push(前4,"")
+				Else
+				End Try
+				排名 = Regex.FindStr(网页源码,"\\d*(?=</span>位)",0)
+				Try 1
+					前4 = push(前4,排名)
+				Catch e
+					前4 = push(前4,"")
+				Else
+				End Try
+				商家数 = Regex.FindStr(网页源码,"(?<=<span itemprop=\"offerCount\">).*?(?=</span>)",0)
+				Try 1
+					前4 = push(前4,商家数)
+				Catch e
+					前4 = push(前4,"")
+				Else
+				End Try
+				tbody = Regex.FindStr(网页源码,"(?<=<table class=\"p-priceTable\">)[\\s\\S]+?(?=</table>)",0)
+				Try 1
+				Catch e
+					File.WriteFile(@res"网页源码.txt",tbody,"utf-8")
+				Else
+				End Try
+				arrRet = Regex.FindAll(tbody,"(?<=<tr>)[\\s\\S]+?(?=</tr>)")
+				arrRet_下标 = UBound(arrRet)
+				If arrRet_下标=-1
+					写入 = push(写入,前4)
+					
+				Else
+					
+				End If
+				内部计数 = 1
+				商家data = []
+				For i = 0 To arrRet_下标 Step 1 
+					暂停()
+					Try 1
+					Catch e
+						File.WriteFile(@res"一行.txt",arrRet[i],"utf-8")
+					Else
+					End Try
+					tempdata = []
+					序列 = Regex.FindStr(arrRet[i],"(?<=<span class=\"p-PTRank p-PTRank-)[\\d]+?(?=\">)",0)
+					Try 1
+						tempdata = push(tempdata,序列)
+					Catch e
+						tempdata = push(tempdata,"")
+					Else
+					End Try
+					价格 = Regex.FindStr(arrRet[i],"(?<=<p class=\"p-PTPrice_price\">)[\\s\\S]+?(?=</p>)",0)
+					Try 1
+						tempdata = push(tempdata,价格)
+					Catch e
+						tempdata = push(tempdata,"")
+					Else
+					End Try
+					
+					状态 = Regex.FindStr(arrRet[i],"(?<=<p class=\"p-PTStock\">)[\\s\\S]+?(?=</p>)",0)
+					Try 1
+						tempdata = push(tempdata,状态)
+					Catch e
+						tempdata = push(tempdata,"")
+					Else
+					End Try
+					Rem 
+					商家  = Regex.FindStr(arrRet[i],"(?<=<p class=\"p-PTShopData_name\">)[\\s\\S]+?(?=<)",0)
+					商家  = Regex.FindStr(商家,"(?<=>)[\\s\\S]+",0)
+					商家URL  = Regex.FindStr(arrRet[i],"((<a onclick=\\D.*?href=\\\"))\\D.*?(?<=\")",0)
+					临时  = Regex.FindStr(商家URL,"(<a onclick=)\\D.*href=\\\"",0)
+					商家URL = Replace(商家URL,临时,"",False)
+					商家URL = Replace(商家URL,"&amp;","&",False)
+					url = Replace(商家URL,"\"","",False)
+					Try 1
+						tempdata = push(tempdata,商家)
+					Catch e
+						tempdata = push(tempdata,"")
+					Else
+					End Try
+					tempdata = concat(前4,tempdata)
+					商家data下标 = UBound(商家data)
+					If 商家data下标=-1
+						有无 = 0
+						
+					Else
+						For Each value1 In 商家data
+							有无 = InStr(value1,"在庫あり",1,False)
+							
+						Next
+						
+					End If
+					If 商家 = "Amazon.co.jp" And 内部计数<8 And 有无 <1 And 状态 = "○"
+						a_data = amazon(url)
+						商家data = concat(商家data,a_data)
+						
+					ElseIf 商家 = "楽天ブックス" And 内部计数<8 And 有无 <1 And 状态 = "○"
+						R_data = Rbukusi(url)
+						商家data = concat(商家data,R_data)
+					ElseIf 商家 = "ヨドバシ.com" And 内部计数<8 And 有无 <1 And 状态 = "○"
+						// Y_data = yodobashi(url)
+						// 商家data = concat(商家data,Y_data)
+					ElseIf 商家 = "Joshin" And 内部计数<8 And 有无 <1 And 状态 = "○"
+						J_data = Joshin(url)
+						商家data = concat(商家data,J_data)
+					End If
+					If i=arrRet_下标
+						TracePrint(i,arrRet_下标)
+						tempdata = concat(tempdata,商家data)
+						
+					Else
+						
+					End If
+					写入 = push(写入,tempdata)
+					内部计数 = 1+内部计数
+					
+				Next
+				Rem 
+				WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				CSV.Save(写入,目录&"\\"&保存文件名,{"encoding":"utf-8-sig"})
+				写入计数 = CStr(计数)
+				INI.Write(@res"seting.ini", "基本信息", "采集数", 写入计数)
+				计数 = 1+计数
+				If 计数 Mod 10 =0
+					
+				Else
+					
+				End If
+				
+			Next
+		Else
+			
+		End If
+		
+	Next
+Next
+Rem 写入程序运行完成标识
+INI.Write(@res"seting.ini", "基本信息", "辅助程序", "OK")
+Rem amazon
+Function amazon(url)
+	暂停()
+	amazon_data = ["Amazon.co.jp"]
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	Else
+	End Try
+	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
+	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
+	Try 1
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		Return amazon_data
+	Else
+	End Try
+	Do While True
+		amazon源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		amazon源码长度 = Len(amazon源码)
+		If amazon源码长度>10000
+			Break
+			
+		Else
+			
+		End If
+		
+	Loop
+	iRet = InStr(amazon源码,"年齢確認",1,False)
+	If iRet>1
+		#icon("@res:hakkppjh-ubnt-i0gc-b8ko-3ucdpusrp3bh.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"black-curtain-yes-button"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		amazon源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		
+	Else
+		
+	End If
+	Try 1
+	Catch e
+		File.WriteFile(@res"amazon源码.txt",amazon源码,"utf-8")
+	Else
+	End Try
+	amazon状态 = Regex.FindStr(amazon源码,"(?<=<span class=\"a-size-medium a-color-success\">)[\\s\\S]+?(?=</span>)",0)
+	amazon状态 = Regex.FindStr(amazon状态,"\\S+",0)
+	Try 1
+		amazon_data = push(amazon_data,amazon状态)
+	Catch e
+		amazon_data = push(amazon_data,"")
+	Else
+	End Try
+	
+	Dialog.Notify(amazon状态, "Amazon.co.jp采集完成", "0")
+	WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Return amazon_data
+End Function
+Rem Joshin
+Function Joshin(url)
+	暂停()
+	Joshin_data = ["Joshin"]
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	Else
+	End Try
+	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
+	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
+	Try 1
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		Return Joshin_data
+	Else
+	End Try
+	Joshin源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Try 1
+	Catch e
+		File.WriteFile(@res"Joshin源码.txt",Joshin源码,"utf-8")
+	Else
+	End Try
+	Joshin状态 = Regex.FindStr(Joshin源码,"(?<=<div class=\"mainbox\">)[\\s\\S]+?(?=</div>)",0)
+	Joshin状态 = Regex.FindStr(Joshin状态,"在庫あり|翌日出荷|明日お届け",0)
+	iRet = Len(Joshin状态)
+	If iRet>0
+		
+		Try 3
+			Joshin_data = push(Joshin_data,"在庫あり")
+		Catch e
+			Joshin_data = push(Joshin_data,"")
+		Else
+		End Try
+	Else
+		
+		Joshin_data = push(Joshin_data,"")
+	End If
+	
+	Dialog.Notify(Joshin状态, "Joshin采集完成", "0")
+	WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Return Joshin_data
+End Function
+Rem ヨドバシ.com
+Function yodobashi(url)
+	暂停()
+	yodobashi_data = ["ヨドバシ.com"]
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	Else
+	End Try
+	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
+	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
+	Try 1
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		Return yodobashi_data
+	Else
+	End Try
+	yodobashi源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	iRet = InStr(yodobashi源码,"年齢認証",1,False)
+	If iRet>1
+		#icon("@res:frgri0ch-6r2a-v8lt-kj2e-b52u4gjc6ih5.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IMG","parentid":"adultAgeCover","aaname":"はい"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+		yodobashi源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		
+	Else
+		
+	End If
+	Try 1
+	Catch e
+		File.WriteFile(@res"yodobashi源码.txt",yodobashi源码,"utf-8")
+	Else
+	End Try
+	yodobashi状态 = Regex.FindStr(yodobashi源码,"(?<=<span class=\"green\" id=\"salesInfoTxt\">)[\\s\\S]+?(?=</span>)",0)
+	yodobashi状态 = Regex.FindStr(yodobashi状态,"\\S+",0)
+	Try 1
+		yodobashi_data = push(yodobashi_data,yodobashi状态)
+	Catch e
+		yodobashi_data = push(yodobashi_data,"")
+	Else
+	End Try
+	
+	Dialog.Notify(yodobashi状态, "ヨドバシ.com采集完成", "0")
+	WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Return yodobashi_data
+End Function
+Rem Rakuten bukusi
+Function Rbukusi(url)
+	暂停()
+	Rbukusi_data = ["楽天ブックス"]
+	Try 1
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		hWeb = WebBrowser.Create("chrome","about:blank",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	Else
+	End Try
+	#icon("@res:qiiqijqc-muc9-8tu7-bqsu-85iistleu7hu.png")
+	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome","app":"chrome"}]})
+	#icon("@res:a2qrccsc-5snl-ppgs-p1e4-f23m7b293khd.png")
+	Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_PANE","name":"Google Chrome"},{"role":"ROLE_SYSTEM_PANE"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"uia","bClickBeforeInput":False})
+	Try 1
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		Return Rbukusi_data
+	Else
+	End Try
+	Rbukusi源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Try 1
+	Catch e
+		File.WriteFile(@res"Rbukusi源码.txt",Rbukusi源码,"utf-8")
+	Else
+	End Try
+	Rbukusi状态 = Regex.FindStr(Rbukusi源码,"(?<=<span class=\"status\">)[\\s\\S]+?(?=</span>)",0)
+	Rbukusi状态 = Regex.FindStr(Rbukusi状态,"\\S+",0)
+	Rbukusi数量 = Regex.FindStr(Rbukusi源码,"(?<=<p class=\"stockInfo\">)[\\s\\S]+?(?=</p>)",0)
+	iRet = LenB(Rbukusi数量)
+	If iRet>10
+		Rbukusi_data = push(Rbukusi_data,"")
+		
+	Else
+		
+		Try 1
+			Rbukusi_data = push(Rbukusi_data,Rbukusi状态)
+		Catch e
+			Rbukusi_data = push(Rbukusi_data,"")
+		Else
+		End Try
+	End If
+	
+	Dialog.Notify(Rbukusi状态, "楽天ブックス采集完成", "0")
+	WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Return Rbukusi_data
+End Function
+Rem 暂停
+Function 暂停()
+	暂停计数 = 0
+	Do While True
+		sRet = INI.Read(@res"seting.ini", "基本信息", "OPEN", "")
+		If sRet<>"OFF" 
+			
+			#icon("@res:ujsr25jn-o1e3-c1f4-01ht-kvj3kifsi0ik.png")
+			bRet = Image.Exists({"wnd":[{"cls":"Shell_TrayWnd","app":"explorer"}]},{"height":0,"width":0,"x":0,"y":0},@res"1bc7phfs-lats-44p4-njrs-dq927kbr3h9g.png",0.9,1000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10,"bSetForeground":True,"sMatchType":"GrayMatch"})
+			If bRet
+				
+				Try 1
+					PrintToScreen.CleanText(objWindow)
+					PrintToScreen.CloseWindow(objWindow)
+				Catch e
+				Else
+				End Try
+				Break
+			Else
+				If 暂停计数=0
+					#icon("@res:ebca4664-t51g-cfad-rrt4-jiknogoj8pm6.png")
+					objRect = Window.GetSize({"wnd":[{"cls":"XLMAIN","title":"在庫写入.xlsx - Excel","app":"EXCEL"}]})
+					objWindow = PrintToScreen.CreateWindow({"height":75,"resolution":{"height":objRect["height"],"width":objRect["width"]},"width":356,"x":objRect["width"]-356,"y":objRect["height"]-150},True)
+					PrintToScreen.DrawText(objWindow,"辅助程序暂停中'\n左下角小娜图标不在或主程序打开-保存中",18,[255,0,0])
+					暂停计数 = 1
+					
+				Else
+					
+				End If
+				
+			End If
+		Else
+			
+			If 暂停计数=0
+				#icon("@res:ebca4664-t51g-cfad-rrt4-jiknogoj8pm6.png")
+				objRect = Window.GetSize({"wnd":[{"cls":"XLMAIN","title":"在庫写入.xlsx - Excel","app":"EXCEL"}]})
+				objWindow = PrintToScreen.CreateWindow({"height":75,"resolution":{"height":objRect["height"],"width":objRect["width"]},"width":356,"x":objRect["width"]-356,"y":objRect["height"]-150},True)
+				PrintToScreen.DrawText(objWindow,"辅助程序暂停中'\n左下角小娜图标不在或主程序打开-保存中",18,[255,0,0])
+				暂停计数 = 1
+				
+			Else
+				
+			End If
+		End If
+		
+	Loop
+	
+End Function
+
+
+
