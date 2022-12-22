@@ -1,0 +1,58 @@
+
+Dim bRet = ""
+Dim arrayRet = ""
+Dim iRet = ""
+Dim iPID = ""
+Dim objExcelWorkBook = ""
+Dim CSV文件 = ""
+Dim sRet = ""
+Rem 对比下载Q10图片
+sRet = Dialog.OpenFile("C:\\Users\\user\\Downloads","Q10data文档 (xlsx、log)|*.xlsx;*.log|任意文件|*","选择Q10data文档")
+文件名 = Regex.FindStr(sRet,"[^\\\\]+(?!.*\\\\)",0)
+Try 1
+	objExcelWorkBook = Excel.BindBook(文件名)
+Catch e
+	iPID = App.Start(sRet, "0", "1")
+	Try 999
+		objExcelWorkBook = Excel.BindBook(文件名)
+	Catch ee
+		iRet = Dialog.MsgBox("绑定Q10data文件出错，程序结束","绑定出错","0",4,0)
+		exit()
+	Else
+	End Try
+Else
+End Try
+总行数 = Excel.GetRowsCount(objExcelWorkBook,"Sheet1")
+arrayRet = Excel.ReadRange(objExcelWorkBook,"Sheet1","A1:O"&总行数)
+For Each value In arrayRet
+	商品番号 = CInt(value[0])
+	If 商品番号>0
+		
+		bRet = File.FileExists("Z:\\bazhuayu\\Q10_image\\"&商品番号&".jpg")
+		If bRet
+			
+		Else
+			本地图片 = File.FileExists("C:\\Users\\user\\Pictures\\"&value[1]&".jpg")
+			If 本地图片
+				File.CopyFile("C:\\Users\\user\\Pictures\\"&value[1]&".jpg","Z:\\bazhuayu\\Q10_image",True)
+				File.RenameEx("Z:\\bazhuayu\\Q10_image\\"&value[1]&".jpg",value[0]&".jpg")
+				TracePrint("移动本地图片成功",value[0]&".jpg")
+				
+			Else
+				
+				sRet = HTTP.GetFile(value[14], "Z:\\bazhuayu\\Q10_image\\"&商品番号&".jpg", {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
+				TracePrint("下载以下商品图片-",value[0])
+				TracePrint("下载网络图片成功")
+				Delay(1000)
+			End If
+			
+		End If
+	Else
+		Continue
+		
+	End If
+	
+Next
+
+
+
