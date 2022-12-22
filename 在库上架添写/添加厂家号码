@@ -1,0 +1,74 @@
+
+Dim 厂家代码 = ""
+Dim iRet = ""
+Dim 行号 = ""
+Dim arrayBrand = ""
+Dim 厂家表 = ""
+Dim 待添加文档表名 = ""
+Dim 待添加文档 = ""
+Dim item = ""
+Dim array在库 = ""
+Dim 在库 = ""
+Function 遍历brand(X)
+	
+	For Each value In arrayBrand
+		
+		For i = 1 To 4 Step 1 
+			bRet = StrComp(X,value[i],False)
+			If bRet
+				
+				Return value[0]
+				
+				
+			Else
+				
+				
+			End If
+			
+		Next
+	Next
+	
+End Function
+在库  = Dialog.OpenFile("Z:\\YS登録\\在庫出力","要添加的文档 (csv、log)|*.csv;*.log|任意文件|*","先择在库文档")
+array在库 = CSV.Open(在库,{"encoding":"auto"})
+item = Shift(array在库)
+待添加文档 = Dialog.OpenFile("Z:\\YS登録\\q10","要添加的文档 (csv、log)|*.csv;*.xlsx|任意文件|*","先择Q10上传文档")
+待添加文档表名 = Regex.FindStr(待添加文档,"(?<=q10\\\\).*(?=.xlsx)",0)
+TracePrint(待添加文档表名)
+Try 3
+	待添加文档 = Excel.BindBook(待添加文档表名&".xlsx")
+Catch e
+	iRet = Dialog.MsgBox("绑定excel失败，检查文档是否打开或单元格占用后按确定","绑定excel失败","0","1",0)
+	待添加文档表名 = Regex.FindStr(iRet,"(?<=q10\\\\).*(?=.xlsx)",0)
+	待添加文档 = Excel.BindBook(待添加文档表名&".xlsx")
+	Excel.ActiveBook(待添加文档)
+	行数 = Excel.GetRowsCount(待添加文档,待添加文档表名)
+Else
+End Try
+厂家表 = Dialog.OpenFile("C:\\tool\\Qoo10登録","要添加的文档 (csv、log)|*.csv;*.log|任意文件|*","先择厂家代码文档")
+arrayBrand = CSV.Open(厂家表,{"encoding":"auto"})
+行号 = 5
+For Each value In array在库
+	iRet = UBound(value)
+	TracePrint(iRet)
+	TracePrint(value[14])
+	If iRet>14  
+		
+		厂家代码=遍历brand(value[14])
+	Else
+		
+		厂家代码=遍历brand(value[15])
+	End If
+	If 厂家代码<>Null
+		
+		Excel.ActiveBook(待添加文档)
+		
+		Excel.WriteCell(待添加文档,"TEST","D"&行号,厂家代码,False)
+		TracePrint("添入第"&行号&"行-"&"查找:"&value[14]&"。找到:"&厂家代码)
+	Else
+		
+	End If
+	行号 = 行号+1
+Next
+
+
