@@ -1,0 +1,291 @@
+
+Dim JAN = ""
+Dim sRet_在库 = ""
+Dim 付款_text = ""
+Dim 消息内容 = ""
+Dim title = ""
+Dim 未付款 = ""
+Dim 已付款 = ""
+Dim 付款信息 = ""
+Dim 供给原价 = ""
+Dim 记数 = ""
+Dim dictScrollPostion = ""
+Dim 定单商品数 = ""
+Dim 定单数 = ""
+Dim list_data = ""
+Dim sRet = ""
+Dim 排除 = ""
+Dim 在库 = ""
+Dim 型番 = ""
+Dim URL = ""
+Dim array_paichu = ""
+Dim paichu_row = ""
+Dim array_title和番号 = ""
+Dim title和番号_row = ""
+Dim objRet = ""
+Dim objExcel_title和番号 = ""
+Dim iPID = ""
+Dim objExcelWorkBook = ""
+Dim arrayRet = ""
+Dim bRet = ""
+Dim hWeb = ""
+Dim iRet = ""
+Dim objDatatable = ""
+Dim item = ""
+Dim arrRet = ""
+Dim temp = ""
+Dim arrayData = ""
+Function down_data()
+	panduan_window(配送URL)
+	#icon("@res:default.png")
+	Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"tab_main_request"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+	#icon("@res:u3e09et2-e3mu-chbq-105n-8t9btijrc9tk.png")
+	Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"tab_main_request"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+	Do While True
+		title = ["","配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","Email","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""]
+		#icon("@res:n6o0o4cv-v5d7-gqe3-uh83-hhrth6911vl8.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_new_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		arrayData = UiElement.DataScrap({"html":[{"idx":1,"parentid":"__grid_goods_grid","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+		
+		arrayData[0] = title
+		obj_Sheet1 = Datatable.BuildDataTable(arrayData,arrayData[0])
+		#icon("@res:ccl2u2pi-jiqf-j3t3-icmq-f6ngit4np80i.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_cnt_awaiting_orders1"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		arrayData_1 = UiElement.DataScrap({"html":[{"idx":1,"parentid":"__grid_goods_grid","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+		arrayData_1[0] = title
+		obj_Sheet2 = Datatable.BuildDataTable(arrayData_1,arrayData_1[0])
+		bRet_sheet = Datatable.CompareDataTable(obj_Sheet2,obj_Sheet1)
+		If bRet_sheet
+			
+		Else
+			Break
+			
+		End If
+	Loop
+	item = Shift(arrayData_1)
+	arrayData = concat(arrayData,arrayData_1)
+	arrayData[0] = title
+	objDatatable = Datatable.BuildDataTable(arrayData,title)
+	objDatatable_data = Datatable.SliceDataTable(objDatatable,[],["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","Email","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"])
+	objDatatable = Datatable.DropDuplicatesDataTable(objDatatable_data,"販売者商品コード","first")
+	arrayData = Datatable.GetDataTableByArray(objDatatable_data,False)
+	list_data = Datatable.GetDataTableByArray(objDatatable,False)
+	CSV.Save(arrayData,"\\\\LS410D8E6\\tool\\bazhuayu\\定单.csv",{"encoding":"utf-8-sig"})
+	CSV.Save(list_data,"\\\\LS410D8E6\\tool\\bazhuayu\\定单去重后.csv",{"encoding":"utf-8-sig"})
+End Function
+Function panduan_window(url=None)
+	If url=None
+		url = "https://www.baidu.com/"
+		
+	Else
+		
+	End If
+	
+	Try 1
+		iRet_kakaku = InStr(url,"kakaku",1,False)
+		If iRet_kakaku>1
+			
+			sRet_url = Right(url,1)
+			If sRet_url<>"/"
+				
+				url = url&"/"
+			Else
+				
+			End If
+		Else
+			
+		End If
+		bRet = WebBrowser.SwitchTab(hWeb,"url",url,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	Catch e
+		#icon("@res:bv8p3bib-ov3j-69d6-2bhb-nkm98aufrua9.png")
+		Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"*Google Chrome*"},{"role":"ROLE_SYSTEM_TEXT","name":"*"}]},"T",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"message","bClickBeforeInput":False})
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	Else
+	End Try
+End Function
+Function work()
+	
+	TracePrint(list_data)
+	If list_data=None Or list_data=""
+		TracePrint("list_data=None,选择操作")
+		iRet = Dialog.MsgBox("list为空，请选择操作\nはい　读取CSV\nいいえ　网页重新下载\nキャンセル 退出程序","UiBot",3,"1",0)
+		If iRet = 6
+			Try 1
+				list_data = CSV.Open("\\\\LS410D8E6\\tool\\bazhuayu\\定单去重后.csv",{"encoding":"auto"})
+				arrayData = CSV.Open("\\\\LS410D8E6\\tool\\bazhuayu\\定单.csv",{"encoding":"auto"})
+			Catch e
+				iRet_ = Dialog.MsgBox("文件不存在，退出","UiBot",0,"1",0)
+				Return 
+			Else
+			End Try
+			
+		ElseIf iRet = 7
+			down_data()
+		Else
+			
+			Return 
+		End If
+		
+	Else
+		
+	End If
+	Try 1
+		objExcel_title和番号 = Excel.BindBook("title和番号.xlsm")
+	Catch e
+		iPID = App.Start("\\\\LS410D8E6\\tool\\bazhuayu\\title和番号.xlsm", "0", "1")
+		Try 9999999
+			objExcel_title和番号 = Excel.BindBook("title和番号.xlsm")
+		Catch ee
+		Else
+		End Try
+	Else
+	End Try
+	title和番号_row = Excel.GetRowsCount(objExcel_title和番号,"采集 (4)")
+	array_title和番号 = Excel.ReadRange(objExcel_title和番号,"采集 (4)","A2:W"&title和番号_row)
+	Try 1
+		objExcel_paichu = Excel.BindBook("paichu.xlsx")
+	Catch e
+		iPID = App.Start("Z:\\bazhuayu\\paichu.xlsx", "0", "1")
+		Try 9999999
+			objExcel_paichu = Excel.BindBook("paichu.xlsx")
+		Catch e
+		Else
+		End Try
+	Else
+	End Try
+	paichu_row = Excel.GetRowsCount(objExcel_paichu,"Sheet1")
+	array_paichu = Excel.ReadRange(objExcel_paichu,"Sheet1","A2:G"&paichu_row)
+	array_在库 = CSV.Open("\\\\LS410D8E6\\tool\\bazhuayu\\在庫.csv",{"encoding":"auto"})
+	item = Shift(list_data)
+	共有商品数 = Len(list_data)
+	记数 = 1
+	For Each value In list_data
+		JAN = ""
+		番号 = CInt(value[12])
+		JAN_listdata = Regex.FindStr(value[84],"\\d+",0)
+		JAN_listdata = CInt(JAN_listdata)
+		For Each value_xlsm In array_title和番号
+			iRet_番号 = CInt(value_xlsm[1])
+			JAN_xlsm = CInt(value_xlsm[7])
+			If 番号=iRet_番号 Or JAN_listdata = JAN_xlsm
+				URL = value_xlsm[22]
+				型番 = value_xlsm[3]
+				JAN = JAN_xlsm
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+		在库  = 0
+		For Each value_在库 In array_在库
+			sRet_在库 = Regex.FindStr(value_在库[2],"\\d+",0)
+			sRet_在库 = CInt(sRet_在库)
+			If JAN=sRet_在库 Or 型番=value_在库[3] And JAN>0
+				在库  = 在库+1
+				
+			Else
+				
+			End If
+			
+		Next
+		排除  = "无"
+		For Each value_paichu In array_paichu
+			iRet_paichu = CInt(value_paichu[0])
+			If 番号=iRet_paichu
+				排除 = Format("有 结束日期:%s",value_paichu[5])
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+		定单数 = 0
+		定单商品数 = 0
+		已付款 = 0
+		未付款 = 0
+		付款_text = ""
+		For Each value_arrayData In arrayData
+			If value[12]=value_arrayData[12]
+				
+				定单数 = 定单数+1
+				定单商品数 = 定单商品数+value_arrayData[14]
+				TracePrint(value_arrayData[7])
+				iRet_长度 = Len(value_arrayData[7])
+				If iRet_长度>12
+					已付款 = 已付款+1
+					付款_text = 付款_text&"\n"&value_arrayData[18]&" | "&value_arrayData[7]&" | ****** | "&value_arrayData[32] 
+					
+				Else
+					未付款 = 未付款+1
+					付款_text = 付款_text&"\n"&"| ****** | ****** | "&value_arrayData[6]&" | "&value_arrayData[32]
+					
+				End If
+			Else
+				
+			End If
+			
+		Next
+		付款信息 = "   已付款:"&已付款&"           | 未付款:"&未付款&" | 供给原价"
+		panduan_window(商品管理URL)
+		#icon("@res:sepiol3o-bjjl-7juk-3mc7-dvhdar5n3q02.png")
+		UiElement.SetCheck({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"chk_stat_all"}]},True,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		
+		#icon("@res:9th9h90j-154u-7olj-o0p8-8unuelg64v4g.png")
+		UiElement.SetSelect({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SELECT","name":"sel_search_keyword_type"}]},2,"index",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		#icon("@res:hsjghdpj-qsi2-0k20-osea-ehgo8u1oflos.png")
+		UiElement.SetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TEXTAREA"}]},番号,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		#icon("@res:32adgutn-vd6l-jqj4-aul7-01d0qrn70u7j.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_search"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Try 3
+			#icon("@res:7homke4s-qtds-ssjq-klq3-jure22cae3jh.png")
+			供给原价 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"div_product_list","parentname":"aspnetForm","aaname":"*円"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		Catch e
+			iRet_get = Dialog.MsgBox("获取价格失败，退出","UiBot",1,"1",0)
+			If iRet_get= 7
+				
+				exit()
+			Else
+				
+			End If
+		Else
+		End Try
+		#icon("@res:lno9u8l5-j5d8-vrhd-e3s8-23aknve4bnpe.png")
+		上架数量 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"DIV","parentid":"edit_inv_cnt_0"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		WebBrowser.SetScroll(hWeb,{ "ScrollLeft": 0, "ScrollTop": 298 },{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		消息内容 = Format("共有商品数：%d，现在是第%d个\n\n商品番号：%d\n在库： %d\n排除：%s\n定单数：%d\n定单商品数：%d\n付款信息：%s\n%s\n\n商品供给原价：%s\n在架数量：%s\n\nはい：打开网页，いいえ：下一个　キャンセル：退出",共有商品数,记数,番号,在库,排除,定单数,定单商品数,付款信息,付款_text,供给原价,上架数量)
+		iRet_window = Dialog.MsgBox(消息内容,"UiBot",3,"1",0)
+		If iRet_window= 2
+			Return 
+		ElseIf iRet_window= 6
+			panduan_window(URL)
+			kakaku_url = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			waite_mess = Format("共有商品数：%d，现在是第%d个\n\n商品番号：%d\n在库： %d\n排除：%s\n定单数：%d\n定单商品数：%d\n付款信息：%s\n%s\n\n商品供给原价：%s\n在架数量：%s\n\n改价后点击继续",共有商品数,记数,番号,在库,排除,定单数,定单商品数,付款信息,付款_text,供给原价,上架数量)
+			iRet = Dialog.MsgBox(waite_mess,"UiBot","0","1",0)
+			Try 1
+				bRet_kakaku = WebBrowser.SwitchTab(hWeb,"url",kakaku_url,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":20})
+			Catch e
+			Else
+				WebBrowser.Close(hWeb,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+			End Try
+			记数 = 1+记数
+			
+		ElseIf iRet_window= 7	
+			记数 = 1+记数
+			Continue
+			
+		End If
+		
+	Next
+End Function
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+配送URL = "https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Delivery/DeliveryManagement.aspx"
+商品管理URL = "https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Product/ProductListSummary.aspx"
+work()
+
+
+
+
