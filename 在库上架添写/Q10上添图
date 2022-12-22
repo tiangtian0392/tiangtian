@@ -1,0 +1,191 @@
+Import image_size
+Dim 计数 = ""
+Dim arrayData = ""
+Dim 高 = ""
+Dim xx = ""
+Dim hWeb = ""
+Dim item = ""
+Dim iPID = ""
+Dim bRet = ""
+Dim iRet = ""
+Dim arrayRet = ""
+Dim JS = ""
+Dim temp = ""
+Dim sRet = ""
+Dim objWindow = ""
+objWindow = PrintToScreen.CreateWindow({"height":88,"resolution":{"height":1080,"width":1920},"width":309,"x":1608,"y":949},True)
+array相册 = File.DirFileOrFolder("C:\\Users\\user\\Pictures","file",{"hasPath":True})
+在库出力文件  = Dialog.OpenFile("Z:\\YS登録\\在庫出力","打开在库出力 (csv、log)|*.csv|任意文件|*","UiBot")
+文件名 = Replace(在库出力文件,"Z:\\YS登録\\在庫出力\\","",False)
+arrayRet = CSV.Open(在库出力文件,{"encoding":"auto"})
+item = Shift(arrayRet)
+数组长度 = UBound(arrayRet)
+无图 = []
+JS = 1
+K = 0
+无图 = []
+开始号 = Dialog.InputBox("输入要开始的行数","添图","2",False)
+开始号 = CInt(开始号)-2
+For i = 开始号 To 数组长度 Step 1 
+	iRet = CInt(arrayRet[i][6])
+	
+	If iRet=0
+		TracePrint("商品"&arrayRet[i][1]&"无图，开始添加")
+		计数 = 0
+		Do While True
+			
+			#icon("@res:rbge74rj-s4tf-0bbm-a3j3-ienvipdcdhdu.png")
+			UiElement.SetSelect({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SELECT","name":"sel_search_keyword_type"}]},"販売者商品コード","text",{"bContinueOnError":True,"iDelayAfter":50,"iDelayBefore":50})
+			#icon("@res:f0b2lni8-cs2p-gvrm-dm4q-u1o2tt4aobom.png")
+			Keyboard.InputText({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TEXTAREA"}]},arrayRet[i][1],True,20,10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			#icon("@res:upsb65od-o65r-qnig-e696-od2ustddgor7.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_search"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			Try 1
+				#icon("@res:jv951i0u-m9n9-6n4r-a7af-pm9utru0qr3j.png")
+				sRet = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"div_product_list"},{"tag":"TD","tableCol":"5"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":200})
+			Catch e
+			Else
+				arrayData_list = UiElement.DataScrap({"html":[{"id":"div_product_list","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text"],"selecors":[{"className":"","index":0,"prefix":"","tag":"table","value":"table"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"","index":3,"prefix":">","tag":"td","value":"td:nth-child(3)"},{"className":"width9","index":0,"prefix":">","tag":"div","value":"div.width9"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+				iRet_arrayData_list = Len(arrayData_list)
+			End Try
+			If iRet_arrayData_list=1
+				Break
+				
+			ElseIf 计数>10
+				TracePrint("番号查找出错，流程退出")
+				Return 返回值
+				
+			End If
+			计数 = 计数+1
+		Loop
+		#icon("@res:btlj48rj-19m1-4mka-edob-qt5uka0smuq8.png")
+		Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_edit_0"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		#icon("@res:hltqcb0a-5ejm-sqoa-qi2u-of1792nqr859.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_edit_0"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		#icon("@res:pgcc9mh9-psue-4bua-2d62-17b2gpvjpunu.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_product_list","aaname":"修正"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Try 9999
+			#icon("@res:tvaou20j-6p5u-i8uu-rssu-ahi6160ucmc5.png")
+			sRet = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"input_seller_code"}]},{"bContinueOnError":False,"iDelayAfter":30,"iDelayBefore":200})
+		Catch e
+		Else
+		End Try
+		Delay(1000)
+		If sRet<>arrayRet[i][1]
+			TracePrint("型号错误，退出重新开始")
+			iRet = Dialog.MsgBox("型号错误，退出重新开始","错误","0",3,0)
+			exit()
+			
+		Else
+			
+		End If
+		Try 9
+			#icon("@res:e9j02jsu-9dfm-2ofg-dm9d-uaja2eb3ik24.png")
+			Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"all_category_list"}]},1500,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Catch e
+			Break
+		Else
+			#icon("@res:k8g9mdu9-mgl4-ach7-ok6v-7mn7gk0bn5j1.png")
+			Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_mainimg_wrap_y","aaname":"menu"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:hh5qfchi-idhv-1q10-4bdc-vc4rl84eehbu.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_mainimg_wrap_y","aaname":"menu"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:vd8ubajr-3mb5-peao-97m5-v1b2t9arskfe.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_mainimg_wrap_y","aaname":"削除する"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		End Try
+		#icon("@res:gg6egcer-qbs7-ee2s-0pat-os966j0felg2.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"ipt_mainimg_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Try 3
+			#icon("@res:oad3skml-6v0g-7cak-4gf7-pa77cfds2lb6.png")
+			Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"C:\\Users\\user\\Pictures\\"&sRet&".jpg",True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+		Catch e
+		Else
+		End Try
+		#icon("@res:6hgg7kd2-skjd-4son-sp1u-p7cuq3ocilgo.png")
+		Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		#icon("@res:h62dpkfa-umrp-m628-0ojo-01qngeg2lved.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"DirectUIHWND","aaname":"開く"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		If bRet
+			Clipboard.SetText(sRet)
+			hWeb = WebBrowser.Create("chrome",arrayRet[i][10],30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+			iRet = Dialog.MsgBox("图片没有发现，重新下载完并关闭选择文件窗口后点击确定继续,\n"&arrayRet[i][1],"无图下载","0","1",0)
+			#icon("@res:gg6egcer-qbs7-ee2s-0pat-os966j0felg2.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"ipt_mainimg_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:oad3skml-6v0g-7cak-4gf7-pa77cfds2lb6.png")
+			Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"C:\\Users\\user\\Pictures\\"&sRet&".jpg",True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			#icon("@res:6hgg7kd2-skjd-4son-sp1u-p7cuq3ocilgo.png")
+			Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			
+		Else
+			
+		End If
+		
+		#icon("@res:6ovsusn9-7rrv-bkdq-uquc-g4p5c1ohaclr.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"QSM (Qoo10 Sales Manager) - Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_DIALOG","name":"qsm.qoo10.jp の内容"},{"role":"ROLE_SYSTEM_PANE"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		If bRet
+			Clipboard.SetText(sRet)
+			hWeb = WebBrowser.Create("chrome",arrayRet[i][10],30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+			iRet = Dialog.MsgBox("图片太小，重新下载完成后点击确定继续,\n不用关闭Q10对话框。\n"&arrayRet[i][1],"无图下载","0","1",0)
+			#icon("@res:hh5qfchi-idhv-1q10-4bdc-vc4rl84eehbu.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_mainimg_wrap_y","aaname":"menu"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:vd8ubajr-3mb5-peao-97m5-v1b2t9arskfe.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","parentid":"div_mainimg_wrap_y","aaname":"削除する"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:gg6egcer-qbs7-ee2s-0pat-os966j0felg2.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"ipt_mainimg_upload"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			Try 3
+				#icon("@res:oad3skml-6v0g-7cak-4gf7-pa77cfds2lb6.png")
+				Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"C:\\Users\\user\\Pictures\\"&sRet&".jpg",True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			Catch e
+			Else
+			End Try
+			#icon("@res:6hgg7kd2-skjd-4son-sp1u-p7cuq3ocilgo.png")
+			Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":1000,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			
+		Else
+			
+		End If
+		xx=image_size.get_image_size("C:\\Users\\user\\Pictures\\"&sRet&".jpg")
+		Try 10
+			#icon("@res:84s1h0kt-43tb-15rv-debj-b4lo5c1bqqql.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"I","parentid":"mceu_4"}]},"left","click",1500,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Catch e
+			exit()
+		Else
+			#icon("@res:1ncl5bq5-o73f-jc11-ff2t-dbd1efd0flr3.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","src":"/GMKT.INC.Gsm.Web/Popup/Goods/pop_HTMLEditor_InsertImgFromLocal.*"},{"tag":"INPUT","id":"attachFile_uc_upload_image"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			#icon("@res:oad3skml-6v0g-7cak-4gf7-pa77cfds2lb6.png")
+			Keyboard.InputText({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"ComboBoxEx32","aaname":"ファイル名(N):"},{"cls":"ComboBox","aaname":"ファイル名(N):"},{"cls":"Edit","ctrlid":1148,"aaname":"ファイル名(N):"}]},"C:\\Users\\user\\Pictures\\"&sRet&".jpg",True,20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":500,"bSetForeground":True,"sSimulate":"message","bValidate":False,"bClickBeforeInput":False})
+			#icon("@res:r7j881o8-nmi3-9p7l-beh3-l85rn54lo62l.png")
+			Mouse.Action({"wnd":[{"app":"chrome","cls":"#32770","title":"開く"},{"cls":"Button","title":"開く(&O)","ctrlid":1,"aaname":"開く(O)"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		End Try
+		#icon("@res:gb9juuij-i6fe-tt1h-33mf-ugac0nadvgel.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"IFRAME","src":"/GMKT.INC.Gsm.Web/Popup/Goods/pop_HTMLEditor_InsertImgFromLocal.*"},{"tag":"IMG","parentid":"ul_other_image_list"}]},"left","click",2000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Keyboard.Press("Tab", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"message"})
+		Keyboard.Press("Tab", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"message"})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"message"})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"message"})
+		Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"message"})
+		TracePrint(xx)
+		#icon("@res:54t8ngb5-9vtg-9p1h-ju4c-d7u2k7j9gr1d.png")
+		Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_modification"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		#icon("@res:b7vcjs5q-ocug-u456-m9u8-tn5sbg6cchg1.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"BUTTON","id":"btn_modification"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+		Delay(2000)
+		#icon("@res:bg85cmje-8qm5-6kr7-06f0-n3mj4ol395pe.png")
+		Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"QSM (Qoo10 Sales Manager) - Google Chrome"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"QSM (Qoo10 Sales Manager) - Google Chrome - kaga"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"閉じる"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+	Else
+		
+	End If
+Next
+TracePrint(无图)
+iRet = UBound(无图)
+INI.Write(@res"seting.ini", "添图", "文件名", "")
+If iRet=-1
+	TracePrint("空")
+	
+Else
+	iPID = App.Start(@res"无图记录.txt", "0", "1")
+	
+End If
+
+
+
