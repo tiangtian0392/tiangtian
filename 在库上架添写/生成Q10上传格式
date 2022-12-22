@@ -1,0 +1,144 @@
+
+Dim TEST = ""
+Dim arrSelItem = ""
+Dim 保存文件名 = ""
+Dim shijian = ""
+Dim arr上传文件 = ""
+Dim 更多图片 = ""
+Dim K = ""
+Dim dTime = ""
+Dim item = ""
+Dim iRet = ""
+Dim temp = ""
+Dim arrayRet = ""
+Dim sRet = ""
+Dim iPID = ""
+Rem 
+dTime = Time.Now()
+时间 = Time.Format(dTime,"yyyymmdd")
+sRet = Dialog.OpenFile("Z:\\YS登録\\在庫出力","在库文档 (CSV、log)|*.csv;*.log|任意文件|*","选择在库文档")
+array在库 = CSV.Open(sRet,{"encoding":"utf-8-sig"})
+在库行数 = Len(array在库)
+Try 1
+	TEST = Excel.BindBook("TEST.xlsx")
+Catch e
+	iPID = App.Start("C:\\tool\\TEST.xlsx", "0", "1")
+	Try 999
+		TEST = Excel.BindBook("TEST.xlsx")
+	Catch w
+	Else
+	End Try
+Else
+End Try
+Q10写入文件 = [["item_number","seller_unique_item_id","category_number","brand_number","item_name","item_promotion_name","item_status_Y/N/D","end_date","price_yen","retail_price_yen","quantity","option_info","additional_option_info","additional_option_text","image_main_url","image_other_url","video_url","image_option_info","image_additional_option_info","header_html","footer_html","item_description","Shipping_number","option_number","available_shipping_date","desired_shipping_date","search_keyword","item_condition_type","origin_type","origin_region_id","origin_country_id","origin_others","medication_type","item_weight","item_material","model_name","external_product_type","external_product_id","manufacture_date","expiration_date_type","expiration_date_MFD","expiration_date_PAO","expiration_date_EXP","under18s_display_Y/N","A/S_info","buy_limit_type","buy_limit_date","buy_limit_qty"],["商品番号","販売者商品コード","カテゴリ","ブランド","商品名","広告文","販売ステータス","販売終了日","販売価格","参考価格","在庫数量","オプション","追加型オプション(選択)","追加型オプション(直接入力)","メイン画像","追加画像","動画","オプションの画像","追加型オプションの画像","ヘッダー","フッター","商品詳細","送料","オプション送料","発送可能日","お届け希望日","検索ワード","商品状態","原産地","原産地\n_地域名","原産地\n_国名","原産地\n_その他","医薬品分類","重量","素材","モデル名","商品識別コード","商品識別コード_コード","製造日","有効期間","有効期間_期間1","有効期間_期間2","有効期間__日付","18歳未満制限","アフターサービス情報","購入数量制限","購入数量制限_期間","購入数量制限_数量"],["必須入力","選択入力","必須入力","選択入力","必須入力","選択入力","必須入力","必須入力","必須入力","選択入力","必須入力","選択入力","選択入力","選択入力","必須入力","選択入力","選択入力","選択入力","選択入力","選択入力","選択入力","必須入力","必須入力","選択入力","必須入力","選択入力","選択入力","必須入力","必須入力","選択入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","選択入力","選択入力","選択入力","条件付き必須入力","選択入力","選択入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","選択入力","選択入力","選択入力","条件付き必須入力","条件付き必須入力"],["*新規登録の際は入力しません。\n\n商品番号(半角数字)\n\n例) 1234567890","[ガイド] 販売者商品コードは同一アカウント内で重複させることはできません。\n\n最大100文字\n\n販売者の管理用商品コード","カテゴリコード9桁(半角数字)\n\n例) 320001873","ブランドコード(半角数字)\n\n例) 27450","*商品名ガイドに沿って入力してください。 \n[ガイド] ♡♠などの特殊記号は自動的に削除されます。\n\n最大50文字\n\n製品名+仕様+型番+商品分類\n\n例) パーフェクティングファンデーション35mlリキッドファンデーション","最大20文字","Y: 販売中\nN: 販売中止\nD: 商品削除","YYYY-MM-DD\n\n例) 2020-01-01","最大9桁(半角数字)\n\n例) 10,000","最大9桁(半角数字)","*[G列/販売ステータス]が「Y:販売中」の場合、1個以上の在庫数量を入力してください。\n\n最大9桁(半角数字)\n\n예) 200","オプション名1||*オプションの選択肢1||*オプション名2||*オプションの選択肢2||*オプション価格||*在庫数量||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\nオプション1段階 例) カラー||*レッド||*0||*200||*Red$$\nカラー||*ブルー||*0||*200||*Blue\n\nオプション2段階 例) カラー||*レッド||*サイズ||*Sl||*0||*200||*Red_S","オプション名1||*オプションの選択肢1||*追加型オプションの価格||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\n例) \nリフィル||*選択しない||*0||*code01$$\nリフィル||*選択||*0||*code02$$\nおまけ||*タイプA||*0||*code03$$\nおまけ||*タイプB||*0||*code04","オプション名$$\n{追加は$$で区分}\n\n最大3個\n最大20文字\n\n例1) イニシャル\n\n例2) 刻印する文字1$$\n刻印する文字2$$\n配送メッセージ","*画像ガイドに沿って登録してください。\n\n画像URL\n(JPG, PNG, GIF)\n\n最大200文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png","画像URL\n(JPG, PNG, GIF) \n\n最大10個\n(追加は$$で区分)\n\n最大2,000文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nhttps://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\n","動画URL\n\n最大200文字\n\n例) https://www.youtube.com/watch?v=Zhl4N5vd7NE","[ガイド] [L列/オプション]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) カラー||*レッド||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nカラー||*ブルー||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$","[ガイド] [M列/追加型オプション(選択)]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) おまけ||*ノート||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nおまけ||*ペン||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$","HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","HTML code\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","送料コード(半角数字)\n\n例) 123456","送料コード(半角数字)\n(追加は$$で区分)\n\n最大2つ\n\n例) 123456$$\n123456","一般発送(4日以降)または発売日を設定する場合、配送ポイントが付与されません。\n\n一般発送: 1~14以内(所要日) 半角数字\n当日発送: hh:mm (時刻)\n発売日設定: YYYY-MM-DD (日付)\n\n例1) 1\n例2) 16:30\n例3) 2022-01-01\n","3~20以内(注文日基準の選択可能日)数字\n\n例1) 3\n例2) 20","最大10個\n\n各最大30文字\n(追加は$$で区分)\n\n例1) バカンス\n例2) バカンス$$カジュアル","1 : 新品\n2 : 中古品-未使用\n3 : 中古品-新古品\n4 : 中古品-ほぼ新品\n5 : 中古品-状態良好\n6 : 中古品-やや古い\n7 : 中古品-ジャンク品","1 : 国内\n2 : 海外\n3 : その他","[ガイド] [AC列/原産地]が国内の場合に適用されます。\n\n地域コード(英文)\n\n例1) TOKYO\n例2) FUKUOKA","[ガイド] [AC列/原産地]が「2: 海外」の場合、国コードが必須入力です。\n\n国コード 2桁(英文)\n\n例1) US\n例2) CN","[ガイド] [AC列/原産地]が「3: その他」の場合に必須入力です。\n\n最大50文字\n\n例) OOに限りOO国から発送","[ガイド] [C列/カテゴリ]が医薬品に該当するカテゴリの場合は必須入力です。\n\n1C : 第1類医薬品\n2C : 第2類医薬品\n3C : 第3類医薬品\nD2 : 指定第2類医薬品\nQD : 医薬部外品","[ガイド] [W列/送料]海外発送の場合は必須入力です。\n\n最大2桁(半角数字、小数点第1位まで可能)\n\n最大 30kg\n\n例1) 1\n例2) 1.5","最大500文字\n\n例1) ポリエステル80%, 綿20%\n例2) 表: 合成皮革、裏: ポリエステル","最大30文字\n\n例1) CUH-7218BB01\n例2) SV17","JAN : JANコード\nKAN : KANコード\nISBN : ISBNコード\nUPC : UPCコード\nEAN : EANコード\nHS : HSコード","[ガイド] [AK列/商品識別コード]入力時に適用されます。 \n\n最大30文字\n\n例1) TK-FBP019EBK\n例2) 85171290","YYYY-MM-DD\n\n例) 2020-01-01","1: 製造日から\n2: 開封日から\n3: 指定日まで","[ガイド] [AN列/有効期間]が「1: 製造日から」の場合に適用されます。\n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内","[ガイド] [AN列/有効期間]が「2: 開封日から」の場合に適用されます。 \n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内","[ガイド] [AN列/有効期間]が「3: 指定日まで」の場合に適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01","Y: 制限する\nN: 制限しない\n\n入力していない場合、Nとして適用","アフターサービス担当者の情報\n\n例) 電話番号: 090-0000-0000 / メールアドレス: xxx@xxx.xxx","1: 購入者別1回の購入数量制限\n2: 購入者別1日の購入数量制限","[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01","[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\n最大2桁 (半角数字)\n\n例) 13"]]
+K = 4
+For i = 1 To 在库行数-1 Step 1 
+	Q10写入文件[K] = [ "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 1.0, 3.0, "", "", "その他", "", "", "", "", "JAN", "", "", " ", "", "", "", "N", "", "", "", "" ]
+	Q10写入文件[K][1] = array在库[i][1]
+	Q10写入文件[K][4] = array在库[i][3]
+	If array在库[i][5]="1"
+		
+		Q10写入文件[K][6] = "Y"
+	Else
+		Q10写入文件[K][6] = "N"
+		
+	End If
+	Q10写入文件[K][7] = "2022-12-22"
+	Q10写入文件[K][8] = array在库[i][4]
+	Q10写入文件[K][10] = array在库[i][5]
+	Q10写入文件[K][14] = array在库[i][10]
+	Q10写入文件[K][22] = array在库[i][8]
+	Q10写入文件[K][24] = array在库[i][7]
+	Q10写入文件[K][27] = "1"
+	Q10写入文件[K][28] = "3"
+	Q10写入文件[K][31] = "その他"
+	Q10写入文件[K][35] = array在库[i][1]
+	Q10写入文件[K][36] = "JAN"
+	Q10写入文件[K][37] = array在库[i][0]
+	Q10写入文件[K][43] = "N"
+	array在库[i][6] = Replace(array在库[i][6]," ","",False)
+	图片有无  = CInt(array在库[i][6])
+	If 图片有无>0
+		sRet = Regex.FindStr(array在库[i][10],"K\\d+",0)
+		sRet1 = "<img src=\"https://img1.kakaku.k-img.com/images/productimage/fullscale/"&sRet&".jpg\"><br><br>"
+		Q10写入文件[K][21] = sRet1&array在库[i][2]
+		
+		Q10写入文件[K][14] = "https://img1.kakaku.k-img.com/images/productimage/fullscale/"&sRet&".jpg"
+		If 图片有无>1
+			
+			X = "https://img1.kakaku.k-img.com/images/productimage/fullscale/"&sRet
+			For w = 1 To 图片有无-1 Step 1 
+				If w=1
+					
+					更多图片 = X&"_000"&w&".jpg"
+				Else
+					更多图片 = 更多图片&"$$"&X&"_000"&w&".jpg"
+					
+				End If
+				
+			Next
+			
+			Q10写入文件[K][15] = 更多图片
+		Else
+			
+		End If
+		
+	Else
+		Q10写入文件[K][21] = array在库[i][2]
+		
+	End If
+	
+	array在库[i][8] = Replace(array在库[i][8]," ","",False)
+	If array在库[i][8]="335370"
+		Q10写入文件[K][23] = "444697"
+		
+	Else
+		
+	End If
+	K = K+1
+Next
+Try 99
+	test = Excel.BindBook("TEST.xlsx")
+	Excel.ActiveBook(test)
+Catch e
+Else
+End Try
+#icon("@res:1u01jmku-jh7o-damf-qd7u-44vlal1arueo.png")
+Window.SetActive({"wnd":[{"cls":"XLMAIN","title":"TEST.xlsx - Excel","app":"EXCEL"}]})
+Excel.WriteRange(test,"TEST","A1",Q10写入文件,False)
+#icon("@res:m6d7ut66-nj2t-g3gp-60j8-dr64ilrrh4k8.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"XLMAIN","title":"TEST.xlsx - Excel"},{"cls":"EXCEL2","idx":1},{"cls":"MsoCommandBar","title":"Ribbon"},{"cls":"MsoWorkPane","title":"Ribbon","aaname":"Ribbon"},{"cls":"NUIPane"},{"cls":"NetUIHWND","aaname":"Ribbon"}],"ctrl":[{"role":"ROLE_SYSTEM_PROPERTYPAGE","name":"Ribbon"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"ファイル タブ"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+#icon("@res:pn8djd7p-eueg-5c78-ucne-f86q0pus29ru.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"XLMAIN","title":"TEST.xlsx - Excel"},{"cls":"FullpageUIHost"},{"cls":"NetUIHWND"}],"ctrl":[{"role":"ROLE_SYSTEM_LIST","name":"ファイル"},{"role":"ROLE_SYSTEM_LISTITEM","name":"名前を付けて保存"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+#icon("@res:rqnja9qn-skvj-bnpn-8e2p-jhaq906q3d4l.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"XLMAIN","title":"TEST.xlsx - Excel"},{"cls":"FullpageUIHost"},{"cls":"NetUIHWND"}],"ctrl":[{"role":"ROLE_SYSTEM_GROUPING","name":"機能の保存"},{"role":"ROLE_SYSTEM_MENUBAR","name":"機能の保存"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"参照"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+dTime = Time.Date()
+shijian = Time.Format(dTime,"yyyymmdd")
+保存文件名 = "\\\\LS410D8E6\\tool\\YS登録\\q10\\Q-"&shijian
+保存文件名 = Replace(保存文件名,".xlsm",".xlsx",False)
+TracePrint(保存文件名)
+Clipboard.SetText(保存文件名)
+Keyboard.Press("V", "press", ["Ctrl"],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+#icon("@res:2in2bd49-e8cl-avrc-4bjk-eg7p61ale709.png")
+UiElement.SetSelect({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink","idx":2},{"cls":"ComboBox","aaname":"ファイルの種類:"}]},0,"index",{"bContinueOnError":True,"iDelayAfter":500,"iDelayBefore":200})
+#icon("@res:8vk8922c-vo65-q7c6-2pfc-9o4osfcvn855.png")
+arrSelItem = UiElement.GetSelect({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink","idx":2},{"cls":"ComboBox","aaname":"ファイルの種類:"}]},"text",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+TracePrint(arrSelItem[0])
+Delay(1000)
+Do While arrSelItem[0]<>"Excel ブック (*.xlsx)"
+	
+	#icon("@res:2in2bd49-e8cl-avrc-4bjk-eg7p61ale709.png")
+	UiElement.SetSelect({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink","idx":2},{"cls":"ComboBox","aaname":"ファイルの種類:"}]},0,"index",{"bContinueOnError":True,"iDelayAfter":100,"iDelayBefore":200})
+	Delay(200)
+	#icon("@res:lgta59ep-oknr-md7b-ucm8-unl7fddfjfvh.png")
+	arrSelItem = UiElement.GetSelect({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink","idx":2},{"cls":"ComboBox","aaname":"ファイルの種類:"}]},"text",{"bContinueOnError":False,"iDelayAfter":100,"iDelayBefore":100})
+	TracePrint("在次改变文件扩展名")
+Loop
+#icon("@res:6tnjtofl-a7eo-b8n9-ch8g-js5od5bvi0fq.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"Button","title":"保存(&S)","ctrlid":1,"aaname":"保存(S)"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+#icon("@res:ntb2isgm-oks6-mupl-fvhj-l2e95ckqc5g0.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存"},{"cls":"Button","title":"OK","ctrlid":1,"aaname":"OK"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+#icon("@res:hopkfs07-5km4-jbov-r4vj-p57ae1tvg6d1.png")
+Mouse.Action({"wnd":[{"app":"EXCEL","cls":"#32770","title":"名前を付けて保存の確認"},{"cls":"DirectUIHWND","aaname":"名前を付けて保存の確認"},{"cls":"CtrlNotifySink","idx":6},{"cls":"Button","title":"はい(&Y)","aaname":"はい(Y)"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"uia","bMoveSmoothly":False})
+
+
