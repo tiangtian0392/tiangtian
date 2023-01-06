@@ -82,3 +82,4 @@ Cyden / Jackery / motorola / Fitbit / Google Pixcel / GARMIN / SENNHEISERl / Mir
 メール：nichiyou7777@gmail.com
 応対可能な時間：平日11:00～17:00
 ご連絡はメールでお願いいたします。
+    DoCmd.TransferText acLinkDelim, "ImportCsv", filename, Path & filename & ".csv", True, , 65001 
