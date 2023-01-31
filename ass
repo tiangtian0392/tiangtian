@@ -85,3 +85,6 @@ Cyden / Jackery / motorola / Fitbit / Google Pixcel / GARMIN / SENNHEISERl / Mir
     DoCmd.TransferText acLinkDelim, "ImportCsv", filename, Path & filename & ".csv", True, , 65001 
     
     whitebang https://tfnmobile.com/company/#philosophy https://www.qoo10.jp/shop-info/whitebang?global_yn=N
+    
+    ---------------
+    ご理解ありがとうございました。何かご質問又は気になることがありましたら、お気軽にお問い合わせください。
