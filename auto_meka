@@ -1,0 +1,181 @@
+Dim temp = ""
+Dim bRet = ""
+Dim iRet = ""
+Dim JAN = ""
+Dim meka_GX = ""
+Dim hWeb = ""
+Dim meka_dict = ""
+Dim list1 = ""
+Dim objJSON = ""
+Dim strJSON = ""
+Dim dictRet = ""
+Dim arrRet = ""
+Dim 激活 = ""
+meka_dict = {"ノジマオンライン":[1639,1,1,1,2],"Amazon.co.jp":[1208,0,0,0,13],"Joshin":[1877,0,0,0,11],"ヤマダ電機":[3842,0,1,1,9],"ヤマダウェブコム":[1865,1,1,1,1],"楽天ブックス":[9014,1,1,1,12],"EDIONネットショップ":[1747,1,1,1,5],"ひかりTVショッピング":[2162,1,1,1,10],"コジマ":[3832,1,0,1,15],"ヨドバシ.com":[2220,0,1,1,14],"PREMOA":[3713,1,0,1,3],"エディオン":[3779,1,1,1,4],"XPRICE楽天":[2114,1,1,1,8],"SAKURA":[3720,1,1,1,6],"WiNK":[5,1,1,1,7]}
+meka_GX = {"ノジマオンライン":{"JAN":["(?<=Keywords\" content=\")[\\s\\S]+?(?=,)"],"型号":["(?<=Keywords\" content=\"\\d+,)[\\s\\S]+?(?=,)"],"详情":[]},"Amazon.co.jp":{"JAN":[],"型号":[],"详情":[]},"Joshin":{"JAN":[],"型号":[],"详情":[]},"ヤマダ電機":{"JAN":[],"型号":[],"详情":[]},"ヤマダウェブコム":{"JAN":[],"型号":[],"详情":[]},"楽天ブックス":{"JAN":[],"型号":[],"详情":[]},"EDIONネットショップ":{"JAN":[],"型号":[],"详情":[]},"ひかりTVショッピング":{"JAN":[],"型号":[],"详情":[]},"コジマ":{"JAN":[],"型号":[],"详情":[]},"ヨドバシ.com":{"JAN":[],"型号":[],"详情":[]},"PREMOA":{"JAN":[],"型号":[],"详情":[]},"エディオン":{"JAN":[],"型号":[],"详情":[]},"XPRICE楽天":{"JAN":[],"型号":[],"详情":[]},"SAKURA":{"JAN":[],"型号":[],"详情":[]},"WiNK":{"JAN":[],"型号":[],"详情":[]}}
+Function Get_meka()
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	bRet = WebBrowser.SwitchTab(hWeb,"url","https://kakaku.com/*",{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	For i = 0 To 10 Step 1 
+		
+		kakaku_htmlcode = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		iRet_kakaku_htmlcode = Len(kakaku_htmlcode)
+		If iRet_kakaku_htmlcode>1000
+			Break
+			
+		ElseIf iRet_kakaku_htmlcode<1000 And i >=10
+			TracePrint("获取源码失败，退出流程")
+			exit()
+			
+		End If
+	Next
+	dict_demo = {"component":[],"layout":"vertical","source":[]}
+	Dim arrayData = ""
+	Dim sRet = ""
+	arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text","url"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-shopInfo","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-shopInfo"},{"className":"p-PTShop","index":0,"prefix":">","tag":"div","value":"div.p-PTShop"},{"className":"p-PTShop_info","index":0,"prefix":">","tag":"div","value":"div.p-PTShop_info"},{"className":"p-PTShopData","index":0,"prefix":">","tag":"div","value":"div.p-PTShopData"},{"className":"p-PTShopData_name","index":0,"prefix":">","tag":"p","value":"p.p-PTShopData_name"},{"className":"p-PTShopData_name_link","index":0,"prefix":">","tag":"a","value":"a.p-PTShopData_name_link"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	排序 = 50
+	激活 = ""
+	For Each value In arrayData
+		Demo1 = {"default":"","name":"","option":[{"selected":False,"text":"JAN","value":"0"},{"selected":False,"text":"型号","value":"1"},{"selected":False,"text":"说明","value":"2"}],"selected":[],"type":"checkbox"}
+		Demo2 = {"active":False,"type":"checkbox","value":{"select":{"multiSelectArr":[{"keyText":"JAN","valueText":"0"},{"keyText":"型号","valueText":"1"},{"keyText":"说明","valueText":"2"}],"multiSelectArrValue":[]},"title":""}}
+		If meka_dict[value[0]]<>Null
+			
+			Demo1["name"] = value[0]
+			Demo1["option"][0]["value"] = "0"
+			Demo1["option"][1]["value"] = "1"
+			Demo1["option"][2]["value"] = "2"
+			Demo2["value"]["title"] = value[0]
+			Demo2["value"]["select"]["multiSelectArr"][0]["valueText"] = "0"
+			Demo2["value"]["select"]["multiSelectArr"][1]["valueText"] = "1"
+			Demo2["value"]["select"]["multiSelectArr"][2]["valueText"] = "2"
+			dict_demo["component"] = push(dict_demo["component"],Demo1)
+			dict_demo["source"] = push(dict_demo["source"],Demo2)
+			If meka_dict[value[0]][4]<排序
+				TracePrint(排序,meka_dict[value[0]][4])
+				排序 = meka_dict[value[0]][4]
+				激活 = value[0]
+				
+			Else
+				
+			End If
+		Else
+			
+		End If
+		
+	Next
+	TracePrint(排序,激活)
+	For Each value In dict_demo["component"]
+		If value["name"]=激活
+			TracePrint(激活,meka_dict[激活])
+			For i = 0 To 2 Step 1 
+				If meka_dict[激活][i+1]=1
+					nub_str = CStr(i)
+					
+					value["selected"] = push(value["selected"],nub_str)
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		
+	Next
+	For Each value In dict_demo["source"]
+		If value["value"]["select"]["title"]=激活
+			TracePrint(激活,meka_dict[激活])
+			For i = 0 To 2 Step 1 
+				If meka_dict[激活][i+1]=1
+					value["value"]["select"]["multiSelectArrValue"] = push(value["value"]["select"]["multiSelectArrValue"],i)
+					
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		
+	Next
+	strJSON = JSON.Stringify(dict_demo)
+	File.WriteFile(@res"1675131579633.json",strJSON,"utf-8")
+	dictRet = Dialog.UDFDialog("",@res"1675131579633.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	TracePrint(dictRet,dictRet["EDIONネットショップ"])
+	
+End Function
+Get_meka()
+Get_GX()
+Function Get_GX()
+	meka_GX = {"ノジマオンライン":{"JAN":["(?<=Keywords\" content=\")[\\s\\S]+?(?=,)"],"型号":["(?<=Keywords\" content=\")[\\s\\S]+?>","(?<=,)[\\s\\S]+?(?=,)"],"详情":["(?<=shohininfoicon.png\">商品説明\\</h\\d>)[\\s\\S]+?(?=\\<img src=\"/contents/image/shohininfoicon.png)"]},"Amazon.co.jp":{"JAN":[],"型号":[],"详情":[]},"Joshin":{"JAN":[],"型号":[],"详情":[]},"ヤマダ電機":{"JAN":[],"型号":[],"详情":[]},"ヤマダウェブコム":{"JAN":[],"型号":[],"详情":[]},"楽天ブックス":{"JAN":[],"型号":[],"详情":[]},"EDIONネットショップ":{"JAN":[],"型号":[],"详情":[]},"ひかりTVショッピング":{"JAN":[],"型号":[],"详情":[]},"コジマ":{"JAN":[],"型号":[],"详情":[]},"ヨドバシ.com":{"JAN":[],"型号":[],"详情":[]},"PREMOA":{"JAN":[],"型号":[],"详情":[]},"エディオン":{"JAN":[],"型号":[],"详情":[]},"XPRICE楽天":{"JAN":[],"型号":[],"详情":[]},"SAKURA":{"JAN":[],"型号":[],"详情":[]},"WiNK":{"JAN":[],"型号":[],"详情":[]}}
+	For Each key, value In dictRet
+		iRet_PD = UBound(value)
+		If iRet_PD>0
+			For i = 0 To 10 Step 1 
+				meka_URL = Regex.FindStr(kakaku_htmlcode,"ShopCD="&meka_dict[key][0]&"[\\s\\S]+?(?=\")",0)
+				If meka_URL<>"" 
+					Break
+					
+				ElseIf meka_URL = "" And i >= 10
+					TracePrint("获取网址失败，退出")
+					exit()
+					
+				End If
+				
+			Next
+			meka_URL = "https://c.kakaku.com/forwarder/forward.aspx?"&meka_URL
+			meka_URL = Replace(meka_URL,"&amp;","&",False)
+			TracePrint(meka_URL)
+			hWeb_GX = WebBrowser.Create("chrome",meka_URL,30000,{"bContinueOnError":False,"iDelayAfter":2000,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+			Do While True
+				GX_HTMLCODE = WebBrowser.GetHTML(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				iRet_strPD = LenB(GX_HTMLCODE)
+				If iRet_strPD>10000
+					Break
+					
+				Else
+					
+				End If
+				
+			Loop
+			TracePrint("value",value)
+			For Each value_GX In value
+				If value_GX="0"
+					
+					For Each value_JAN In meka_GX[key]["JAN"]
+						TracePrint(value_JAN)
+						JAN = Regex.FindStr(GX_HTMLCODE,value_JAN,0)
+						
+					Next
+				ElseIf value_GX="1"
+					For Each value_型号 In meka_GX[key]["型号"]
+						
+						型号 = Regex.FindStr(GX_HTMLCODE,value_型号,0)
+						TracePrint(value_型号,型号)
+					Next
+					
+				ElseIf value_GX="2"
+					For Each value_详情 In meka_GX[key]["详情"]
+						TracePrint(value_详情)
+						
+						详情 = Regex.FindStr(GX_HTMLCODE,value_详情,0)
+					Next
+					
+				End If
+				
+			Next
+			
+			WebBrowser.Close(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		Else
+			
+		End If
+		
+	Next
+	
+End Function
+TracePrint(JAN,型号,详情)
+
+
