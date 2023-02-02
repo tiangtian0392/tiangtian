@@ -1,4 +1,5 @@
 Dim 详情 = ""
+Dim CSV_list = ""
 Dim paichu_excel = ""
 Dim 停止出品 = ""
 Dim iPID = ""
@@ -42,9 +43,10 @@ Dim 激活 = ""
 meka_dict = {"ソフマップ.com":[1824,1,1,1,9],"ノジマオンライン":[1639,1,1,1,2],"Amazon.co.jp":[1208,0,0,0,13],"Joshin":[1877,1,1,1,10],"ヤマダウェブコム":[1865,1,1,1,1],"楽天ブックス":[9014,1,1,1,12],"EDIONネットショップ":[1747,1,1,1,5],"ひかりTVショッピング":[2162,1,1,1,11],"コジマ":[3832,1,0,1,15],"ヨドバシ.com":[2220,0,1,1,14],"PREMOA":[3713,1,0,1,3],"エディオン":[3779,1,0,1,4],"XPRICE楽天":[2114,1,1,1,8],"SAKURA":[3720,1,1,1,6],"WiNK":[5,1,1,1,7]}
 meka_GX = {    "ソフマップ.com" : {       "JAN" : ["(?<=new_jan\\=)\\d+"],       "型号" : ["(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)","[^>]+(?!.*>)"],       "详情" : ["(?<=単品商品詳細 start -->)[\\s\\S]+?(?=\\<!-- 単品商品詳細 end)"]    },"Amazon.co.jp" : {       "JAN" : [],       "型号" : [],       "详情" : []    },    "EDIONネットショップ" : {       "JAN" : [ "(?<=janCd:')[\\s\\S]+?(?=')" ],       "型号" : [ "(?<=word-break\">型番\\</dt>\\s<dd>)[\\s\\S]+?(?=</dd>)" ],       "详情" : [ "(?<= include PC8 -->)[\\s\\S]+?(?=\\<!-- フリー領域)" ]    },    "Joshin" : {       "JAN" : [ "(?<=item_id: ')\\d+?(?=')" ],       "型号" : [ "(?<=keywords\" content=\")[\\s\\S]+?(?=[,|\\s])" ],       "详情" : [ "(?<=title01\">商品の特長)[\\s\\S]+?(?=レビュー)" ]    },    "PREMOA" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"]    },    "SAKURA" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : ["(?<=商品番号\\</span>)[\\s\\S]+?(?=\\</span>)","[^>]+(?!.*>)"],       "详情" : ["(?<=span class=\"item_desc\">)[\\s\\S]+?(?=\\</span>)"]    },    "WiNK" : {       "JAN" : [],       "型号" : [],       "详情" : []    },    "XPRICE楽天" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"]    },    "ひかりTVショッピング" : {       "JAN" : ["(?<=ProductID\" : \")\\d+?(?=\")"],       "型号" : ["(?<=型番)[\\s\\S]+?(?=\\</td>)","(?<=>)\\S+"],       "详情" : ["(?<=商品の特徴)[\\s\\S]+?(?=\\</div>)"]    },    "エディオン" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=の商品説明)[\\s\\S]+?(?=\\</span>)"]    },    "コジマ" : {       "JAN" : [ "(?<=JANコード：)\\d+" ],       "型号" : [ "(?<=型式：)[\\s\\S]+?(?=\\<)" ],       "详情" : [          "(?<=【商品解説】)[\\s\\S]+?(?=【注意事項・特記事項】)"       ]    },    "ノジマオンライン" : {       "JAN" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=,)" ],       "型号" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=>)", "(?<=,)[\\s\\S]+?(?=,)" ],       "详情" : [          "(?<=商品説明</h\\d>)[\\s\\S]+?(?=<img src=\"/contents/image/shohininfoicon.png)"       ]    },    "ヤマダウェブコム" : {       "JAN" : ["(?<=JAN\\</th>)[\\s\\S]+?(?=\\</td>)","(?<=>)\\d+"],       "型号" : ["(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)","(?<=>)\\S+"],       "详情" : ["(?<=div class=\"product-sammary__inner\">)[\\s\\S]+?(?=\\</section>)"]    },    "ヨドバシ.com" : {       "JAN" : [],       "型号" : [],       "详情" : ["(?<=pDescription -->)[\\s\\S]+?(?=\\<!-- /pdContainer -->)"]    },    "楽天ブックス" : {       "JAN" : [          "(?<=JAN</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"       ],       "型号" : [          "(?<=品番</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"       ],       "详情" : [ "(?<=商品説明\\</h\\d>)[\\s\\S]+?(?=\\<!-- /div#editArea2 -->)" ]    } }
 设定位 = 5
-加价 = Null
+加价 = 0
 停止出品 = 0
 arrayQ10data = CSV.Open("Z:\\bazhuayu\\Qoo10_Data.csv",{"encoding":"auto"})
+CSV_list = CSV.Open("Z:\\bazhuayu\\title_banhao.csv",{"encoding":"auto"})
 Function 查找出品(x)
 	Text查找 = x
 	Dialog.Notify("查找内容为："&Text查找, "查找", "0")
@@ -179,7 +181,7 @@ Function Get_meka()
 	排序 = 50
 	激活 = ""
 	JS = 1
-	If 加价=Null
+	If 加价=0
 		加价 = Dialog.InputBox("输入加价金额","设置加价",3500,True)
 		加价 = CInt(加价)
 		
@@ -306,7 +308,7 @@ Function Get_GX()
 	End If
 	For Each key, value In dictRet
 		iRet_PD = UBound(value)
-		If iRet_PD>0
+		If iRet_PD>=0
 			For i = 0 To 10 Step 1 
 				meka_URL = Regex.FindStr(kakaku_htmlcode,"ShopCD="&meka_dict[key][0]&"[\\s\\S]+?(?=\")",0)
 				If meka_URL<>"" 
@@ -385,13 +387,13 @@ Function Get_GX()
 				
 			Next
 			
-			WebBrowser.Close(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 		Else
 			
 		End If
 		
 	Next
 	
+	TracePrint("")
 	判断是否出品过()
 	list_write[0] = JAN
 	Rem 去掉商品详情内图片，动画，商家文字
@@ -442,9 +444,8 @@ Function Excelwrite()
 End Function
 Rem 判断是否出品过
 Function 判断是否出品过()
-	CSV_list = CSV.Open("Z:\\bazhuayu\\title_banhao.csv",{"encoding":"auto"})
 	For Each value In CSV_list
-		If JAN=value[6] Or 型号=value[2] And JAN<>"" And  型号<>""
+		If (JAN<>"" And JAN=value[6]) Or  (型号<>"" And 型号=value[2])
 			TracePrint(JAN,value[0],value[2])
 			strtext = Format("JAN：%s，番号：%s\n%s\n以出品，'确认'退出，不在出品",JAN,value[0],value[3])
 			strtext = Dialog.MsgBox(strtext,"重复提示",1,"1",0)
@@ -464,12 +465,18 @@ Function 判断是否出品过()
 End Function
 Rem 主程序循环
 Do While True
-	winForm = myUI.CreateForm("出品",360,250)
+	详情 = ""
+	JAN = ""
+	型号 = ""
+	价格 = ""
+	价格1 = ""
+	winForm = myUI.CreateForm("出品",360,150)
 	objControl = myUI.CreateControl(winForm,"Label","加价：",50,24,3,5)
 	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,88,24,55,3)
-	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,30)
-	objButton = myUI.CreateButton(winForm,"Cancel","退出",88,24,95,30)
-	objButton = myUI.CreateButton(winForm,"Suspend","查找",88,24,150,3)
+	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,90)
+	objButton = myUI.CreateButton(winForm,"Cancel","退出",88,24,260,90)
+	objButton = myUI.CreateButton(winForm,"Suspend","查找",88,24,260,3)
+	INI.Write(@res"seting.ini", "基本信息", "位置", "1")
 	myUI.ShowModal(winForm)
 	Text加价 = myUI.GetControlText(obj加价)
 	加价 = CInt(Text加价)
