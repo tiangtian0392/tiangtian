@@ -397,7 +397,7 @@ Function Get_GX()
 	判断是否出品过()
 	list_write[0] = JAN
 	Rem 去掉商品详情内图片，动画，商家文字
-	rec_GX = ["\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>"]
+	rec_GX = ["\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
 	For Each value In rec_GX
 		arrRet = Regex.FindAll(详情,value)
 		TracePrint(arrRet)
@@ -503,7 +503,7 @@ Function test()
 	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	GX_HTMLCODE = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	sRet = Regex.FindStr("","",0)
-	meke = "ノジマオンライン"
+	meke = "ソフマップ.com"
 	For Each key, value In meka_GX
 		If key=meke
 			TracePrint(key,meke,meka_GX[key]["JAN"])
@@ -554,7 +554,7 @@ Function test()
 	Next
 	
 	Rem 去掉商品详情内图片，动画，商家文字
-	rec_GX = ["\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>"]
+	rec_GX = ["\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
 	For Each value In rec_GX
 		arrRet = Regex.FindAll(详情,value)
 		TracePrint(arrRet)
