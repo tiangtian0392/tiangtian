@@ -1,0 +1,177 @@
+{
+   "component" : [
+      {
+         "default" : "",
+         "name" : "Joshin",
+         "option" : [
+            {
+               "selected" : false,
+               "text" : "JAN",
+               "value" : "0"
+            },
+            {
+               "selected" : false,
+               "text" : "番号",
+               "value" : "1"
+            },
+            {
+               "selected" : false,
+               "text" : "说明",
+               "value" : "2"
+            }
+         ],
+         "selected" : [],
+         "type" : "checkbox"
+      },
+      {
+         "default" : "",
+         "name" : "ヨドバシ.com",
+         "option" : [
+            {
+               "selected" : false,
+               "text" : "番号",
+               "value" : "1"
+            },
+            {
+               "selected" : false,
+               "text" : "说明",
+               "value" : "2"
+            }
+         ],
+         "selected" : [],
+         "type" : "checkbox"
+      },
+      {
+         "default" : "",
+         "name" : "XPRICE楽天",
+         "option" : [
+            {
+               "selected" : false,
+               "text" : "JAN",
+               "value" : "0"
+            },
+            {
+               "selected" : false,
+               "text" : "番号",
+               "value" : "1"
+            },
+            {
+               "selected" : false,
+               "text" : "说明",
+               "value" : "2"
+            }
+         ],
+         "selected" : [],
+         "type" : "checkbox"
+      },
+      {
+         "default" : "",
+         "name" : "PREMOA",
+         "option" : [
+            {
+               "selected" : false,
+               "text" : "JAN",
+               "value" : "0"
+            },
+            {
+               "selected" : false,
+               "text" : "说明",
+               "value" : "2"
+            }
+         ],
+         "selected" : [ "0", "2" ],
+         "type" : "checkbox"
+      }
+   ],
+   "layout" : "vertical",
+   "source" : [
+      {
+         "active" : false,
+         "type" : "checkbox",
+         "value" : {
+            "select" : {
+               "multiSelectArr" : [
+                  {
+                     "keyText" : "JAN",
+                     "valueText" : "0"
+                  },
+                  {
+                     "keyText" : "番号",
+                     "valueText" : "1"
+                  },
+                  {
+                     "keyText" : "说明",
+                     "valueText" : "2"
+                  }
+               ],
+               "multiSelectArrValue" : []
+            },
+            "title" : "Joshin"
+         }
+      },
+      {
+         "active" : false,
+         "type" : "checkbox",
+         "value" : {
+            "select" : {
+               "multiSelectArr" : [
+                  {
+                     "keyText" : "番号",
+                     "valueText" : "1"
+                  },
+                  {
+                     "keyText" : "说明",
+                     "valueText" : "2"
+                  }
+               ],
+               "multiSelectArrValue" : []
+            },
+            "title" : "ヨドバシ.com"
+         }
+      },
+      {
+         "active" : false,
+         "type" : "checkbox",
+         "value" : {
+            "select" : {
+               "multiSelectArr" : [
+                  {
+                     "keyText" : "JAN",
+                     "valueText" : "0"
+                  },
+                  {
+                     "keyText" : "番号",
+                     "valueText" : "1"
+                  },
+                  {
+                     "keyText" : "说明",
+                     "valueText" : "2"
+                  }
+               ],
+               "multiSelectArrValue" : []
+            },
+            "title" : "XPRICE楽天"
+         }
+      },
+      {
+         "active" : false,
+         "type" : "checkbox",
+         "value" : {
+            "select" : {
+               "multiSelectArr" : [
+                  {
+                     "keyText" : "JAN",
+                     "valueText" : "0"
+                  },
+                  {
+                     "keyText" : "说明",
+                     "valueText" : "2"
+                  }
+               ],
+               "multiSelectArrValue" : []
+            },
+            "title" : "PREMOA"
+         }
+      }
+   ]
+}
