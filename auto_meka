@@ -449,8 +449,9 @@ End Function
 Rem 判断是否出品过
 Function 判断是否出品过()
 	For Each value In CSV_list
-		If (JAN<>"" And JAN=value[6]) Or  (型号<>"" And 型号=value[2])
-			TracePrint(JAN,value[0],value[2])
+		value[6] = DigitFromStr(value[6])
+				If (JAN<>"" And JAN=value[6]) Or  (型号<>"" And 型号=value[2])
+			TracePrint(JAN,value[0],value[2],value[6])
 			strtext = Format("JAN：%s，番号：%s\n%s\n以出品，'确认'退出，不在出品",JAN,value[0],value[3])
 			strtext = Dialog.MsgBox(strtext,"重复提示",1,"1",0)
 			If strtext = 6
