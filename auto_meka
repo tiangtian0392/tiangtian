@@ -1,4 +1,6 @@
 Dim 详情 = ""
+Dim Text加价 = ""
+Dim obj加价 = ""
 Dim CSV_list = ""
 Dim paichu_excel = ""
 Dim 停止出品 = ""
@@ -91,14 +93,10 @@ End Function
 Function 不在出品(厂家)
 	TracePrint("查找不在出品名单",厂家)
 	Try 1
-		#icon("@res:nciqbtt7-46ad-17nm-p7nu-llrbai4hjbqa.png")
-		Window.SetActive({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx - Excel","app":"EXCEL"}]})
 		paichu_excel = Excel.BindBook("paichu.xlsx")
 	Catch e
 		iRet = Dialog.MsgBox("绑定排除失败，查看原因","UiBot","0","1",0)
 	Else
-		#icon("@res:nciqbtt7-46ad-17nm-p7nu-llrbai4hjbqa.png")
-		Window.SetActive({"wnd":[{"cls":"XLMAIN","title":"paichu.xlsx - Excel","app":"EXCEL"}]})
 		paichu_excel = Excel.BindBook("paichu.xlsx")
 		Excel.ActiveBook(paichu_excel)
 		iRet_行数  = Excel.GetRowsCount(paichu_excel,"不出品")
@@ -471,8 +469,10 @@ Do While True
 	价格 = ""
 	价格1 = ""
 	winForm = myUI.CreateForm("出品",360,150)
-	objControl = myUI.CreateControl(winForm,"Label","加价：",50,24,3,5)
-	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,88,24,55,3)
+	objControl = myUI.CreateControl(winForm,"Label","加　　价：",70,24,3,5)
+	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,88,24,75,3)
+	objControl = myUI.CreateControl(winForm,"Label","价格取位：",70,24,3,30)
+	obj价格位 = myUI.CreateControl(winForm,"TextBox",5,88,24,75,30)
 	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,90)
 	objButton = myUI.CreateButton(winForm,"Cancel","退出",88,24,260,90)
 	objButton = myUI.CreateButton(winForm,"Suspend","查找",88,24,260,3)
@@ -480,8 +480,10 @@ Do While True
 	myUI.ShowModal(winForm)
 	Text加价 = myUI.GetControlText(obj加价)
 	加价 = CInt(Text加价)
+	设定位 = myUI.GetControlText(obj价格位)
+	设定位 = CInt(设定位)
 	ButtonID = myUI.GetButtonID()
-	TracePrint(ButtonID)
+	TracePrint("ButtonID："&ButtonID,"取价位置："&设定位,"加价："&加价)
 	If ButtonID=1
 		停止出品 = 0
 		Get_meka()
