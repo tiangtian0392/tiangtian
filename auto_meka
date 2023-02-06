@@ -295,6 +295,12 @@ Function Get_meka()
 	strJSON = JSON.Stringify(dict_demo)
 	File.WriteFile(@res"1675131579633.json",strJSON,"utf-8")
 	dictRet = Dialog.UDFDialog("",@res"1675131579633.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	If dictRet["return"] = 0
+		停止出品 = 1
+		
+	Else
+		
+	End If
 	TracePrint(dictRet)
 	
 End Function
