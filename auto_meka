@@ -404,7 +404,7 @@ Function Get_GX()
 	判断是否出品过()
 	list_write[0] = JAN
 	Rem 去掉商品详情内图片，动画，商家文字
-	rec_GX = ["\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","[^>]+について[≫|＞]*","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
+	rec_GX = ["仕様詳細[\\s\\S]+?\\</table>","商品情報","\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","[^>]+について[≫|＞]*","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
 	For Each value In rec_GX
 		arrRet = Regex.FindAll(详情,value)
 		TracePrint(arrRet)
@@ -566,7 +566,7 @@ Function test()
 	Next
 	
 	Rem 去掉商品详情内图片，动画，商家文字
-	rec_GX = ["\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","[^>]+について[≫|＞]*","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
+	rec_GX = ["商品情報","\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","[^>]+について[≫|＞]*","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
 	For Each value In rec_GX
 		arrRet = Regex.FindAll(详情,value)
 		TracePrint(arrRet)
