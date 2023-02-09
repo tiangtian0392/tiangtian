@@ -1,4 +1,5 @@
 Dim 详情 = ""
+Dim strXH_CD = ""
 Dim Text加价 = ""
 Dim obj加价 = ""
 Dim CSV_list = ""
@@ -483,6 +484,8 @@ Do While True
 	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,88,24,75,3)
 	objControl = myUI.CreateControl(winForm,"Label","价格取位：",70,24,3,30)
 	obj价格位 = myUI.CreateControl(winForm,"TextBox",5,88,24,75,30)
+	objButton = myUI.CreateButton(winForm,"Retry","型号处理",88,24,3,63)
+	objControl = myUI.CreateControl(winForm,"Label",strXH_text,150,24,94,71)
 	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,90)
 	objButton = myUI.CreateButton(winForm,"Cancel","退出",88,24,260,90)
 	objButton = myUI.CreateButton(winForm,"Suspend","查找",88,24,260,3)
@@ -505,9 +508,58 @@ Do While True
 	ElseIf ButtonID=3
 		x = Clipboard.GetText()
 		查找出品(x)	
+	ElseIf ButtonID=4
+		XingHaoZL()
 	End If
 	
 Loop
+Rem 型号整理
+Function XingHaoZL()
+	strXH = Clipboard.GetText()
+	strXH_list = Regex.FindAll(strXH,"[\\S]")
+	tesuzifu = ["[","]","(",")"," ","　"]
+	strXH_text = ""
+	For Each value In strXH_list
+		For Each value_item In tesuzifu
+			If value_item=value
+				value = "-"
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+		
+		strXH_text = strXH_text&value
+	Next
+	
+	strXH_PD = EndsWith(strXH_text,"-")
+	If strXH_PD
+		
+		strXH_text = RTrim(strXH_text,"-")
+	Else
+		
+	End If
+	strXH_CD = Len(strXH_text)
+	If strXH_CD>20
+		strXH_text = Replace(strXH_text,"-","",False)
+		
+	Else
+		
+	End If
+	strXH_CD1 = Len(strXH_text)
+	If strXH_CD1>20
+		TracePrint(">20")
+		
+		iRet = Dialog.MsgBox("字符串长度：" & strXH_CD & "\n" & strXH_text,"UiBot","0","1",0)
+	Else
+		
+	End If
+	Clipboard.SetText(strXH_text)
+	TracePrint(strXH_CD1,strXH_text)
+End Function
+Rem 测试
 Function test()
 	strJSON = JSON.Stringify(meka_GX)
 	File.WriteFile("C:\\Users\\user\\Downloads\\1.txt",strJSON,"utf-8")
