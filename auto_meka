@@ -1,4 +1,5 @@
 Dim 详情 = ""
+Dim Browser_dict = ""
 Dim Rows = ""
 Dim 设定位 = ""
 Dim Index = ""
@@ -132,6 +133,8 @@ Function 不在出品(厂家)
 	
 End Function
 Function Get_meka()
+	价格 = ""
+	价格1 = ""
 	list_write = Array([20])
 	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
 	bRet = WebBrowser.SwitchTab(hWeb,"url","https://kakaku.com/*",{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
@@ -330,7 +333,11 @@ Function Get_meka()
 	
 End Function
 Function Get_GX()
+	详情 = ""
+	JAN = ""
+	型号 = ""
 	image_dict = {}
+	Browser_dict = {}
 	If 停止出品=1
 		Return 
 	Else
@@ -361,6 +368,8 @@ Function Get_GX()
 			meka_URL = "https://c.kakaku.com/forwarder/forward.aspx?"&meka_URL
 			meka_URL = Replace(meka_URL,"&amp;","&",False)
 			hWeb_GX = WebBrowser.Create("chrome",meka_URL,30000,{"bContinueOnError":False,"iDelayAfter":2000,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+			getWebUrl = WebBrowser.GetURL(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			Browser_dict[key] = getWebUrl
 			Do While True
 				GX_HTMLCODE = WebBrowser.GetHTML(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 				iRet_strPD = LenB(GX_HTMLCODE)
@@ -545,11 +554,6 @@ Function 判断是否出品过()
 End Function
 Rem 主程序循环
 Do While True
-	详情 = ""
-	JAN = ""
-	型号 = ""
-	价格 = ""
-	价格1 = ""
 	winForm = myUI.CreateForm("出品",363,150)
 	objControl = myUI.CreateControl(winForm,"Label","加　　价：",70,24,3,5)
 	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,60,24,75,3)
@@ -561,6 +565,7 @@ Do While True
 		ComboBox = myUI.AddComboBoxItem(objimg,key)
 	Next
 	objButton = myUI.CreateButton(winForm,"Ignore","添加图片",88,24,273,30)
+	objButton = myUI.CreateButton(winForm,"Yes","下载图片",88,24,273,63)
 	objButton = myUI.CreateButton(winForm,"Retry","型号处理",88,24,3,63)
 	objControl = myUI.CreateControl(winForm,"Label",strXH_text,150,24,94,71)
 	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,90)
@@ -592,6 +597,11 @@ Do While True
 		TracePrint(指定图片,image_dict[指定图片])
 		Rows1 = Excel.GetRowsCount(objExcelWorkBook,"在庫写入")
 		Excel.WriteCell(objExcelWorkBook,"在庫写入","Q"&Rows1,image_dict[指定图片],False)
+	ElseIf ButtonID=6
+		TracePrint(Browser_dict[指定图片])
+		hWeb_GX = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		bRet = WebBrowser.SwitchTab(hWeb_GX,"url",Browser_dict[指定图片],{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		DownImage(image_dict[指定图片])
 	End If
 	
 Loop
@@ -738,22 +748,18 @@ Function GetIMAGE()
 	Next
 	
 	TracePrint(amaon_URL)
-	DownImage()
+	DownImage(amaon_URL)
 End Function
 Rem 下载图片
-Function DownImage()
+Function DownImage(DowURL)
+	TracePrint("开始下载网页，输出型号，URL",型号,DowURL)
 	Try 3
-		WebBrowser.Download(hWeb_img,amaon_URL,"C:\\Users\\user\\Pictures\\"&型号&".jpg",True,100000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		WebBrowser.Download(hWeb_img,DowURL,"C:\\Users\\user\\Pictures\\"&型号&".jpg",True,100000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 	Catch e
 		TracePrint("Amazon图片下载失败")
 	Else
 		iPID = App.Start("C:\\Users\\user\\Pictures\\"&型号&".jpg", "0", "1")
 	End Try
-	
-End Function
-Rem 图片列表
-Function Image_list()
-	dictRet = Dialog.UDFDialog("","",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
 	
 End Function
 
