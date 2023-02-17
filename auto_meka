@@ -1,4 +1,5 @@
 Dim 详情 = ""
+Dim Rows1 = ""
 Dim 单独子程序 = ""
 Dim list_write = ""
 Dim objimg = ""
@@ -56,8 +57,8 @@ Dim strJSON = ""
 Dim dictRet = ""
 Dim arrRet = ""
 Dim 激活 = ""
-meka_dict = {"ソフマップ.com":[1824,1,1,1,9,1],"ノジマオンライン":[1639,1,1,1,2,0],"Amazon.co.jp":[1208,0,1,1,14,1],"Joshin":[1877,1,1,1,11,0],"ヤマダウェブコム":[1865,1,1,1,1,1],"楽天ブックス":[9014,1,1,1,13,0],"EDIONネットショップ":[1747,1,1,1,5,1],"ひかりTVショッピング":[2162,1,1,1,12,0],"コジマ":[3832,1,0,1,16,1],"ヨドバシ.com":[2220,0,1,1,15,0],"PREMOA":[3713,1,0,1,3,1],"エディオン":[3779,1,0,1,4,1],"XPRICE楽天":[2114,1,1,1,8,0],"SAKURA":[3720,1,1,1,6,1],"WiNK":[5,1,1,1,7,0],"ケーズデンキWEB":[1733,1,0,1,10,1],"楽天ビックカメラ":[3757,1,0,1,10,1]}
-meka_GX = {   "Amazon.co.jp" :{       "JAN" : [],       "型号" : ["(?<=asin: \")\\S+?(?=\")"],       "详情" : ["(?<=show up to 2 reviews by default -->)[\\s\\S]+?(?=\\</div>)"],      "图片" : [ "(?<=data-old-hires=\")[\\S\\s]+?jpg" ]    },   "EDIONネットショップ" : {      "JAN" : [ "(?<=janCd:')[\\s\\S]+?(?=')" ],      "型号" : [ "(?<=word-break\">型番\\</dt>\\s<dd>)[\\s\\S]+?(?=</dd>)" ],      "详情" : [ "(?<= include PC8 -->)[\\s\\S]+?(?=\\<!-- フリー領域)" ],      "图片" : [ "/ito/product/7537/04549550227537/598x598/\\d+_1.jpg" ]	   },   "Joshin" : {      "JAN" : [ "(?<=item_id: ')\\d+?(?=')" ],      "型号" : [ "(?<=keywords\" content=\")[\\s\\S]+?(?=[,|\\s])" ],      "详情" : [ "(?<=title01\">商品の特長)[\\s\\S]+?(?=レビュー)" ]   },   "PREMOA" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [ "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "SAKURA" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [ "(?<=商品番号\\</span>)[\\s\\S]+?(?=\\</span>)", "[^>]+(?!.*>)" ],      "详情" : [ "(?<=span class=\"item_desc\">)[\\s\\S]+?(?=\\</span>)" ]   },   "WiNK" : {      "JAN" : [ "(?<=商品コード：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\d+" ],      "型号" : [ "(?<=型番：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\S+" ],      "详情" : [         "(?<=\\<!-- .detail-box -->)[\\s\\S]+?(?=\\<!-- 商品ここまで -->)",         "(?<=\\<p class=\"text01\">)[\\s\\S]+"      ]   },   "XPRICE楽天" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [         "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"      ]   },   "ひかりTVショッピング" : {      "JAN" : [ "(?<=ProductID\" : \")\\d+?(?=\")" ],      "型号" : [ "(?<=型番)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [ "(?<=商品の特徴)[\\s\\S]+?(?=\\</div>)" ]   },   "エディオン" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [ "(?<=の商品説明)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "ケーズデンキWEB" : {      "JAN" : [ "(?<=JAN：)\\d+" ],      "型号" : [],      "详情" : [ "(?<=goodscomment1_ \">)[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "(?<=data-viewsrc=\"//)image.ksdenki.com/img/goods/[\\S]+_5.jpg?(?=\")" ]   },   "コジマ" : {      "JAN" : [ "(?<=JANコード：)\\d+" ],      "型号" : [ "(?<=型式：)[\\s\\S]+?(?=\\<)" ],      "详情" : [ "(?<=【商品解説】)[\\s\\S]+?(?=\\</p>)" ],      "图片" : [ "https://shop.r10s.jp/r-kojima/cabinet/\\S+_1.jpg" ]   },   "ソフマップ.com" : {      "JAN" : [ "(?<=new_jan\\=)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "[^>]+(?!.*>)" ],      "详情" : [         "(?<=単品商品詳細 start -->)[\\s\\S]+?(?=\\<!-- 単品商品詳細 end)"      ],      "图片" : [ "https://image.sofmap.com/images/product/pim/\\d+_A01.jpg" ]   },   "ノジマオンライン" : {      "JAN" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=,)" ],      "型号" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=>)", "(?<=,)[\\s\\S]+?(?=,)" ],      "详情" : [         "(?<=商品説明</h\\d>)[\\s\\S]+?(?=<img src=\"/contents/image/shohininfoicon.png)"      ]   },   "ヤマダウェブコム" : {      "JAN" : [ "(?<=JAN\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [         "(?<=div class=\"product-sammary__inner\">)[\\s\\S]+?(?=\\</section>)"      ],      "图片" : [ "https://cache.ymall.jp/webcom/item/multiimage/500/\\d+_001.jpg" ]   },   "ヨドバシ.com" : {      "JAN" : [],      "型号" : [],      "详情" : [ "(?<=pDescription -->)[\\s\\S]+?(?=\\<!-- /pdContainer -->)" ]   },   "楽天ビックカメラ" : {      "JAN" : [ "(?<=mng_number\":\")\\d+" ],      "型号" : [],      "详情" : [ "(?<=c-list\" data-v-42ea0d56=\"\">)[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "https://image.rakuten.co.jp/biccamera/cabinet/product/\\S+_a01.jpg" ]   },   "楽天ブックス" : {      "JAN" : [         "(?<=JAN</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "型号" : [         "(?<=品番</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "详情" : [ "(?<=商品説明\\</h\\d>)[\\s\\S]+?(?=\\<!-- /div#editArea2 -->)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   }}
+meka_dict = {"ソフマップ.com":[1824,1,1,1,9,1],"ノジマオンライン":[1639,1,1,1,2,0],"Amazon.co.jp":[1208,1,1,1,14,1],"Joshin":[1877,1,1,1,11,0],"ヤマダウェブコム":[1865,1,1,1,1,1],"楽天ブックス":[9014,1,1,1,13,0],"EDIONネットショップ":[1747,1,1,1,5,1],"ひかりTVショッピング":[2162,1,1,1,12,0],"コジマ":[3832,1,0,1,16,1],"ヨドバシ.com":[2220,0,1,1,15,0],"PREMOA":[3713,1,0,1,3,1],"エディオン":[3779,1,0,1,4,1],"XPRICE楽天":[2114,1,1,1,8,0],"SAKURA":[3720,1,1,1,6,1],"WiNK":[5,1,1,1,7,0],"ケーズデンキWEB":[1733,1,0,1,10,1],"楽天ビックカメラ":[3757,1,0,1,10,1]}
+meka_GX = {   "Amazon.co.jp" :{       "JAN" : ["商品モデル番号[\\s\\S]+?\\</li>","\\d{9,}"],       "型号" : ["(?<=asin: \")\\S+?(?=\")"],       "详情" : ["(?<=show up to 2 reviews by default -->)[\\s\\S]+?(?=\\</div>)"],      "图片" : [ "(?<=data-old-hires=\")[\\S\\s]+?jpg" ]    },   "EDIONネットショップ" : {      "JAN" : [ "(?<=janCd:')[\\s\\S]+?(?=')" ],      "型号" : [ "(?<=word-break\">型番\\</dt>\\s<dd>)[\\s\\S]+?(?=</dd>)" ],      "详情" : [ "(?<= include PC8 -->)[\\s\\S]+?(?=\\<!-- フリー領域)" ],      "图片" : [ "/ito/product/7537/04549550227537/598x598/\\d+_1.jpg" ]	   },   "Joshin" : {      "JAN" : [ "(?<=item_id: ')\\d+?(?=')" ],      "型号" : [ "(?<=keywords\" content=\")[\\s\\S]+?(?=[,|\\s])" ],      "详情" : [ "(?<=title01\">商品の特長)[\\s\\S]+?(?=レビュー)" ]   },   "PREMOA" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [ "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "SAKURA" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [ "(?<=商品番号\\</span>)[\\s\\S]+?(?=\\</span>)", "[^>]+(?!.*>)" ],      "详情" : [ "(?<=span class=\"item_desc\">)[\\s\\S]+?(?=\\</span>)" ]   },   "WiNK" : {      "JAN" : [ "(?<=商品コード：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\d+" ],      "型号" : [ "(?<=型番：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\S+" ],      "详情" : [         "(?<=\\<!-- .detail-box -->)[\\s\\S]+?(?=\\<!-- 商品ここまで -->)",         "(?<=\\<p class=\"text01\">)[\\s\\S]+"      ]   },   "XPRICE楽天" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [         "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"      ]   },   "ひかりTVショッピング" : {      "JAN" : [ "(?<=ProductID\" : \")\\d+?(?=\")" ],      "型号" : [ "(?<=型番)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [ "(?<=商品の特徴)[\\s\\S]+?(?=\\</div>)" ]   },   "エディオン" : {      "JAN" : [ "(?<=manage_number\\=)\\d+" ],      "型号" : [],      "详情" : [ "(?<=の商品説明)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "ケーズデンキWEB" : {      "JAN" : [ "(?<=JAN：)\\d+" ],      "型号" : [],      "详情" : [ "(?<=goodscomment1_ \">)[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "(?<=data-viewsrc=\"//)image.ksdenki.com/img/goods/[\\S]+_5.jpg?(?=\")" ]   },   "コジマ" : {      "JAN" : [ "(?<=JANコード：)\\d+" ],      "型号" : [ "(?<=型式：)[\\s\\S]+?(?=\\<)" ],      "详情" : [ "(?<=【商品解説】)[\\s\\S]+?(?=\\</p>)" ],      "图片" : [ "https://shop.r10s.jp/r-kojima/cabinet/\\S+_1.jpg" ]   },   "ソフマップ.com" : {      "JAN" : [ "(?<=new_jan\\=)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "[^>]+(?!.*>)" ],      "详情" : [         "(?<=単品商品詳細 start -->)[\\s\\S]+?(?=\\<!-- 単品商品詳細 end)"      ],      "图片" : [ "https://image.sofmap.com/images/product/pim/\\d+_A01.jpg" ]   },   "ノジマオンライン" : {      "JAN" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=,)" ],      "型号" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=>)", "(?<=,)[\\s\\S]+?(?=,)" ],      "详情" : [         "(?<=商品説明</h\\d>)[\\s\\S]+?(?=<img src=\"/contents/image/shohininfoicon.png)"      ]   },   "ヤマダウェブコム" : {      "JAN" : [ "(?<=JAN\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [         "(?<=div class=\"product-sammary__inner\">)[\\s\\S]+?(?=\\</section>)"      ],      "图片" : [ "https://cache.ymall.jp/webcom/item/multiimage/500/\\d+_001.jpg" ]   },   "ヨドバシ.com" : {      "JAN" : [],      "型号" : [],      "详情" : [ "(?<=pDescription -->)[\\s\\S]+?(?=\\<!-- /pdContainer -->)" ]   },   "楽天ビックカメラ" : {      "JAN" : [ "(?<=mng_number\":\")\\d+" ],      "型号" : [],      "详情" : [ "\\<div id=\"description[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "https://image.rakuten.co.jp/biccamera/cabinet/product/\\S+_a01.jpg" ]   },   "楽天ブックス" : {      "JAN" : [         "(?<=JAN</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "型号" : [         "(?<=品番</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "详情" : [ "(?<=商品説明\\</h\\d>)[\\s\\S]+?(?=\\<!-- /div#editArea2 -->)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   }}
 strJSON = JSON.Stringify(meka_GX)
 File.WriteFile("C:\\Users\\user\\Documents\\公式.txt",strJSON,"utf-8")
 image_dict = {}
@@ -391,7 +392,7 @@ Function Get_GX()
 				
 			End If
 			getWebUrl = WebBrowser.GetURL(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
-						Browser_dict[key] = getWebUrl
+			Browser_dict[key] = getWebUrl
 			Do While True
 				GX_HTMLCODE = WebBrowser.GetHTML(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
 				iRet_strPD = LenB(GX_HTMLCODE)
@@ -522,7 +523,7 @@ Function Get_GX()
 	If 单独子程序<>""
 		list_write[10] = getWebUrl
 		list_write[1] = 型号
-				
+		
 	Else
 		
 	End If
@@ -606,7 +607,7 @@ Do While True
 	Text加价 = myUI.GetControlText(obj加价)
 	加价 = CInt(Text加价)
 	设定位 = myUI.GetControlText(obj价格位)
-		设定位 = CInt(设定位)
+	设定位 = CInt(设定位)
 	指定图片 = myUI.GetControlText(objimg)
 	ButtonID = myUI.GetButtonID()
 	TracePrint("ButtonID："&ButtonID,"取价位置："&设定位,"加价："&加价)
@@ -625,8 +626,15 @@ Do While True
 		XingHaoZL()
 	ElseIf ButtonID=5
 		TracePrint(指定图片,image_dict[指定图片])
-		Rows1 = Excel.GetRowsCount(objExcelWorkBook,"在庫写入")
-		Excel.WriteCell(objExcelWorkBook,"在庫写入","Q"&Rows1,image_dict[指定图片],False)
+		Try 3
+			Rows1 = Excel.GetRowsCount(objExcelWorkBook,"在庫写入")
+			Excel.WriteCell(objExcelWorkBook,"在庫写入","Q"&Rows1,image_dict[指定图片],False)
+		Catch e
+			iRet = Dialog.MsgBox("exlce写入失败，检查！","UiBot","0","1",0)
+			Rows1 = Excel.GetRowsCount(objExcelWorkBook,"在庫写入")
+			Excel.WriteCell(objExcelWorkBook,"在庫写入","Q"&Rows1,image_dict[指定图片],False)
+		Else
+		End Try
 	ElseIf ButtonID=6
 		TracePrint(Browser_dict[指定图片])
 		hWeb_GX = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
