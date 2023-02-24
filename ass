@@ -111,3 +111,69 @@ https://buyee.jp/help/common/company
     ご理解ありがとうございました。何かご質問又は気になることがありましたら、お気軽にお問い合わせください。
     
     もしかして？ おばけの射的屋 for Nintendo Switch
+
+Private Sub SpinButton1_SpinUp()
+    Dim currentVal As Variant
+    Dim newVal As Variant
+    Dim selectedRange As Range
+    Set selectedRange = Selection
+    
+    inc = 100
+    
+    If InStr(1, ActiveCell.Address, "$V$") = 1 Then
+    
+        If selectedRange.Cells.Count <> 1 Or IsEmpty(selectedRange.Value) Then Exit Sub
+        
+        currentVal = selectedRange.Value
+        Debug.Print currentVal
+        
+        If Not IsNumeric(currentVal) Then
+            MsgBox "The value in the selected cell is not numeric.", vbCritical, "Error"
+            Exit Sub
+        End If
+        
+        If IsNumeric(selectedRange.Offset(0, 1).Value) And selectedRange.Offset(0, 1) <> "" Then
+            
+            selectedRange.Offset(0, 1).Value = selectedRange.Offset(0, 1).Value + inc
+        Else
+            selectedRange.Offset(0, 1).Value = currentVal + inc
+        
+        End If
+    Else
+        Debug.Print "Up Not V.Column Exit"
+        Exit Sub
+    End If
+  
+End Sub
+
+Private Sub SpinButton1_SpinDown()
+    Dim currentVal As Variant
+    Dim newVal As Variant
+    Dim selectedRange As Range
+    Set selectedRange = Selection
+    
+    inc = 100
+    
+    If InStr(1, ActiveCell.Address, "$V$") = 1 Then
+    
+        If selectedRange.Cells.Count <> 1 Or IsEmpty(selectedRange.Value) Then Exit Sub
+        
+        currentVal = selectedRange.Value
+        
+        If Not IsNumeric(currentVal) Then
+        MsgBox "The value in the selected cell is not numeric.", vbCritical, "Error"
+        Exit Sub
+        End If
+        
+        If IsNumeric(selectedRange.Offset(0, 1).Value) And selectedRange.Offset(0, 1) <> "" Then
+            selectedRange.Offset(0, 1).Value = selectedRange.Offset(0, 1).Value - inc
+        Else
+            selectedRange.Offset(0, 1).Value = currentVal - inc
+        
+        End If
+    
+    Else
+        Debug.Print "Down Not V.Column Exit"
+        Exit Sub
+    End If
+End Sub
