@@ -210,3 +210,51 @@ OSLO EDU：这是一款免费的光学设计软件，它提供了一些基本的
 VirtualLab Fusion：这是一款免费的光学建模和仿真软件，它可以用于设计反射器、透镜、偏振器和其他光学元件。它具有简单易用的用户界面和强大的分析功能，可以帮助您快速创建高质量的光学系统。
 
 需要注意的是，设计反射器需要一定的光学知识和技能，并且需要对特定的光源和应用场景进行详细的分析和优化。因此，建议在进行反射器设计之前，先学习一些基本的光学知识和技能，以便更好地完成设计工作。
+
+
+首先，您需要在微信小程序中使用网络请求API来调用OpenAI API。您可以使用微信小程序的wx.request()函数发送HTTP请求。具体实现方法如下：
+
+javascript
+Copy code
+wx.request({
+  url: 'https://api.openai.com/v1/engines/davinci-codex/completions',
+  method: 'POST',
+  header: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer YOUR_API_KEY' // 在这里替换为您的OpenAI API密钥
+  },
+  data: {
+    prompt: 'YOUR_INPUT_TEXT', // 在这里替换为用户输入的文本问题
+    max_tokens: 100, // 在这里替换为您需要的max_tokens值
+    n: 1, // 在这里替换为您需要的n值
+    stop: '\n', // 在这里替换为您需要的stop标记，例如：'EOS'
+    temperature: 0.7, // 在这里替换为您需要的temperature值
+    top_p: 1, // 在这里替换为您需要的top_p值
+  },
+  success: function(res) {
+    console.log(res.data.choices[0].text); // 在这里替换为您需要的对返回结果的处理方式
+  },
+  fail: function(res) {
+    console.log('Request failed', res);
+  }
+})
+以上代码中，wx.request()函数向OpenAI API发送HTTP POST请求，并通过设置header字段来传递OpenAI API密钥。在data字段中，设置了输入文本、max_tokens、n、stop、temperature和top_p等参数。发送请求后，您可以通过success回调函数来获取OpenAI API返回的结果，并在页面上显示生成的文本。
+
+对于页面布局，您可以使用微信小程序提供的组件来实现。以下是一个示例页面的代码，包括一个大文本框、一个输入框、一个发送按钮和两个侧边按钮：
+
+html
+Copy code
+<view class="container">
+  <textarea class="output" value="{{outputText}}"></textarea>
+  <view class="input-container">
+    <input class="input" placeholder="输入问题" bindinput="onInput"/>
+    <button class="send-button" bindtap="onSend">发送</button>
+  </view>
+  <view class="sidebar">
+    <button class="new-chat-button">新建聊天</button>
+    <button class="delete-chat-button">删除聊天</button>
+  </view>
+</view>
+您需要根据实际情况修改样式和处理函数。例如，onInput函数用于处理输入框中的输入事件，onSend函数用于处理发送按钮的点击事件。您还需要使用outputText变量来保存OpenAI API返回的结果，并在页面上显示。
+
+希望这些信息可以帮助您实现微信小程序页面，并成功调
