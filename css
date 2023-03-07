@@ -1,0 +1,44 @@
+以下是将图片和文字组合的几个示例，分别演示了文字在图片上、下、左、右方的不同排列方式，以及如何将两个图片和文本组合在同一行中。
+
+文字在图片上方：
+css
+Copy code
+<div style="display: flex; flex-direction: column; align-items: center;">
+  <p style="margin: 0;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+  <img src="your-image-src" alt="your-image-description" style="width: 350px; height: 350px;">
+</div>
+文字在图片下方：
+css
+Copy code
+<div style="display: flex; flex-direction: column; align-items: center;">
+  <img src="your-image-src" alt="your-image-description" style="width: 350px; height: 350px;">
+  <p style="margin: 0;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+</div>
+文字在图片左侧：
+css
+Copy code
+<div style="display: flex; align-items: center;">
+  <img src="your-image-src" alt="your-image-description" style="width: 350px; height: 350px;">
+  <p style="margin: 0; margin-left: 10px;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+</div>
+文字在图片右侧：
+css
+Copy code
+<div style="display: flex; align-items: center;">
+  <p style="margin: 0; margin-right: 10px;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+  <img src="your-image-src" alt="your-image-description" style="width: 350px; height: 350px;">
+</div>
+两个图片和文本在同一行中：
+css
+Copy code
+<div style="display: flex; width: 700px; align-items: center;">
+  <div style="display: flex; flex-direction: column; flex: 1;">
+    <img src="your-image-src-1" alt="your-image-description-1" style="width: 350px; height: 350px;">
+    <p style="margin: 0;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+  </div>
+  <div style="display: flex; flex-direction: column; flex: 1;">
+    <img src="your-image-src-2" alt="your-image-description-2" style="width: 350px; height: 350px;">
+    <p style="margin: 0;">Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here. Your text goes here.</p>
+  </div>
+</div>
+请注意，这些示例中的样式都是嵌入在 style 属性中的，而不是从外部的 CSS 文件中加载的。
