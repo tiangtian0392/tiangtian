@@ -1,0 +1,110 @@
+
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+   
+    mytime = Sheets("Sheet1").[K1]
+    y = ActiveSheet.UsedRange.Rows.Count
+    nowtime = Date + Time
+    If nowtime - mytime > 0.041666667 Then
+        
+    Else
+        Exit Sub
+    End If
+    Filename = ActiveWorkbook.Name
+    Filename = Replace(Filename, ".xlsm", ".csv")
+    Filename = "''" & Filename & "'!"
+    Debug.Print Filename, y
+    Sheets("Sheet2").Range("W2").Value = Filename
+    Dim cnn As Object
+    Dim strcnn As String
+    Dim mydata As String
+    Dim mytable As String
+    Dim sql As String
+    Dim rs As Object
+    Dim i As Integer
+    Dim rsarr() As Variant
+    Dim numCols As Integer
+    Dim numRows As Long
+    
+    Set Sh1 = Sheets("Sheet1")
+    Set Sh5 = Sheets("Sheet5")
+    Sh5.Range("A2:AV65536").ClearContents
+
+   
+    Set cnn = CreateObject("ADODB.Connection")
+    mydata = "D:\Q10\bazhuayu\Q10_up.accdb"
+    Select Case Application.Version * 1
+        Case Is <= 11
+            strcnn = "Provider=Microsoft.Jet.Oledb.4.0;Jet OLEDB:Database Password='123456';Data Source=" & mydata
+        Case Is >= 12
+            strcnn = "Provider=Microsoft.ACE.OLEDB.12.0;Jet OLEDB:Database Password='123456';Data Source=" & mydata
+    End Select
+
+    cnn.Open strcnn
+     
+    mytable = "Sheet1"
+    Set rs = CreateObject("ADODB.Recordset")
+ 
+
+    sql = "select B.* from [Excel 8.0;Database=" & ThisWorkbook.FullName & "].[" & Sh1.Name & "$A1:A" & y & "] a left join Sheet1 AS B on a.彜昳斣崋 = B.item_number"
+    'sql = "select  * from Sheet1"
+    Set rs = cnn.Execute(sql)
+    
+    Dim resultList() As Variant
+    Dim fieldCount As Integer
+    Dim fieldValue As Variant
+    
+    fieldCount = rs.Fields.Count
+    Do While Not rs.EOF
+        ReDim Preserve resultList(0 To numRows)
+        ReDim resultRow(0 To fieldCount - 1)
+        For i = 0 To fieldCount - 1
+            fieldValue = rs(i).Value
+            If IsNumeric(fieldValue) Then
+                fieldValue = CDbl(fieldValue)
+            End If
+            resultRow(i) = fieldValue
+        Next i
+        resultList(numRows) = resultRow
+        numRows = numRows + 1
+        rs.MoveNext
+    Loop
+    rs.Close
+    cnn.Close
+    Set rs = Nothing
+    Set cnn = Nothing
+    
+   
+    
+    she1Alist = Sheets("Sheet1").Range("A2:A" & y).Value
+    ReDim wr_she5_list(1 To UBound(she1Alist, 1), 1 To 48)
+    
+    For i = 1 To UBound(she1Alist, 1)
+        For j = 0 To UBound(resultList, 1)
+            If she1Alist(i, 1) = resultList(j)(0) Then
+                'Debug.Print she1Alist(i, 1), resultList(j)(0)
+                For Z = 0 To 47
+                  wr_she5_list(i, Z + 1) = resultList(j)(Z)
+                
+                Next Z
+            End If
+        Next j
+    Next i
+    
+    
+    Dim numDataRows As Long
+    numDataRows = numRows
+    
+    Sheets("Sheet5").Range("A2").Resize(UBound(wr_she5_list, 1), UBound(wr_she5_list, 2)).Value = wr_she5_list
+    
+    Sheets("Sheet5").Columns("A:AV").ColumnWidth = 15
+    Sheets("Sheet5").Columns("A:AV").RowHeight = 15
+
+    
+
+    Sheets("Sheet1").[K1] = Date + Time
+
+End Sub
+
+
+
