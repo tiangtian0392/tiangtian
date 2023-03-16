@@ -1,0 +1,168 @@
+
+Dim result = ""
+Dim objPoint = ""
+Dim arrRet = ""
+Dim temp = ""
+Dim hWeb = ""
+Dim iRet = ""
+Dim objDatatable = ""
+Dim item = ""
+Dim arrayRet = ""
+Dim objExcelWorkBook = ""
+Dim sRet = ""
+Dim iPID = ""
+Dim dictRet = ""
+
+dictRet = Dialog.UDFDialog("",@res"1659604540639.json", { "return" : 1, "输入行号范围" : "", "选择Q10下载xlsx文件" : "Z:\\bazhuayu\\Qoo10_ItemInfo_20220803152556_1.xlsx", "选择包涵URL和番号CSV文件" : "Z:\\bazhuayu\\标题和番号.csv" },{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+fanwei = Regex.FindAll(dictRet["输入行号范围"],"\\d+")
+list_csv = CSV.Open(dictRet["选择包涵URL和番号CSV文件"],{"encoding":"auto"})
+objDatatable = Datatable.BuildDataTable(list_csv,list_csv[0])
+objDatatable = Datatable.SelectDataTableColumns(objDatatable,['商品番号','URL'])
+list_csv = Datatable.GetDataTableByArray(objDatatable,True)
+Q10文件 = App.Start(dictRet["选择Q10下载xlsx文件"], "0", "1")
+Q10文件名 = Regex.FindStr(dictRet["选择Q10下载xlsx文件"],"[^\\\\]+(?!.*\\\\)",0)
+Try 3
+	Q10文件 = Excel.BindBook(Q10文件名)
+Catch e
+	TracePrint("绑定EXCEL失败")
+Else
+	list_Q10_A = Excel.ReadColumn(Q10文件,"Sheet1","A1")
+	list_Q10_A = Unshift(list_Q10_A,"")
+End Try
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+#icon("@res:4mfg3qmv-o79f-a7d4-qi35-kfo3o2q8530c.png")
+Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"* - Google Chrome*","app":"chrome"}]})
+For i = fanwei[0] To fanwei[1] Step 1 
+	Q10_banhao = CInt(list_Q10_A[i])
+	TracePrint(Q10_banhao)
+	For Each value In list_csv
+		csv_banhao = CInt(value[0])
+		If csv_banhao=Q10_banhao And Q10_banhao > 1
+			Try 1
+				url = Regex.FindStr(value[1],"(?<=item/)K\\d+",0)
+			Catch e
+				Continue
+			Else
+			End Try
+			If url=""
+				Continue
+				
+			Else
+				
+			End If
+			TracePrint(i,url,value)
+			hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			#icon("@res:default.png")
+			iRet = WebBrowser.GoURL(hWeb,value[1],True,{},30000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":20})
+			Try 1
+				#icon("@res:s230ej8d-5p4u-ji1l-mmsc-ucle08v7ek50.png")
+				kakaku_jiage = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","parentid":"priceBox","aaname":"¥*"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+			Catch ei
+			Else
+				i = CInt(i)
+				Excel.WriteCell(Q10文件,"Sheet1","W"&i,kakaku_jiage,False)
+			End Try
+			url = Format("https://ssl.kakaku.com/auth/mypage/entry/product.aspx?PrdKey=%s&lid=itemview_top_favorite",url)
+			#icon("@res:4mfg3qmv-o79f-a7d4-qi35-kfo3o2q8530c.png")
+			Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"* - Google Chrome","app":"chrome"}]})
+			Try 1
+				#icon("@res:default.png")
+				iRet = WebBrowser.GoURL(hWeb,url,True,{},30000,{"bContinueOnError":False,"iDelayAfter":20,"iDelayBefore":20})
+			Catch e
+				Continue
+			Else
+			End Try
+			#icon("@res:bcqvbpnl-a90j-91aq-779n-i1lrogb4q1s0.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"mypage","aaname":"登録する"}]},"left","click",1000,{"bContinueOnError":True,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			Try 1
+				Try 1
+					#icon("@res:default.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","aaname":"最安価格が設定した金額分変動した時に通知"}]},1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":10,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+				Catch eee
+					Continue
+				Else
+				End Try
+				objPoint=Mouse.GetPos()
+				result = simplelife.get_color(objPoint["x"],objPoint["y"])
+				If result[2]>200
+					
+					#icon("@res:9se7d81c-r56n-p55c-helo-p8t52vltubn2.png")
+					Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","aaname":"最安価格が設定した金額分変動した時に通知"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":10,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+					Do While True
+						#icon("@res:default.png")
+						Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","aaname":"最安価格が設定した金額分変動した時に通知"}]},1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":10,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						objPoint=Mouse.GetPos()
+						result = simplelife.get_color(objPoint["x"],objPoint["y"])
+						If result[2]<100
+							Break
+							
+						Else
+							#icon("@res:9se7d81c-r56n-p55c-helo-p8t52vltubn2.png")
+							Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","aaname":"最安価格が設定した金額分変動した時に通知"}]},"left","click",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":10,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+							
+							
+						End If
+						
+					Loop
+				Else
+					Continue
+					
+				End If
+			Catch e
+				#icon("@res:bcbpi0e6-5924-8vvv-21uu-uv8holoh80h2.png")
+				Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL","aaname":"価格が掲載*"}]},"left","click",10000,{"bContinueOnError":True,"iDelayAfter":300,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+				Do While True
+					#icon("@res:njdtih9j-kkli-lj66-kpaj-gd4fa96g97ug.png")
+					Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					
+					#icon("@res:default.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"TopLeft","iCursorOffsetX":-10,"iCursorOffsetY":18,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					objPoint=Mouse.GetPos()
+					result = simplelife.get_color(objPoint["x"],objPoint["y"])
+					If result[2]<100
+						Break
+						
+					Else
+						#icon("@res:njdtih9j-kkli-lj66-kpaj-gd4fa96g97ug.png")
+						Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+						
+						#icon("@res:default.png")
+						Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"TopLeft","iCursorOffsetX":-10,"iCursorOffsetY":18,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						objPoint=Mouse.GetPos()
+						result = simplelife.get_color(objPoint["x"],objPoint["y"])
+						
+					End If
+				Loop
+			Else
+				Do While True
+					
+					#icon("@res:default.png")
+					Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知","idx":1}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"TopLeft","iCursorOffsetX":-10,"iCursorOffsetY":18,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+					objPoint=Mouse.GetPos()
+					result = simplelife.get_color(objPoint["x"],objPoint["y"])
+					If result[2]<100
+						Break
+						
+					Else
+						#icon("@res:j4doofr4-b2p7-pfim-3a87-qjhv24ulm7j8.png")
+						Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SPAN","aaname":"メール通知","idx":1}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+						
+						
+					End If
+				Loop
+				#icon("@res:sctn8f7b-c3bm-gsk7-f7bf-jf8lbiruvrpo.png")
+				UiElement.SetSelect({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"SELECT"}]},4,"index",{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+			End Try
+			#icon("@res:kcasiqje-t1ni-9fai-aha3-u2rnnt31girj.png")
+			Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"LABEL"}]},10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			
+		Else
+			
+		End If
+		
+	Next
+	
+Next
+
+
+
