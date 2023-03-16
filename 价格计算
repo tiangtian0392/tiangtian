@@ -1,7 +1,73 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_jisuanqi(object):
+    def setupUi(self, jisuanqi):
+
+        jisuanqi.setObjectName("jisuanqi")
+
+        # 设置窗口无边框
+        # jisuanqi.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        # 设置窗口透明度为80%
+        jisuanqi.setWindowOpacity(0.7)
+        # jisuanqi.setWindowModality(QtCore.Qt.WindowModal)
+
+        jisuanqi.resize(325, 30)
+        # jisuanqi.setLocale(QtCore.QLocale(QtCore.QLocale.Japanese, QtCore.QLocale.Japan))
+        self.splitter = QtWidgets.QSplitter(jisuanqi)
+        self.splitter.setGeometry(QtCore.QRect(5, 0, 320, 20))
+        self.splitter.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter.setObjectName("splitter")
+        self.lineEdit = QtWidgets.QLineEdit(self.splitter)
+        self.lineEdit.setMinimumSize(QtCore.QSize(70, 20))
+        self.lineEdit.setMaximumSize(QtCore.QSize(70, 20))
+        self.lineEdit.setObjectName("lineEdit")
+
+
+        # Create the menu
+        self.pushButton = QtWidgets.QPushButton(self.splitter)
+        self.pushButton.setMinimumSize(QtCore.QSize(40, 20))
+        self.pushButton.setMaximumSize(QtCore.QSize(40, 20))
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.setMenu(QtWidgets.QMenu(self.pushButton))
+        self.pushButton.menu().addAction("0.9").triggered.connect(lambda checked,value='0.9': self.on_menu_click(self.pushButton,value))
+        self.pushButton.menu().addAction("0.91").triggered.connect(lambda checked,value='0.91': self.on_menu_click(self.pushButton,value))
+        self.pushButton.menu().addAction("0.92").triggered.connect(lambda checked,value='0.92': self.on_menu_click(self.pushButton,value))
+
+        self.pushButton_2 = QtWidgets.QPushButton(self.splitter)
+        self.pushButton_2.setMinimumSize(QtCore.QSize(70, 20))
+        self.pushButton_2.setMaximumSize(QtCore.QSize(70, 20))
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.pushButton_2.setMenu(QtWidgets.QMenu(self.pushButton_2))
+
+        self.pushButton_2.menu().addAction("到手价").triggered.connect(lambda checked,value='到手价': self.on_menu_click(self.pushButton_2,value))
+        self.pushButton_2.menu().addAction("供给原价").triggered.connect(lambda checked,value='供给原价': self.on_menu_click(self.pushButton_2,value))
+        self.pushButton_2.menu().addAction("卖价").triggered.connect(lambda checked,value='卖价': self.on_menu_click(self.pushButton_2,value))
+
+        self.label = QtWidgets.QLabel(self.splitter)
+        self.label.setMinimumSize(QtCore.QSize(120, 20))
+        self.label.setMaximumSize(QtCore.QSize(120, 20))
+        self.label.setObjectName("label")
+        self.label.setStyleSheet('border:1px solid black')
+
+        self.retranslateUi(jisuanqi)
+        QtCore.QMetaObject.connectSlotsByName(jisuanqi)
+
+
+
+
+    def retranslateUi(self, jisuanqi):
+        _translate = QtCore.QCoreApplication.translate
+        jisuanqi.setWindowTitle(_translate("jisuanqi", "Form"))
+        self.pushButton.setText(_translate("jisuanqi", "0.92"))
+        self.pushButton_2.setText(_translate("jisuanqi", "卖价"))
+        self.label.setText(_translate("jisuanqi", "值="))
+        
+        -------------------------------------------------
+ 
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import *
-from minijiduanqi import Ui_jisuanqi
+from JSQ_window import Ui_jisuanqi
 
 class mywindow(QWidget,Ui_jisuanqi):
     def __init__(self,):
@@ -21,6 +87,51 @@ class mywindow(QWidget,Ui_jisuanqi):
         self.is_stay_on_top = False
         self.mouseDoubleClickEvent = self.toggle_stay_on_top
 
+        #程序打开时位置
+        width,height = 325,30
+        self.setGeometry(QDesktopWidget().screenGeometry().width() // 2 - width // 2, 1000, width, height)
+
+        self.label.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if obj is self.label and event.type() == QtCore.QEvent.Enter:
+            # 当鼠标悬停在 label 上时计算结果并设置预览窗口的文本
+            try:
+                Bt1 = float(self.pushButton.text())
+                Bt2 = self.pushButton_2.text()
+                num = int(self.lineEdit.text())
+                if Bt2 == "卖价":
+                    outvalue = num * 0.9 - ((num * 0.9 * 1.02 * 0.01) + (num - num * 0.9 * 1.02) - (
+                                num - num * 0.9 * 1.02 - (num - num * 0.9 * 1.02) / 11))
+                    outvalue1 = num * 0.91 - ((num * 0.91 * 1.02 * 0.01) + (num - num * 0.91 * 1.02) - (
+                                num - num * 0.91 * 1.02 - (num - num * 0.91 * 1.02) / 11))
+                    outvalue2 = num * 0.92 - ((num * 0.92 * 1.02 * 0.01) + (num - num * 0.92 * 1.02) - (
+                                num - num * 0.92 * 1.02 - (num - num * 0.92 * 1.02) / 11))
+                    QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), "0.9:={}\n0.91:={}\n0.92:={}".format(outvalue,outvalue1,outvalue2))
+                if Bt2 == "到手价":
+                    outvalue = (num + num * 0.0102 + ((num / 0.9 - 1.02 * num) / 11)) / 0.9 * 1.0003
+                    outvalue1 = (num + num * 0.0102 + ((num / 0.91 - 1.02 * num) / 11)) / 0.91 * 1.0003
+                    outvalue2 = (num + num * 0.0102 + ((num / 0.92 - 1.02 * num) / 11)) / 0.92 * 1.0003
+                    QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), "0.9:={}\n0.91:={}\n0.92:={}".format(outvalue,outvalue1,outvalue2))
+                if Bt2 == "供给原价":
+                    num0 = num / 0.9
+                    outvalue = num0 * 0.9 - ((num0 * 0.9 * 1.02 * 0.01) + (num0 - num0 * 0.9 * 1.02) - (
+                            num0 - num0 * 0.9 * 1.02 - (num0 - num0 * 0.9 * 1.02) / 11))
+                    num1 = num / 0.91
+                    outvalue1 = num1 * 0.91 - ((num1 * 0.91 * 1.02 * 0.01) + (num1 - num1 * 0.91 * 1.02) - (
+                            num1 - num1 * 0.91 * 1.02 - (num1 - num1 * 0.91 * 1.02) / 11))
+                    num2 = num / 0.92
+                    outvalue2 = num2 * 0.92 - ((num2 * 0.92 * 1.02 * 0.01) + (num2 - num2 * 0.92 * 1.02) - (
+                            num2 - num2 * 0.92 * 1.02 - (num2 - num2 * 0.92 * 1.02) / 11))
+                    QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), "0.9:={}\n0.91:={}\n0.92:={}".format(outvalue,outvalue1,outvalue2))
+                print(outvalue)
+            except ValueError:
+                pass
+        elif obj is self.label and event.type() == QtCore.QEvent.Leave:
+            # 当鼠标离开 label 时隐藏预览窗口
+            QtWidgets.QToolTip.hideText()
+        return super().eventFilter(obj, event)
+        #双击窗口置顶
     def toggle_stay_on_top(self, event):
         if not self.is_stay_on_top:
             self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -34,32 +145,43 @@ class mywindow(QWidget,Ui_jisuanqi):
 
     def on_menu_click(self,button, value):
         button.setText(str(value))
+        self.calculate_value()
         # Do something with the selected menu option
         # print('打印',self,value)
 
 
-    def calculate_value(self, value):
-        Bt1 = self.pushButton.text()
+    def calculate_value(self):
+        Bt1 = float(self.pushButton.text())
         Bt2 = self.pushButton_2.text()
-        num = self.lineEdit.text()
+        if self.lineEdit.text() == "":
+            return
+        num = int(self.lineEdit.text())
         print(Bt1,Bt2,num)
+        outvalue = 0
         try:
-            value = float(value)
-            # 进行一些计算
-            result = value * 2
-            # 更新标签中的值
-            self.label.setText("值={:.2f}".format(result))
+            if Bt2 == "卖价":
+                outvalue = num*Bt1-((num*Bt1*1.02*0.01)+(num-num*Bt1*1.02)-(num-num*Bt1*1.02-(num-num*Bt1*1.02)/11))
+                self.label.setText("到手价={}".format(round(outvalue)))
+            if Bt2 == "到手价":
+                outvalue = (num+num*0.0102+((num/Bt1-1.02*num)/11))/Bt1*1.0003
+                self.label.setText("卖价={}".format(round(outvalue)))
+            if Bt2 == "供给原价":
+                num = num/Bt1
+                outvalue = num * Bt1 - ((num * Bt1 * 1.02 * 0.01) + (num - num * Bt1 * 1.02) - (
+                            num - num * Bt1 * 1.02 - (num - num * Bt1 * 1.02) / 11))
+                self.label.setText("到手价={}".format(round(outvalue)))
+            print(outvalue)
+
+
         except ValueError:
             # 如果输入的不是浮点数，则清空标签中的值
             self.label.setText("值=")
-    # # 双击置顶
-    # def mouseDoubleClickEvent(self, QMouseEvent):
-    #     print('鼠标双击',)
-    #     if self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint):
-    #         self.setWindowFlags(QtCore.Qt.Widget)
-    #     else:
-    #         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-    #     self.show()
+
+        def mouseMoveEvent(self, event):
+            x = event.x()
+            y = event.y()
+            result = 2 + 2  # 进行一些计算
+            QToolTip.showText(self.mapToGlobal(event.pos()), "计算结果为：{}".format(result))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -67,68 +189,3 @@ if __name__ == '__main__':
 
     win.show()
     sys.exit(app.exec_())
-    
-    
-    -------------------------------
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-
-class Ui_jisuanqi(object):
-    def setupUi(self, jisuanqi):
-
-        jisuanqi.setObjectName("jisuanqi")
-
-        # 设置窗口无边框
-        # jisuanqi.setWindowFlag(QtCore.Qt.FramelessWindowHint)
-        # 设置窗口透明度为80%
-        jisuanqi.setWindowOpacity(0.7)
-        # jisuanqi.setWindowModality(QtCore.Qt.WindowModal)
-
-        jisuanqi.resize(300, 40)
-        # jisuanqi.setLocale(QtCore.QLocale(QtCore.QLocale.Japanese, QtCore.QLocale.Japan))
-        self.splitter = QtWidgets.QSplitter(jisuanqi)
-        self.splitter.setGeometry(QtCore.QRect(10, 10, 298, 20))
-        self.splitter.setOrientation(QtCore.Qt.Horizontal)
-        self.splitter.setObjectName("splitter")
-        self.lineEdit = QtWidgets.QLineEdit(self.splitter)
-        self.lineEdit.setMinimumSize(QtCore.QSize(70, 20))
-        self.lineEdit.setMaximumSize(QtCore.QSize(70, 20))
-        self.lineEdit.setObjectName("lineEdit")
-
-
-        # Create the menu
-        self.pushButton = QtWidgets.QPushButton(self.splitter)
-        self.pushButton.setMinimumSize(QtCore.QSize(40, 20))
-        self.pushButton.setMaximumSize(QtCore.QSize(50, 20))
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.setMenu(QtWidgets.QMenu(self.pushButton))
-        self.pushButton.menu().addAction("0.9").triggered.connect(lambda checked,value='0.9': self.on_menu_click(self.pushButton,value))
-        self.pushButton.menu().addAction("0.91").triggered.connect(lambda checked,value='0.91': self.on_menu_click(self.pushButton,value))
-        self.pushButton.menu().addAction("0.92").triggered.connect(lambda checked,value='0.92': self.on_menu_click(self.pushButton,value))
-
-        self.pushButton_2 = QtWidgets.QPushButton(self.splitter)
-        self.pushButton_2.setMinimumSize(QtCore.QSize(70, 20))
-        self.pushButton_2.setMaximumSize(QtCore.QSize(50, 20))
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.pushButton_2.setMenu(QtWidgets.QMenu(self.pushButton_2))
-        self.pushButton_2.menu().addAction("到手价").triggered.connect(lambda checked,value='到手价': self.on_menu_click(self.pushButton_2,value))
-        self.pushButton_2.menu().addAction("卖价").triggered.connect(lambda checked,value='卖价': self.on_menu_click(self.pushButton_2,value))
-        self.pushButton_2.menu().addAction("供给原价").triggered.connect(lambda checked,value='供给原价': self.on_menu_click(self.pushButton_2,value))
-
-        self.label = QtWidgets.QLabel(self.splitter)
-        self.label.setMinimumSize(QtCore.QSize(80, 20))
-        self.label.setMaximumSize(QtCore.QSize(80, 20))
-        self.label.setObjectName("label")
-
-        self.retranslateUi(jisuanqi)
-        QtCore.QMetaObject.connectSlotsByName(jisuanqi)
-
-
-
-
-    def retranslateUi(self, jisuanqi):
-        _translate = QtCore.QCoreApplication.translate
-        jisuanqi.setWindowTitle(_translate("jisuanqi", "Form"))
-        self.pushButton.setText(_translate("jisuanqi", "0.92"))
-        self.pushButton_2.setText(_translate("jisuanqi", "供给原价"))
-        self.label.setText(_translate("jisuanqi", "值="))
