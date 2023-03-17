@@ -1,5 +1,10 @@
 =E11 + E11*0.0102 + ((E11/0.92 - 1.02*E11)/11)
 
+robots.txt
+robots.txt文件来告诉搜索引擎哪些页面可以抓取,哪些页面不能抓取
+Disallow: /admin/ 这里定义是禁止爬寻admin目录下面的目录
+Allow: .htm$ 仅允许访问以".htm"为后缀的URL。
+
 https://www.lancers.jp/work/search/task/question 
 线上发布工作
 
