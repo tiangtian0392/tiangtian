@@ -1,0 +1,110 @@
+import time
+
+import xlwings as xw
+from listener_pywinauto import MsgBoxListener
+
+class ExcelFile:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.workbook = None
+
+    def open_workbook(self):
+        listener = MsgBoxListener('Microsoft Excel',1)
+        listener.start()
+        # 判断文件是否已打开
+        try:
+            self.workbook = xw.apps[0].books[self.file_path]
+        except:
+            pass
+
+        # 如果文件未打开，则打开文件
+        if self.workbook is None:
+            try:
+                self.workbook = xw.Book(self.file_path)
+            except FileNotFoundError:
+                self.workbook = xw.Book()
+
+        time.sleep(3)
+        listener.stop()
+
+    def get_cell_value(self, sheet_name, cell):
+        sheet = self.workbook.sheets[sheet_name]
+        return sheet.range(cell).value
+
+    def set_cell_value(self, sheet_name, cell, value):
+        sheet = self.workbook.sheets[sheet_name]
+        sheet.range(cell).value = value
+
+    def get_range_values(self, sheet_name, range_str):
+        sheet = self.workbook.sheets[sheet_name]
+        return sheet.range(range_str).value
+
+    def set_range_values(self, sheet_name, range_str, values):
+        sheet = self.workbook.sheets[sheet_name]
+        sheet.range(range_str).value = values
+
+    def get_row_count(self, sheet_name):
+        sheet = self.workbook.sheets[sheet_name]
+        return sheet.api.UsedRange.Rows.Count
+# 创建一个 ExcelFile 对象，指定文件路径
+xlsmpath = "C:\\bazhuayu\\采集\\"
+filename = "4_CPU・ケース・メモリ.xlsm"
+workfile = ExcelFile(xlsmpath + filename)
+
+# 打开 Excel 文件，如果文件未打开则创建新的文件
+workfile.open_workbook()
+
+===================================================
+import time
+from threading import Thread,Event
+import win32gui,win32con
+
+class MsgBoxListener(Thread):
+
+    def __init__(self,title:str,interval:int):
+        Thread.__init__(self)
+        self._title = title
+        self._interval = interval
+        self._stop_event = Event()
+
+    def stop(self):self._stop_event.set()
+
+    @property
+    def is_running(self):return not self._stop_event.is_set()
+
+    def run(self):
+        while self.is_running:
+            try:
+                time.sleep(self._interval)
+                self._close_msgbox()
+            except Exception as e:
+                print(e,flush=True)
+
+    def _close_msgbox(self):
+        '''Click button to close message box if has text "ok","Yes" or "Confirm".'''
+        #Get handles of all top wondows
+        print("点击开始")
+        h_windows = []
+        win32gui.EnumWindows(lambda hwnd,param:param.append(hwnd),h_windows)
+
+        for h_window in h_windows:
+            #get child button with text ok,yes or confirm of given window
+            h_btn = win32gui.FindWindowEx(h_window,None,'Button',None)
+            if not h_btn:continue
+
+            #check button text
+            text = win32gui.GetWindowText(h_btn)
+            print(text)
+            if not text in ('ok','yes','続行(&C)'):continue
+
+            #click button
+            win32gui.PostMessage(h_btn,win32con.WM_LBUTTONDOWN,None,None)
+            time.sleep(0.2)
+            win32gui.PostMessage(h_btn,win32con.WM_LBUTTONUP,None,None)
+            time.sleep(0.2)
+
+if __name__=='__main__':
+    t = MsgBoxListener('Microsoft Excel',1)
+    t.start()
+    time.sleep(10)
+    t.stop()
