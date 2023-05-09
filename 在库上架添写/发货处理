@@ -1,0 +1,280 @@
+
+Dim 临时在库 = ""
+Dim 定单标识 = ""
+Dim value_定单 = ""
+Dim dictRet = ""
+Dim hWeb = ""
+Dim Q10文件名 = ""
+Dim 发货方式 = ""
+Dim array地址表 = ""
+Dim value_在库 = ""
+Dim 发货标识 = ""
+Dim 表长度 = ""
+Dim 地址1 = ""
+Dim data = ""
+Dim 已添加 = ""
+Dim 地址排序后 = ""
+Dim arrRet = ""
+Dim item = ""
+Dim objDatatable = ""
+Dim time1 = ""
+Dim temp = ""
+Dim arrayRet = ""
+Dim dTime = ""
+Dim iRet = ""
+Dim bRet = ""
+Dim objRet = ""
+Dim objExcelWorkBook = ""
+Dim sRet = ""
+Rem 定单网上下载程序
+Function down_dingdan()
+	Do While True
+		
+		hWeb = WebBrowser.BindBrowser("chrome",1000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		Q10文件名 = "DeliveryManagement_detail_"
+		#icon("@res:ds0u7484-fk07-di0j-lob5-c2fkck03b779.png")
+		bRet = UiElement.Exists({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送/キャンセル/未受取"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If bRet
+			
+			#icon("@res:0df3g224-781r-ng7g-ue7b-8jsjbm2i2091.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送/キャンセル/未受取"}]},"left","click",5000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Else
+			iRet = Dialog.MsgBox("检查网页，没有发现配送页面","UiBot","0","1",0)
+			
+		End If
+		Try 1
+			#icon("@res:nhnp6lt1-dg4b-44sb-h87h-n74mbmmvcvud.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送管理 "}]},"left","click",5000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Catch e
+			#icon("@res:0df3g224-781r-ng7g-ue7b-8jsjbm2i2091.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送/キャンセル/未受取"}]},"left","click",3000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+			#icon("@res:9hjpsi82-jnr0-obkh-8pli-j697rrej0963.png")
+			Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"menu","aaname":"配送管理 "}]},"left","click",5000,{"bContinueOnError":False,"iDelayAfter":200,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		Else
+		End Try
+		#icon("@res:31fq06gb-kr4l-9mch-2g3o-amhdqch76shb.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","parentid":"tab_main_request"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:fod61cov-nmt6-knfe-8ib5-inmqeaj7gu6q.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"INPUT","id":"txt_shipping_type_registered"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:mnh775r0-14ad-7eu8-ol0g-hbtn8eps7f5o.png")
+		Mouse.Hover({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		#icon("@res:default.png")
+		Mouse.Action({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"A","id":"btn_excel_down"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"simulate","bMoveSmoothly":False})
+		dTime = Time.Now()
+		dTime = Time.Format(dTime,"yyyymmdd_hhmm")
+		Q10文件名 = Q10文件名&dTime&".csv"
+		Q10文件名1 = "C:\\Users\\user\\Downloads\\"&Q10文件名
+		Clipboard.SetText(Q10文件名1)
+		TracePrint(Q10文件名)
+		Delay(1500)
+		#icon("@res:default.png")
+		bRet = UiElement.Exists({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		If 条件成立
+			
+			#icon("@res:hbr4f8jm-7cq5-3jpm-lnts-uicuijunqk5f.png")
+			Keyboard.PressKey({"wnd":[{"app":"chrome","cls":"#32770","title":"名前を付けて保存"},{"cls":"DUIViewWndClassName"},{"cls":"DirectUIHWND","aaname":"Explorer ウィンドウ"},{"cls":"FloatNotifySink"},{"cls":"ComboBox","aaname":"ファイル名:"},{"cls":"Edit","ctrlid":1001,"aaname":"ファイル名:"}]},"V",20,10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sKeyModifiers":["Ctrl"],"sSimulate":"simulate","bClickBeforeInput":False})
+			Keyboard.Press("Enter", "press", [],{"iDelayAfter":300,"iDelayBefore":200,"sSimulate":"simulate"})
+		Else
+			
+		End If
+		Delay(3000)
+		bRet = File.FileExists("C:\\Users\\user\\Downloads\\"&Q10文件名)
+		If bRet
+			TracePrint("文件下载成功")
+			Break
+			
+		Else
+			TracePrint("文件名对比不正确")
+			
+		End If
+	Loop
+	
+End Function
+Rem 定单处理子程序
+Function dingdan()
+	
+	Rem 数组名：arrayRet 下面先按日期从小到大排序
+	Try 1
+		arrayRet = CSV.Open("C:\\Users\\user\\Downloads\\"&Q10文件名,{"encoding":"auto"})
+	Catch e
+		sRet = Dialog.OpenFile("C:\\Users\\user\\Downloads","定单文档 (csv、log)|*.csv;*.log|任意文件|*","UiBot")
+		arrayRet = CSV.Open(sRet,{"encoding":"auto"})
+	Else
+	End Try
+	item = Shift(arrayRet)
+	objDatatable = Datatable.BuildDataTable(arrayRet,["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"])
+	objDatatable = Datatable.SortDataTable(objDatatable,"入金日",True)
+	按日期排序表 = Datatable.GetDataTableByArray(objDatatable,False)
+	全表长度 = UBound(arrayRet)
+	Rem 在按地址去重
+	objDatatable = Datatable.BuildDataTable(arrayRet,["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"])
+	objDatatable = Datatable.DropDuplicatesDataTable(objDatatable,"住所","first")
+	array地址表 = Datatable.GetDataTableByArray(objDatatable,False)
+	表长度 = UBound(array地址表)
+	地址排序后 = [["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"]]
+	定单表 = []
+	已添加 = 0
+	For i = 0 To 表长度 Step 1 
+		data = ["",[],[],[],[],[]]
+		地址1 = array地址表[i][22]
+		data[0] = array地址表[i][18]
+		data[5] = array地址表[i][22]
+		For Each value In 按日期排序表
+			
+			地址2 = value[22]
+			If 地址2=地址1
+				data[1] = push(data[1],value[7])
+				data[2] = push(data[2],value[14])
+				data[3] = push(data[3],value[3])
+				data[4] = push(data[4],value[39])
+				已添加 = 已添加+1
+				
+			Else
+				
+			End If
+		Next
+		
+		Rem 
+		If 已添加=0
+			data[1] = push(data[1],array地址表[i][7])
+			data[2] = push(data[2],array地址表[i][14])
+			data[3] = push(data[3],array地址表[i][3])
+			data[4] = push(data[4],array地址表[i][39])
+			
+		Else
+			
+		End If
+		定单表 = push(定单表,data)
+	Next
+	CSV.Save(按日期排序表,"D:\\按日期排序表.csv",{"encoding":"utf-8-sig"})
+	CSV.Save(定单表,"D:\\定单表.csv",{"encoding":"utf-8-sig"})
+	Rem 开始处理定单
+	array在库 = CSV.Open("Z:\\bazhuayu\\在庫.csv",{"encoding":"auto"})
+	Rem 生成个临时表记录出库，如果发货则写入。
+	临时在库 = array在库
+	可发货表 = [["配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材"]]
+	发货方式  = 0
+	For Each value_日期 In 按日期排序表
+		发货标识 = 0
+		发货方式  = 0
+		For Each value_定单 In 定单表
+			Rem 在定单表加个标识位，识别这个人以遍历过
+			If value_日期[22]=value_定单[5]
+				定单标识 = UBound(value_定单)
+				If 定单标识=6
+					TracePrint(value_日期[18],定单标识,"标识6跳出")
+					Break
+					
+				Else
+					
+				End If
+				定单数量 = UBound(value_定单[4])
+				Rem 循环提取定单内的JAN在"在库"内查找
+				For i = 0 To 定单数量 Step 1 
+					Rem 判断发货方式，如果有一个是佐川则佐川
+					If value_定单[3][i]='佐川急便'
+						发货方式  = 发货方式+1
+						
+					Else
+						
+					End If
+					定单表_JAN = CInt(value_定单[4][i])
+					Rem 在昨时表内遍历在库查找JAN
+					For Each value_在库 In 临时在库
+						在库_JAN  = CInt(value_在库[2])
+						If 定单表_JAN=在库_JAN Or value_日期[38]=value_在库[3]
+							Try 1
+								在库标识位 = CInt(value_在库[9])
+							Catch e
+								value_在库 = push(value_在库,1)
+								value_在库 = push(value_在库,value_日期[18])
+								发货标识 = 发货标识+1
+								Break
+							Else
+							End Try
+							
+						Else
+							
+						End If
+						
+					Next
+					
+				Next
+				
+				临时在库 = array在库
+				Rem 如果发货标识小于定单数量，则表示商品不足，今天不发送
+				If 发货标识=定单数量+1
+					value_定单 = push(value_定单,1)
+					
+				Else
+					
+				End If
+			Else
+				
+			End If
+			
+		Next
+		
+		TracePrint(发货标识,定单数量+1,定单标识)
+		Try 1
+			If 发货标识=定单数量+1 Or 定单标识=6
+				
+				If 发货方式>0
+					value_日期[3] = '佐川急便'
+					
+				Else
+					
+				End If
+				可发货表 = push(可发货表,value_日期)
+			Else
+				
+			End If
+		Catch e
+			If 发货标识=定单数量+1 
+				
+				If 发货方式>0
+					value_日期[3] = '佐川急便'
+					
+				Else
+					
+				End If
+				可发货表 = push(可发货表,value_日期)
+			Else
+				
+			End If
+		Else
+		End Try
+		
+		Rem 
+	Next
+	CSV.Save(临时在库,"D:\\临时在库表.csv",{"encoding":"utf-8-sig"})
+	CSV.Save(定单表,"D:\\定单表-1.csv",{"encoding":"utf-8-sig"})
+	CSV.Save(可发货表,"D:\\可发货表.csv",{"encoding":"utf-8-sig"})
+End Function
+Rem 主程序开始
+dictRet = Dialog.UDFDialog("选择功能",@res"1631153913901.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+If dictRet["return"]=0
+	exit()
+	
+Else
+	
+End If
+Rem 判断各子程序是否运行
+For Each value In dictRet["功能选择"]
+	
+	If value="1"
+		下载 = 1
+		Dialog.Notify("开始下载网页定单", "UiBot", "0")
+		down_dingdan()			
+	ElseIf value="2"
+		temp = ""
+		Dialog.Notify("开始处理表格数据", "UiBot", "0")
+		dingdan()
+	ElseIf value="3"
+		
+	End If
+Next
+
+
+
+
