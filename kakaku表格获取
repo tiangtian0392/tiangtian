@@ -1,0 +1,30 @@
+
+Dim list_a = ""
+Dim list_img = ""
+Dim arrRet = ""
+Dim table = ""
+Dim sRet = ""
+Dim hWeb = ""
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+sRet = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+table = Regex.FindStr(sRet,'<div id="mainLeft">[\\s\\S]+?</table>',0)
+table = Regex.FindStr(table,'<table[\\s\\S]+',0)
+table = Replace(table,'border="0"','border="1"',False)
+table = Replace(table,'class=""','',False)
+list_img = Regex.FindAll(table,'<img[\\s\\S]+?>')
+For Each value In list_img
+	table = Replace(table,value,'',False)
+	
+Next
+list_a = Regex.FindAll(table,'<a href[\\s\\S]+?>')
+For Each value In list_a
+	table = Replace(table,value,'',False)
+	
+Next
+list_fuhao = Regex.FindAll(table,'class="[\\s\\S]+?"')
+For Each value In list_fuhao
+	table = Replace(table,value,'',False)
+	
+Next
+TracePrint(table)
+
