@@ -1,4 +1,5 @@
 
+Dim temp = ""
 Dim list_a = ""
 Dim list_img = ""
 Dim arrRet = ""
@@ -6,8 +7,9 @@ Dim table = ""
 Dim sRet = ""
 Dim hWeb = ""
 hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
-sRet = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
-table = Regex.FindStr(sRet,'<div id="mainLeft">[\\s\\S]+?</table>',0)
+html_code = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+table = Regex.FindStr(html_code,'<div id="mainLeft">[\\s\\S]+?</table>',0)
+说明 = Regex.FindStr(table,'<ul[\\s\\S]+?</ul>',0)
 table = Regex.FindStr(table,'<table[\\s\\S]+',0)
 table = Replace(table,'border="0"','border="1"',False)
 table = Replace(table,'class=""','',False)
@@ -26,5 +28,7 @@ For Each value In list_fuhao
 	table = Replace(table,value,'',False)
 	
 Next
-TracePrint(table)
+商品说明 = 说明&"\n\r"&table
+TracePrint(商品说明)
+
 
