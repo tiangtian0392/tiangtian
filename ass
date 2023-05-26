@@ -50,6 +50,65 @@ https://www.m-matching.com/corporation/
 这是一个新的分销系统，以商店、分销商和制造商持有的过剩库存为重点，允许您以“完全匿名”的方式使用互联网以任何您喜欢的价格买卖。详情在这里>>
 _ 希望批量出售以在未来成为公司的独资经营者也可以申请。
 
+不同商品从kakaku获取价格，根据在库是“○”的前6家价格，给出提示价格变动。比如6家价格一致，6家差价小于，6家去掉第一家价格小于，前4家内有某家大型商家，商家小于3家但有大型商家，小于商家没有大型商家。根据上面情况，计算价格。等这些逻辑怎么处理
+ChatGPT
+根据您的描述，您希望从"kakaku.com"获取不同商品的价格，并根据特定的条件进行价格的判断和计算。下面是一个简单的示例代码，演示了如何获取价格并根据您提供的逻辑进行处理：
+
+python
+Copy code
+import requests
+
+# 获取价格的函数
+def get_price(product_id):
+    # 在此处使用合适的方式获取商品的价格，这里以简单的请求为例
+    url = f"https://www.kakaku.com/{product_id}/price.html"
+    response = requests.get(url)
+    price = response.json().get("price")
+    return price
+
+# 定义价格判断和计算的函数
+def calculate_price(product_id):
+    # 获取价格数据
+    prices = []
+    for i in range(6):
+        price = get_price(product_id)
+        if price:
+            prices.append(price)
+
+    # 执行价格判断和计算
+    num_prices = len(prices)
+    avg_price = sum(prices) / num_prices
+    min_price = min(prices)
+    max_price = max(prices)
+
+    # 根据您提供的逻辑进行判断和计算
+    if num_prices == 6 and all(price == prices[0] for price in prices):
+        # 6家价格一致
+        result = avg_price
+    elif num_prices == 6 and max_price - min_price < 10:
+        # 6家差价小于10
+        result = avg_price
+    elif num_prices == 6 and min(prices[1:]) - min_price < 10:
+        # 前6家去掉第一家价格小于10
+        result = avg_price
+    elif num_prices >= 4 and any(price > 100 for price in prices[:4]):
+        # 前4家内有某家大型商家
+        result = max_price
+    elif num_prices > 0 and num_prices < 4 and any(price > 100 for price in prices):
+        # 小于6家但有大型商家
+        result = max_price
+    else:
+        # 其他情况
+        result = avg_price
+
+    return result
+
+# 示例调用
+product_id = "example_product_id"
+price = calculate_price(product_id)
+print("Calculated price:", price)
+请注意，上述代码仅为示例，您需要根据实际情况调整和完善代码逻辑以及获取价格的方式。在函数get_price()中，您需要根据实际情况使用适当的方式获取商品的价格数据。然后，根据您提供的逻辑，在函数calculate_price()中执行价格的判断和计算，并返回最终的价格结果。
+
 SkyVapor - 天空蒸汽
 故事：SkyVapor是一家创新的加湿器品牌，旨在为人们带来宁静、舒适的室内环境。商标名称“SkyVapor”代表了品牌的特点，即这些加湿器喷洒的蒸汽宛如天空中的云朵般清新，让人们感受到室内空气的湿润和宁静。
 
