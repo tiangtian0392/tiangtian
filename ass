@@ -50,6 +50,40 @@ https://kakaku.com/item/K0001331718/
  
  https://kakaku.com/item/K0001082615/
  テレビドアホン・インターホン
+ 
+ #根据返回价格数组计算价格
+def jiage_jisuan(data):
+
+    listnum = len(data)
+    if listnum > 1:
+        jiagelist = [int(item[1].replace('¥', '').replace(',', '')) for item in data]  # 处理字符串，转换为整数
+        print('listnum',listnum,jiagelist)
+
+        price_1 = jiagelist[0]
+        price_2 = jiagelist[1]
+        price_last = 0
+        junjia = 0
+        qujia = 0
+        if listnum >=6:
+            qujia = 6
+            junjia = np.mean(jiagelist[1:6])
+            price_last = jiagelist[5]
+        else:
+            qujia = listnum
+            junjia = np.mean(jiagelist[1:])
+            price_last = jiagelist[-1]
+
+        #设置差值范围
+        fanwei = 300
+
+        for i,item in enumerate(jiagelist):
+            print(i,junjia + fanwei,item)
+            if item > junjia + fanwei:
+                break
+            else:
+                i +=1
+
+        print('均价={},最低价={}，第二位价格={}，共有{}家，第{}位价格={}，大于均价共{}家'.format(junjia,price_1,price_2,listnum,qujia,price_last,i))
 
 https://www.m-matching.com/corporation/
 这是一个新的分销系统，以商店、分销商和制造商持有的过剩库存为重点，允许您以“完全匿名”的方式使用互联网以任何您喜欢的价格买卖。详情在这里>>
