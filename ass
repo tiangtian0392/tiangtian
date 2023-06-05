@@ -51,6 +51,91 @@ https://kakaku.com/item/K0001331718/
  https://kakaku.com/item/K0001082615/
  テレビドアホン・インターホン
  
+ 
+ 商家数	价格取值	重要商家 	差值	操作或扫描间隔	在次计算				2000
+>=6	前6均		>=6	5					2000
+	前6均		>=3	2					2010
+	前6均	>=2	>=3	4					2100
+	前6均		<3	4	去掉第一家，在计算均价				2105
+>=3	前6均		>=5	5					2200
+	前6均		>=4	3					2300
+	前6均	>=2	>=4	5					2500
+	前6均		>=3	2					
+	前6均	>=2	>=3	4					
+	前6均	>=2	>2	2	去掉第一家，在计算均价				
+<3	-1	>=2		1					
+	-1			下架					
+
+ 
+ import numpy as np
+
+def calculate_price_interval(data, second_param):
+    num_of_sellers = len(data)
+    price_values = []
+    price_index = 0
+
+    # 判断价格取值
+    if num_of_sellers >= 6:
+        price_values = np.mean(data[:6])
+        if price_values + second_param < data[2]:
+            price_values = np.mean(data[1:6])
+    elif num_of_sellers >= 3:
+        price_values = np.mean(data)
+        if price_values + second_param < data[2]:
+            price_values = np.mean(data[1:num_of_sellers])
+    else:
+        price_values = np.mean(data[-1])
+
+    print(data)
+    #这里修改，data从小到大排序，price_index是price_values在data中比
+    for i, item in enumerate(data):
+        if item > int(price_values) + int(second_param):
+            print(item)
+            break
+
+    price_index = i
+
+    print(price_values,price_index)
+
+    # 判断操作或扫描间隔
+    interval = 0
+    if num_of_sellers >= 6:
+        if price_index >= 5:
+            interval = 5
+        elif price_index >= 4:
+            interval = 3
+        elif price_index >= 2:
+            interval = 4
+        else:
+            interval = 4
+    elif num_of_sellers >= 3:
+        if price_index >= 5:
+            interval = 5
+        elif price_index >= 4:
+            interval = 3
+        elif price_index >= 2:
+            interval = 5
+        elif price_index == 1:
+            interval = 2
+        else:
+            interval = 4
+    elif num_of_sellers < 3:
+        if price_values == -1:
+            interval = 1
+        else:
+            # 商品已下架
+            return price_values, "商品已下架"
+
+    return price_values, interval
+
+
+jiagelist = [2000, 2000, 2010, 2100, 2105, 2200, 2300, 2500]
+
+chazhi = 100
+
+print(calculate_price_interval(jiagelist,chazhi))
+ 
+ 
  #根据返回价格数组计算价格
 def jiage_jisuan(data):
 
