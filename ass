@@ -139,7 +139,7 @@ def calculate_price_interval(data, second_param):
             interval = 3
             P_text = 'elif price_index >= 3 and important_sellers_3 >= 2:'
         else:
-            interval = 1
+            interval = 2
             P_text = 'else:'
 
     elif num_of_sellers < 3:
