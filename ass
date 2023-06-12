@@ -89,105 +89,87 @@ https://kakaku.com/item/K0001331718/
  import numpy as np
 
 def calculate_price_interval(data, second_param):
+    make_dict = {'Amazon.co.jp': True, 'ノジマオンライン': True, 'コジマネット': True, 'ヨドバシ.com': True, 'ビックカメラ.com': True,
+                 'ソフマップ.com': True, 'Joshin': True}
     num_of_sellers = len(data)
     price_values = []
-    price_index = 0
+    price_index = -1
 
     # 判断价格取值
     if num_of_sellers >= 6:
-        price_values = np.mean(data[:6])
-        if price_values + second_param < data[2]:
-            price_values = np.mean(data[1:6])
+        # '○'商家数大于等于6，取前6位均值
+        price_values = np.mean([int(item[1].replace('¥', '').replace(',', '')) for item in data[:6]])
+        if price_values + second_param < int(data[2][1].replace('¥', '').replace(',', '')):
+            price_values = np.mean([int(item[1].replace('¥', '').replace(',', '')) for item in data[1:]])
     elif num_of_sellers >= 3:
-        price_values = np.mean(data)
-        if price_values + second_param < data[2]:
-            price_values = np.mean(data[1:num_of_sellers])
+        # '○'商家数大于等于3，取前几位均值
+        price_values = np.mean([int(item[1].replace('¥', '').replace(',', '')) for item in data])
+    elif num_of_sellers > 0:
+        # '○'商家数大于0，取最后一位的值
+        price_values = int(data[-1][1].replace('¥', '').replace(',', ''))
     else:
-        price_values = np.mean(data[-1])
+        # '○'商家数为0，商品已下架
+        return price_values, 0
 
-    print(data)
-    #这里修改，data从小到大排序，price_index是price_values在data中比
-    for i, item in enumerate(data):
-        if item > int(price_values) + int(second_param):
-            print(item)
-            break
+    if num_of_sellers > 0:
+        price_index = np.searchsorted([int(item[1].replace('¥', '').replace(',', '')) for item in data],
+                                      price_values + second_param)  # 查找价格取值位置
 
-    price_index = i
-
-    print(price_values,price_index)
+    # 判断商家是否在make_dict内
+    important_sellers_3 = sum(1 for item in data[:3] if item[3] in make_dict)
+    important_sellers_6 = sum(1 for item in data[:6] if item[3] in make_dict)
 
     # 判断操作或扫描间隔
     interval = 0
+    P_text = ''
     if num_of_sellers >= 6:
-        if price_index >= 5:
+        if price_index >= 5 and important_sellers_6 >= 3:
+            interval = 6
+            P_text = 'if price_index >= 5 and important_sellers_6 >= 3:'
+        elif price_index >= 5:
             interval = 5
+            P_text = 'elif price_index >= 5:'
+        elif price_index >= 4 and important_sellers_3 >= 2:
+            interval = 4
+            P_text = 'elif price_index >= 4 and important_sellers_3 >= 2:'
         elif price_index >= 4:
             interval = 3
-        elif price_index >= 2:
-            interval = 4
+            P_text = 'elif price_index >= 4:'
+        elif price_index >= 3 and important_sellers_3 >= 2:
+            interval = 3
+            P_text = 'elif price_index >= 3 and important_sellers_3 >= 2:'
         else:
-            interval = 4
-    elif num_of_sellers >= 3:
-        if price_index >= 5:
-            interval = 5
-        elif price_index >= 4:
-            interval = 3
-        elif price_index >= 2:
-            interval = 5
-        elif price_index == 1:
             interval = 2
-        else:
+            P_text = 'else:'
+    elif num_of_sellers >= 3:
+        if price_index >= 5 and important_sellers_6 >= 3:
+            interval = 6
+            P_text = 'if price_index >= 5 and important_sellers_6 >= 3:'
+        elif price_index >= 5:
+            interval = 5
+            P_text = 'elif price_index >= 5:'
+        elif price_index >= 4 and important_sellers_3 >= 2:
             interval = 4
+            P_text = 'elif price_index >= 4 and important_sellers_3 >= 2:'
+        elif price_index >= 4:
+            interval = 3
+            P_text = 'elif price_index >= 4:'
+        elif price_index >= 3 and important_sellers_3 >= 2:
+            interval = 3
+            P_text = 'elif price_index >= 3 and important_sellers_3 >= 2:'
+        else:
+            interval = 2
+            P_text = 'else:'
     elif num_of_sellers < 3:
-        if price_values == -1:
+        if price_index == 2 and important_sellers_3 == 2:
             interval = 1
+            P_text = 'if price_index == 2 and important_sellers_3 == 2:'
         else:
             # 商品已下架
-            return price_values, "商品已下架"
-
+            interval = 0  # "商品已下架"
+            P_text = 'else:'
+    print(P_text)
     return price_values, interval
-
-
-jiagelist = [2000, 2000, 2010, 2100, 2105, 2200, 2300, 2500]
-
-chazhi = 100
-
-print(calculate_price_interval(jiagelist,chazhi))
- 
- 
- #根据返回价格数组计算价格
-def jiage_jisuan(data):
-
-    listnum = len(data)
-    if listnum > 1:
-        jiagelist = [int(item[1].replace('¥', '').replace(',', '')) for item in data]  # 处理字符串，转换为整数
-        print('listnum',listnum,jiagelist)
-
-        price_1 = jiagelist[0]
-        price_2 = jiagelist[1]
-        price_last = 0
-        junjia = 0
-        qujia = 0
-        if listnum >=6:
-            qujia = 6
-            junjia = np.mean(jiagelist[1:6])
-            price_last = jiagelist[5]
-        else:
-            qujia = listnum
-            junjia = np.mean(jiagelist[1:])
-            price_last = jiagelist[-1]
-
-        #设置差值范围
-        fanwei = 300
-
-        for i,item in enumerate(jiagelist):
-            print(i,junjia + fanwei,item)
-            if item > junjia + fanwei:
-                break
-            else:
-                i +=1
-
-        print('均价={},最低价={}，第二位价格={}，共有{}家，第{}位价格={}，大于均价共{}家'.format(junjia,price_1,price_2,listnum,qujia,price_last,i))
 
 https://www.m-matching.com/corporation/
 这是一个新的分销系统，以商店、分销商和制造商持有的过剩库存为重点，允许您以“完全匿名”的方式使用互联网以任何您喜欢的价格买卖。详情在这里>>
