@@ -1,5 +1,8 @@
 =E11 + E11*0.0102 + ((E11/0.92 - 1.02*E11)/11)
 
+https://www.cnblogs.com/LeHoCat/p/16061506.html
+【Python Django Web项目】利用 Python+Django+Pycharm+MySQL 搭建一个自己的Web网站项目的步骤（详细图文）上集
+
 https://blog.csdn.net/qq_16519957/category_12178233.html
 Python爬虫进阶（1),Django+Selenium+Mysql+SimpleUI，从零开始搭建自己的爬虫后台管理系统
 
