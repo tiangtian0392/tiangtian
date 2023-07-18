@@ -1,0 +1,34 @@
+
+Dim kakaku_table = ""
+Dim objExcelWorkBook = ""
+Dim arrRet = ""
+Dim sRet = ""
+Dim temp = ""
+Dim aa = ""
+kakaku_XQ = ""
+URL = "https://kakaku.com/item/K0001403297"
+Get_kakaku_table()
+Function Get_kakaku_table()
+	googs_XQ = URL&"/spec/#tab"
+	kakaku_XQ = HTTP.Get(googs_XQ, {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'}, 60000)
+	kakaku_table = Regex.FindStr(kakaku_XQ,'<div id="mainLeft">[\\s\\S]+?</table>',0)
+	kakaku_table = Replace(kakaku_table,'border="0"','border="1"',False)
+	del_text = Regex.FindStr(kakaku_table,'<div class="mTop15 alignR">[\\s\\S]+?</div>',0)
+	kakaku_table = Replace(kakaku_table,del_text,"",False)
+	arrRet = Regex.FindAll(kakaku_table,'<img[\\s\\S]+?>')
+	For Each value In arrRet
+		kakaku_table = Replace(kakaku_table,value,"",False)
+		
+	Next
+	
+	arrRet = Regex.FindAll(kakaku_table,'<a href[\\s\\S]+?>')
+	For Each value In arrRet
+		kakaku_table = Replace(kakaku_table,value,"",False)
+		
+	Next
+End Function
+objExcelWorkBook = Excel.BindBook("paichu.xlsx")
+Excel.WriteCell(objExcelWorkBook,0,"U1",kakaku_table,False)
+TracePrint(kakaku_table)
+
+
