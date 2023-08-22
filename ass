@@ -2,6 +2,8 @@
 
 シルク・エキスパート PL-5227
 
+首先，确保你已经安装了 Django REST framework，可以使用以下命令进行安装：
+pip install djangorestframework
 
 要在 Django 中运行一些代码，你可以将其放在一个 Django 应用中的某些视图函数中，然后根据你的需求处理输入和输出。下面是一个简单的示例，演示如何在 Django 中使用这段代码：
 
