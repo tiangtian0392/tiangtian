@@ -1,6 +1,7 @@
 =E11 + E11*0.0102 + ((E11/0.92 - 1.02*E11)/11)
 
-シルク・エキスパート PL-5227
+彩速ナビ MDV-M910HDF
+确认加价 加1万多？
 
 首先，确保你已经安装了 Django REST framework，可以使用以下命令进行安装：
 pip install djangorestframework
