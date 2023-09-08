@@ -1,0 +1,9 @@
+#运行前载入前置文件，在库，排除，title等
+    def zaiku_paichu_getdata(self):
+        file_zaiku_path = r"Z:\bazhuayu\在庫.csv"
+        file_paichu_path = r"Z:\bazhuayu\paichu.xlsx"
+        title_path = r"Z:\bazhuayu\title和番号.xlsm"
+
+大分类文件地址
+self.left_data = self.read_data_from_file('Z:\\bazhuayu\\Top10\\Top10大分類.csv')
+
