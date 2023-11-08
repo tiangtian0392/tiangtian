@@ -1,0 +1,115 @@
+
+Dim tab_html = ""
+Dim a_list = ""
+Dim htmlcode = ""
+Dim URL2 = ""
+Dim 确认价格 = ""
+Dim 行计数 = ""
+Dim 圈记数 = ""
+Dim 价格 = ""
+Dim 序列 = ""
+Dim iRet = ""
+Dim arrRet = ""
+Dim URL1 = ""
+Dim temp = ""
+Dim sRet = ""
+正则序列 = '<span class="p-PTRank p-PTRank-\\d{1,2}">\\d{1,2}?(?=<)'
+正则价格  = '(?<=<p class="p-PTPrice_price">&yen;).*?(?=<)'
+正则在库 = '(?<=<p class="p-PTStock">).*?(?=<)'
+Function get_url()
+	
+	URL = "https://kakaku.com/item/K0001459582/"
+	K_data = Regex.FindStr(URL,'[k|K]\\d+',0)
+	If K_data<>""
+		
+	Else
+		TracePrint("URL处理出错，流程退出")
+		exit()
+		
+	End If
+End Function
+Function get_price()
+	get_url()
+	URL1 = "https://kakaku.com/item/"&K_data
+	htmlcode = HTTP.Get(URL1, {         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",         "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8" }, 60000)
+	price_html = Regex.FindStr(htmlcode,'<table class="p-priceTable">[\\s\\S]+?</table>',0)
+	arrRet = Regex.FindAll(price_html,"<tr>.*?</tr>")
+	row = UBound(arrRet)
+	圈记数 = 0
+	行计数 = 0
+	For Each value In arrRet
+		序列 = Regex.FindStr(value,正则序列,0)
+		If 序列=""
+			Continue
+			
+		Else
+			
+		End If
+		行计数 = 1+行计数
+		序列 = Regex.FindStr(序列,'(?<=>)\\d+',0)
+		价格 = Regex.FindStr(value,正则价格,0)
+		在库 = Regex.FindStr(value,正则在库,0)
+		TracePrint(序列,价格,在库,行计数)
+		If 在库="○"
+			
+			圈记数 = 1+圈记数
+		Else
+			
+		End If
+		If 圈记数>=4
+			Break
+			
+		Else
+			
+		End If
+		
+	Next
+	确认价格 = 9999999
+	If 圈记数=4
+		价格 = DigitFromStr(价格)
+		价格 = CInt(价格)
+		确认价格 = 价格
+		
+	Else
+		
+	End If
+	TracePrint(确认价格)
+End Function
+Function get_tab()
+	get_url()
+	URL2 = "https://kakaku.com/item/"&K_data&"/spec/#tab"
+	tabcode = HTTP.Get(URL2, {         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",         "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8" }, 60000)
+	tabhtml = Regex.FindStr(tabcode,'id="tabContents"[\\s\\S]*?</table>',0)
+	Try 1
+		li_html = Regex.FindStr(tabhtml,'<li>[\\s\\S]*</li>',0)
+	Catch e
+		li_html = ""
+	Else
+	End Try
+	
+	tab_html = Regex.FindStr(tabhtml,'<table[\\s\\S]*',0)
+	a_list = Regex.FindAll(tab_html,'<a.*?>')
+	For Each value In a_list
+		tab_html = Replace(tab_html,value,"",False)
+		
+	Next
+	img_list = Regex.FindAll(tab_html,'<img.*?>')
+	For Each value In img_list
+		tab_html = Replace(tab_html,value,"",False)
+		
+	Next
+	Try 1
+		tab_html = Replace(tab_html,'border="0"','border="1"',False)
+	Catch e
+	Else
+	End Try
+	goods_html = li_html&"\n"&tab_html
+	goods_html = Replace(goods_html,"\n",'',False)
+	TracePrint(goods_html)
+End Function
+path_data = Dialog.OpenFile("","Excel文档 (csv、xlsx、log)|*.csv;*.xlsx;*.log|任意文件|*","UiBot")
+TracePrint(path_data)
+get_price()
+get_tab()
+
+
