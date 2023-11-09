@@ -1,0 +1,1109 @@
+Dim 详情 = ""
+Dim sRet_end = ""
+Dim sRet_sta = ""
+Dim dTime = ""
+Dim aa = ""
+Dim arrayData = ""
+Dim sRet = ""
+Dim ShopID = ""
+Dim kakaku_jan = ""
+Dim Kakaku_jan_dict = ""
+Dim sRet_meka = ""
+Dim arrayData1 = ""
+Dim kakaku_htmlcode = ""
+Dim 笔记本源码 = ""
+Dim getURL = ""
+Dim note_title = ""
+Dim Office詳細 = ""
+Dim strXH_CD1 = ""
+Dim strXH_text = ""
+Dim Banhao_arrayQ10data_dict = ""
+Dim JAN_arrayQ10data_dict = ""
+Dim item = ""
+Dim Image_Save_Path = ""
+Dim 下载图片 = ""
+Dim obj下图 = ""
+Dim arrayData_data = ""
+Dim iRet_arrayData = ""
+Dim sRet_kakaku = ""
+Dim temp_list = ""
+Dim Value = ""
+Dim Rows1 = ""
+Dim 单独子程序 = ""
+Dim list_write = ""
+Dim objimg = ""
+Dim Browser_dict = ""
+Dim Rows = ""
+Dim 设定位 = ""
+Dim Index = ""
+Dim image_dict = ""
+Dim 获取图片 = ""
+Dim meka_URL = ""
+Dim amaon_URL = ""
+Dim size = ""
+Dim IMG_code = ""
+Dim strXH_CD = ""
+Dim Text加价 = ""
+Dim obj加价 = ""
+Dim CSV_list = ""
+Dim paichu_excel = ""
+Dim 停止出品 = ""
+Dim iPID = ""
+Dim ButtonID = ""
+Dim objButton = ""
+Dim Text = ""
+Dim objControl = ""
+Dim winForm = ""
+Dim rec_GX = ""
+Dim 商品数量 = ""
+Dim 价格 = ""
+Dim arrayRet = ""
+Dim objExcelWorkBook = ""
+Dim ctgmane = ""
+Dim IMAGEURL = ""
+Dim 图片数量 = ""
+Dim 图片_list = ""
+Dim mkrname = ""
+Dim Title = ""
+Dim SKU = ""
+Dim 价格1 = ""
+Dim nub = ""
+Dim temp = ""
+Dim JS = ""
+Dim 型号 = ""
+Dim D2_番号_Dict = ""
+Dim D2_JAN_Dict = ""
+Dim JAN_Dict = ""
+Dim bRet = ""
+Dim iRet = ""
+Dim JAN = ""
+Dim meka_GX = ""
+Dim hWeb = ""
+Dim meka_dict = ""
+Dim list1 = ""
+Dim objJSON = ""
+Dim strJSON = ""
+Dim dictRet = ""
+Dim arrRet = ""
+Dim 激活 = ""
+meka_dict = {"ソフマップ.com":[1824,1,1,1,9,1],"ノジマオンライン":[1639,1,1,1,100,0],"Amazon.co.jp":[1208,1,1,1,17,1],"Joshin":[1877,1,1,1,11,0],"ヤマダウェブコム":[1865,1,1,1,10,1],"楽天ブックス":[9014,1,1,1,13,0],"EDIONネットショップ":[1747,1,1,1,5,1],"ひかりTVショッピング":[2162,1,1,1,12,0],"コジマ":[3832,1,0,1,16,1],"ヨドバシ.com":[2220,0,1,1,18,1],"PREMOA":[3713,1,0,1,3,1],"エディオン":[3779,1,0,1,4,1],"XPRICE楽天":[2114,1,1,1,8,0],"SAKURA":[3720,1,1,1,6,1],"WiNK":[5,1,1,1,7,0],"ケーズデンキWEB":[1733,1,0,1,10,1],"楽天ビックカメラ":[3757,1,0,1,10,1],"コジマネット":[1925,1,1,1,16,0],"ビックカメラ.com":[1676,1,1,1,16,0],"PCSHOPアーク":[90,1,0,1,16,0],"あきばお～":[3574,1,0,1,16,0]}
+meka_GX = {   "Amazon.co.jp" :{       "JAN" : ["商品モデル番号[\\s\\S]+?\\</li>","\\d{9,}"],       "型号" : ["(?<=asin: \")\\S+?(?=\")"],       "详情" : ["(?<=show up to 2 reviews by default -->)[\\s\\S]+?(?=\\</div>)"],      "图片" : [ "(?<=data-old-hires=\")[\\s\\S]+?jpg" ,'http[\\s\\S]+']    },   "EDIONネットショップ" : {      "JAN" : [ "(?<=janCd:')[\\s\\S]+?(?=')" ],      "型号" : [ "(?<=word-break\">型番\\</dt>\\s<dd>)[\\s\\S]+?(?=</dd>)" ],      "详情" : [ "(?<= include PC8 -->)[\\s\\S]+?(?=\\<!-- フリー領域)" ],      "图片" : []   },   "Joshin" : {      "JAN" : [ "(?<=item_id': ')\\d+?(?=')" ],      "型号" : [ "(?<=keywords\" content=\")[\\s\\S]+?(?=[,|\\s])" ],      "详情" : [ "(?<=title01\">商品の特長)[\\s\\S]+?(?=レビュー)" ] ,  "图片" : [ '(?<=og:image" content=")[\\s\\S]+?jpg' ]  },   "PREMOA" : {      "JAN" : [ '(?<=manageNumber":")\\d+' ],      "型号" : [],      "详情" : [ "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "SAKURA" : {      "JAN" : [ '(?<=manageNumber":")\\d+'  ],      "型号" : [ "(?<=商品番号\\</span>)[\\s\\S]+?(?=\\</span>)", "[^>]+(?!.*>)" ],      "详情" : [ "(?<=span class=\"item_desc\">)[\\s\\S]+?(?=\\</span>)" ]   },   "WiNK" : {      "JAN" : [ "(?<=商品コード：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\d+" ],      "型号" : [ "(?<=型番：)[\\s\\S]+?(?=\\</dd>)", "(?<=\\>)\\S+" ],      "详情" : [         "(?<=\\<!-- .detail-box -->)[\\s\\S]+?(?=\\<!-- 商品ここまで -->)",         "(?<=\\<p class=\"text01\">)[\\s\\S]+"      ]   },   "XPRICE楽天" : {      "JAN" : [ '(?<=manageNumber":")\\d+'  ],      "型号" : [],      "详情" : [         "(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"      ]   },   "ひかりTVショッピング" : {      "JAN" : [ "(?<=ProductID\" : \")\\d+?(?=\")" ],      "型号" : [ "(?<=型番)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [ "(?<=商品の特徴)[\\s\\S]+?(?=\\</div>)" ]   },   "エディオン" : {      "JAN" : [  '(?<=manageNumber":")\\d+'  ],      "型号" : [],      "详情" : [ "(?<=の商品説明)[\\s\\S]+?(?=\\</span>)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "ケーズデンキWEB" : {      "JAN" : [ "(?<=JAN：)\\d+" ],      "型号" : [],      "详情" : [ "(?<=goodscomment1_ \">)[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "(?<=data-viewsrc=\"//)image.ksdenki.com/img/goods/[\\S]+_5.jpg?(?=\")" ]   },   "コジマ" : {      "JAN" : [ "(?<=JANコード：)\\d+" ],      "型号" : [ "(?<=型式：)[\\s\\S]+?(?=\\<)" ],      "详情" : [ "(?<=【商品解説】)[\\s\\S]+?(?=\\</p>)" ],      "图片" : [ "https://shop.r10s.jp/r-kojima/cabinet/\\S+_1.jpg" ]   },   "ソフマップ.com" : {      "JAN" : [ "(?<=new_jan\\=)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "[^>]+(?!.*>)" ],      "详情" : [         "(?<=単品商品詳細 start -->)[\\s\\S]+?(?=\\<!-- 単品商品詳細 end)"      ],      "图片" : [ "https://image.sofmap.com/images/product/pim/\\d+_A01.jpg" ]   },   "ノジマオンライン" : {      "JAN" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=,)" ],      "型号" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=>)", "(?<=,)[\\s\\S]+?(?=,)" ],      "详情" : [         "(?<=商品説明</h\\d>)[\\s\\S]+?(?=<img src=\"/contents/image/shohininfoicon.png)"      ]   },   "ヤマダウェブコム" : {      "JAN" : [ "(?<=JAN\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\d+" ],      "型号" : [ "(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)", "(?<=>)\\S+" ],      "详情" : [        "(?<=product-sammary__title-button accordion-icon js-accordion-trigger is-active)[\\s\\S]+?</section>", "(?<=div class=\"product-sammary__inner\">)[\\s\\S]+?(?=\\</section>)"      ],      "图片" : [ "https://cache.ymall.jp/webcom/item/multiimage/500/\\d+_001.jpg" ]   },   "ヨドバシ.com" : {      "JAN" : [],      "型号" : [],      "详情" : [ "(?<=pDescription -->)[\\s\\S]+?(?=\\<!-- /pdContainer -->)" ] ,      "图片" : [ '(?<=mainImgLink" href=")[\\s\\S]+?jpg' ]  },   "楽天ビックカメラ" : {      "JAN" : [ '(?<=mng_number":")\\d+' ],      "型号" : [],      "详情" : [ "\\<div id=\"description[\\s\\S]+?(?=\\</tbody>)" ],      "图片" : [ "(?<=image\": \")[\\s\\S]+?jpg" ]   },   "楽天ブックス" : {      "JAN" : [         "(?<=JAN</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "型号" : [         "(?<=品番</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"      ],      "详情" : [ "(?<=商品説明\\</h\\d>)[\\s\\S]+?(?=\\<!-- /div#editArea2 -->)" ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "コジマネット" : {      "JAN" : [         "(?<=sku\": \")\\d+"      ],      "型号" : [         "(?<=mpn\": \")[\\s\\S]+?(?=\")"      ],      "详情" : [ '(?<=ProductClassTable MK2PFRPM000_02)[\\s\\S]+?(?=\\<colgroup>)' ,'(?<=<div class=\\"sub-text\\">)[\\s\\S]+?(?=\\</div>)'],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "ビックカメラ.com" : {      "JAN" : [         "(?<=JANコード：)\\d+"      ],      "型号" : [         "(?<=型番</th>)[\\s\\S]+?</td>" ,  '(?<=td>)[\\s\\S]+(?=</td>)'   ],      "详情" : [ '(?<=id=\\"bcs_detailBase\\">)[\\s\\S]+?(?=\\</div>)' ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "PCSHOPアーク" : {      "JAN" : [         "(?<=JANコード：)\\d+"      ],      "型号" : [         '(?<=型番</th>)[\\s\\S]+?</td>' ,  '(?<=td>)[\\s\\S]+(?=</td>)'   ],      "详情" : [ '(?<=<h2 id="item_a1">)[\\s\\S]+?(?=-->)' ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   },   "あきばお～" : {      "JAN" : [         '(?<=ratRanCode": ")\\d+'     ],      "型号" : [         ''   ],      "详情" : [ '(?<=<span class="item_desc">)[\\s\\S]+?(?=</span>)' ],      "图片" : [ "(?<=og:image)[\\s\\S]+?(?=>)","http[\\s\\S]+jpg" ]   }}
+Rem meka_dict字典内,键的值是商家名。值的数组[1=商家代码(价格网的),2=JAN开关,3=番号开关,4=商品说明开关,5=自动勾选优先级(1最大),6=图片开关],JAN 番号 商品说明 图片 都按meka_GX字典内添入的正则代码执行获取。
+Kakaku_jan_dict = {"1877":"(?<=%252F)\\d{11,}","1639":"(?<=%252F)\\d{11,}",'1924':'(?<=%252F)\\d{11,}','1925':'(?<=prod%25253D)\\d{11,}','74':'(?<=%2Fg)\\d{11,}','1488':'(?<=%2Fg)\\d{11,}','20':'(?<=%2Fg)\\d{11,}','1733':'(?<=shop%252Fg%252Fg)\\d{11,}','1827':'(?<=%252F)\\d{11,}','218':'(?<=item%2F)\\d{11,}','2305':'(?<=%2F)\\d{11,}','1384':'(?<=%2F)\\d{11,}','2506':'(?<=itemcode%3D)\\d{11,}','2410':'(?<=itemcode%3D)\\d{11,}','2789':'(?<=itemcode%3D)\\d{11,}','2519':'(?<=itemcode%3D)\\d{11,}','2626':'(?<=itemcode%253D)\\d{11,}','2685':'(?<=itemcode%253D)\\d{11,}','2524':'(?<=itemcode%3D)\\d{11,}','2729':'(?<=itemcode%3D)\\d{11,}','2411':'(?<=itemcode%3D)\\d{11,}','2716':'(?<=itemcode%3D)\\d{11,}','2213':'(?<=itemcode%3D)\\d{11,}','2586':'(?<=itemcode%3D)\\d{11,}','2726':'(?<=itemcode%3D)\\d{11,}','2497':'(?<=itemcode%3D)\\d{11,}','2546':'(?<=itemcode%3D)\\d{11,}','2651':'(?<=itemcode%3D)\\d{11,}','2649':'(?<=itemcode%3D)\\d{11,}','2319':'(?<=itemcode%3D)\\d{11,}','2781':'(?<=itemcode%3D)\\d{11,}','3504':'(?<=%252F)\\d{11,}','2585':'(?<=itemcode%3D)\\d{11,}','3779':'(?<=%252F)\\d{11,}','3757':'(?<=%252F)\\d{11,}','3756':'(?<=%252F)\\d{11,}','3720':'(?<=%2Fg)\\d{11,}','3830':'(?<=%252F)\\d{11,}','3729':'(?<=%252F)\\d{11,}','3728':'(?<=%252F)\\d{11,}','3832':'(?<=%252F)\\d{11,}','3713':'(?<=%252F)\\d{11,}','3748':'(?<=%2Fg)\\d{11,}','2114':'(?<=%2F)\\d{11,}','3708':'(?<=%252F)\\d{11,}','3840':'(?<=%252F)\\d{11,}','8090':'(?<=itemcode%3D)\\d{11,}','2457':'(?<=itemcode%3D)\\d{11,}','130':'(?<=%2F)\\d{11,}','2510':'(?<=itemcode%3D)\\d{11,}','2675':'(?<=itemcode%3D)\\d{11,}','1914':'(?<=itemcode%3D)\\d{11,}','2321':'(?<=itemcode%3D)\\d{11,}','2640':'(?<=itemcode%3D)\\d{11,}','380':'(?<=%2Fg)\\d{11,}','2820':'(?<=itemcode%3D)\\d{11,}','54188':'(?<=itemcode%3D)\\d{11,}','3750':'(?<=%252F)\\d{11,}','2632':'(?<=itemcode%3D)\\d{11,}','54071':'(?<=%253D)\\d{11,}','2302':'(?<=itemcode%3D)\\d{11,}','54051':'(?<=itemcode%253D)\\d{11,}','2507':'(?<=itemcode%3D)\\d{11,}'}
+kakaku_jan = ""
+image_dict = {}
+设定位 = 5
+加价 = 0
+停止出品 = 0
+excle文件 = "在庫出力.xlsx"
+工作表名 = "在庫写入"
+Image_Save_Path = "C:\\Users\\user\\Pictures\\"&型号&".jpg"
+商品説明_html_path = "C:\\Users\\user\\Documents\\商品説明.html"
+arrayQ10data = CSV.Open("Z:\\bazhuayu\\Qoo10_Data.csv",{"encoding":"auto"})
+item = Shift(arrayQ10data)
+JAN_arrayQ10data_dict = {}
+Banhao_arrayQ10data_dict = {}
+For Each value In arrayQ10data
+	value[37] = CInt(value[37])
+	value[37] = CStr(value[37])
+	JAN_arrayQ10data_dict[value[37]] = value[0]
+	Banhao_arrayQ10data_dict[value[1]] = value[0]
+	
+Next
+Function 查找出品(x)
+	Text查找 = x
+	TracePrint("Text查找",Text查找)
+	If Text查找="" Or Text查找=Null Or Text查找=" " 
+		
+		Dialog.Notify("查找数据为空，跳过", "UiBot", 1)
+		Return 
+	Else
+	End If
+	bRet_num = IsNumeric(Text查找)
+	TracePrint(bRet_num)
+	If bRet_num
+		Text查找 = CInt(Text查找)
+		
+	Else
+		
+	End If
+	Text查找 = CStr(Text查找)
+	Dialog.Notify("查找内容为："&Text查找, "查找", "0")
+	// Text查找内容 = Clipboard.GetText()
+	Text查找 = Left(Text查找,45)
+	TracePrint("Text查找内容"&Text查找)
+	返回查找内容 = ""
+	For Each value In arrayQ10data
+		value_all_text = Format("%s%s%s%s",value[0],value[1],value[4],value[37])
+		iRet_finad = InStr(value_all_text,Text查找,1,False)
+		If iRet_finad>0
+			返回查找内容 = 返回查找内容&value[0]&"\n"&value[1]&"\n"&value[37]&"\n"&value[4]&"\n"
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	TracePrint(返回查找内容)
+	If 返回查找内容<>""
+		iRet = Dialog.MsgBox(返回查找内容&"\n\n[はい]继续出品　[いいえ]取消出品。","查找结果",1,"1",0)
+		If iRet=7
+			停止出品 = 1
+			
+		Else
+			停止出品 = 0
+		End If
+		
+	Else
+		
+		Dialog.Notify("没有找到相关信息", "查找结果", "0")
+	End If
+End Function
+Function 不在出品(厂家)
+	TracePrint("查找不在出品名单",厂家)
+	Try 1
+		paichu_excel = Excel.BindBook("paichu.xlsx")
+	Catch e
+		iRet = Dialog.MsgBox("有单元格处理编辑状态。请退出编辑状态后点击‘确定’","UiBot","0","1",0)
+		paichu_excel = Excel.BindBook("paichu.xlsx")
+	Else
+	End Try
+	
+	Excel.ActiveBook(paichu_excel)
+	iRet_行数  = Excel.GetRowsCount(paichu_excel,"不出品")
+	array不在出品 = Excel.ReadRange(paichu_excel,"不出品","B2:E"&iRet_行数)
+	For Each value In array不在出品
+		For Each value_brand In value
+			make_PD = StrComp(value_brand,厂家,False)
+			If make_PD = True And make_PD <>"" And make_PD <>Null And make_PD <>" "
+				TracePrint("这个厂家不在出品，出品退出\n",厂家,value[3])
+				PD_text = Format("这个厂家不在出品，出品退出\n%s：%s",厂家,value[3])
+				iRet = Dialog.MsgBox(PD_text,"UiBot","0","1",0)
+				停止出品 = 1
+				
+			Else
+				
+			End If
+			
+		Next
+		
+	Next
+End Function
+Function Get_meka()
+	kakaku_jan = ""
+	价格 = ""
+	价格1 = ""
+	list_write = Array([20])
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	bRet = WebBrowser.SwitchTab(hWeb,"url","https://kakaku.com/*",{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+	For i = 0 To 10 Step 1 
+		Try 1
+			kakaku_htmlcode = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		Catch e
+		Else
+		End Try
+		
+		If kakaku_htmlcode = Null
+			
+			#icon("@res:37di8cp9-7n7a-677i-ou3s-ccf5ep8d0pn4.png")
+			Mouse.Action({"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"価格.com*"}],"ctrl":[{"role":"ROLE_SYSTEM_PANE","name":"価格.com *"},{"role":"ROLE_SYSTEM_PUSHBUTTON","name":"再読み込み"}]},"left","click",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"bSetForeground":True,"sCursorPosition":"Center","iCursorOffsetX":0,"iCursorOffsetY":0,"sKeyModifiers":[],"sSimulate":"message","bMoveSmoothly":False})
+			kakaku_htmlcode = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		Else
+			
+		End If
+		iRet_kakaku_htmlcode = Len(kakaku_htmlcode)
+		If iRet_kakaku_htmlcode>1000
+			Break
+			
+		ElseIf iRet_kakaku_htmlcode<1000 And i >=10
+			TracePrint("获取源码失败，退出流程")
+			exit()
+			
+		End If
+	Next
+	Rem 以下为获取基本信息
+	SKU = Regex.FindStr(kakaku_htmlcode,"(?<=prdkey\\: ')[\\s\\S]+?(?=')",0)
+	
+	list_write[10] = "https://kakaku.com/item/"&SKU
+	#icon("@res:oimggits-rgnn-l4om-sv92-7d5gttsnksv2.png")
+	Title = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"H2"}]},{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	// Title = Regex.FindStr(kakaku_htmlcode,"(?<=prdname\\: ')[\\s\\S]+?(?=')",0)
+	list_write[3] = Title
+	If get笔记本title=1
+		getnotetitle()
+	Else
+		
+	End If
+	list_write[9] = Title
+	XingBan = Regex.FindStr(Title,"([A-Za-z0-9])+(-|/)+[A-Za-z0-9-/()]*",0)
+	list_write[1] = XingBan
+	mkrname = Regex.FindStr(kakaku_htmlcode,"(?<=mkrname\\: ')[\\s\\S]+?(?=')",0)
+	mkrname=textreplace(mkrname)
+	不在出品(mkrname)
+	If 停止出品=1
+		Return 
+	Else
+		
+	End If
+	list_write[14] = mkrname
+	ctgmane = Regex.FindStr(kakaku_htmlcode,"(?<=ctgname\\: ')[\\s\\S]+?(?=')",0)
+	list_write[12] = ctgmane
+	imagePD = Regex.FindStr(kakaku_htmlcode,"画像提供",0)
+	If imagePD<>""
+		图片数量 = 0
+		
+	Else
+		IMAGEURL = "<img src=\"https://img1.kakaku.k-img.com/images/productimage/fullscale/"&SKU&".jpg\" width=\"500\" height=\"auto\">"
+		图片_list = Regex.FindAll(kakaku_htmlcode,"https://img1.kakaku.k-img.com/images/productimage/ts/K\\d+_\\d+")
+		图片数量  = Len(图片_list)
+		TracePrint("图片数量",图片数量)
+		图片数量 = 图片数量+1
+		
+	End If
+	
+	list_write[6] = 图片数量
+	输出基本信息 = Format("SKU=%s，Title=%s，型番=%s，厂家=%s，分类=%s",SKU,Title,XingBan,mkrname,ctgmane,图片数量)
+	TracePrint(输出基本信息)
+	Rem 获取基本信息完成
+	dict_demo = {"component":[],"layout":"vertical","source":[]}
+	arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-priceBG","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-priceBG"},{"className":"p-PTPrice","index":0,"prefix":">","tag":"div","value":"div.p-PTPrice"},{"className":"p-PTPrice_price","index":0,"prefix":">","tag":"p","value":"p.p-PTPrice_price"}]},{"props":["text"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col","index":4,"prefix":">","tag":"td","value":"td:nth-child(4)"},{"className":"p-PTStock","index":0,"prefix":">","tag":"p","value":"p.p-PTStock"}]},{"props":["text"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-shopInfo","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-shopInfo"},{"className":"p-PTShop","index":0,"prefix":">","tag":"div","value":"div.p-PTShop"},{"className":"p-PTShop_info","index":0,"prefix":">","tag":"div","value":"div.p-PTShop_info"},{"className":"p-PTShopData","index":0,"prefix":">","tag":"div","value":"div.p-PTShopData"},{"className":"p-PTShopData_name","index":0,"prefix":">","tag":"p","value":"p.p-PTShopData_name"},{"className":"p-PTShopData_name_link","index":0,"prefix":">","tag":"a","value":"a.p-PTShopData_name_link"}]},{"props":["url"],"selecors":[{"className":"p-priceTable","index":0,"prefix":"","tag":"table","value":"table.p-priceTable"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"p-priceTable_col p-priceTable_col-shopInfo","index":0,"prefix":">","tag":"td","value":"td.p-priceTable_col.p-priceTable_col-shopInfo"},{"className":"p-PTShop","index":0,"prefix":">","tag":"div","value":"div.p-PTShop"},{"className":"p-PTShop_btn","index":0,"prefix":">","tag":"div","value":"div.p-PTShop_btn"},{"className":"p-PTShopData_name_link","index":0,"prefix":">","tag":"a","value":"a.p-PTShopData_name_link"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	iRet_arrayData = UBound(arrayData)
+	TracePrint("获取批量抓取数据数组下标",iRet_arrayData)
+	If iRet_arrayData=-1
+		data_dict = {}
+		arrayData = UiElement.DataScrap({"html":[{"id":"mainLeft","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text"],"selecors":[{"className":"tblBorderGray","index":0,"prefix":"","tag":"table","value":"table.tblBorderGray"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"alignR","index":0,"prefix":">","tag":"td","value":"td.alignR"},{"className":"fontPrice","index":0,"prefix":">","tag":"p","value":"p.fontPrice"},{"className":"","index":0,"prefix":">","tag":"a","value":"a"}]},{"props":["text"],"selecors":[{"className":"tblBorderGray","index":0,"prefix":"","tag":"table","value":"table.tblBorderGray"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"","index":4,"prefix":">","tag":"td","value":"td:nth-child(4)"}]},{"props":["text"],"selecors":[{"className":"tblBorderGray","index":0,"prefix":"","tag":"table","value":"table.tblBorderGray"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"shopname","index":0,"prefix":">","tag":"td","value":"td.shopname"},{"className":"","index":0,"prefix":">","tag":"a","value":"a"}]},{"props":["url"],"selecors":[{"className":"tblBorderGray","index":0,"prefix":"","tag":"table","value":"table.tblBorderGray"},{"className":"","index":0,"prefix":">","tag":"tbody","value":"tbody"},{"index":0,"prefix":">","tag":"tr","value":"tr"},{"className":"","index":7,"prefix":">","tag":"td","value":"td:nth-child(7)"},{"className":"","index":0,"prefix":">","tag":"a","value":"a"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+		iRet_arrayData_data = UBound(arrayData)
+		If iRet_arrayData_data<>-1
+			For Each value In arrayData
+				If value[1]="有"
+					value[1] = "○"
+					
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+			For Each value In arrayData_data
+				data_dict[value[1]] = value[2]
+				
+			Next
+			TracePrint(data_dict)
+			arrayData1 = UiElement.DataScrap({"html":[{"aaname":"順位 価格（差額）*","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+			For Each value In arrayData1
+				temp_list = []
+				sRet_kakaku = Regex.FindStr(value[1],"¥(.*?)(?=\\n)",0)
+				If sRet_kakaku<>""
+					
+					temp_list = push(temp_list,sRet_kakaku)
+					If value[3]="有"
+						temp_list = push(temp_list,"○")
+						
+					Else
+						temp_list = push(temp_list,value[3])
+						
+					End If
+					
+					Try 1
+						sRet_meka = Regex.FindStr(value[5],"(.*?)(?=\\n)",0)
+					Catch e
+						iRet = Dialog.MsgBox("页面获取出错，重新激活页面后关闭本窗体","UiBot","0","1",0)
+						arrayData1 = UiElement.DataScrap({"html":[{"aaname":"順位 価格（差額）*","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+						sRet_meka = Regex.FindStr(value[5],"(.*?)(?=\\n)",0)
+					Else
+					End Try
+					temp_list = push(temp_list,sRet_meka)
+					temp_list = push(temp_list,data_dict[sRet_meka])
+					TracePrint(temp_list)
+					arrayData = push(arrayData,temp_list)
+				Else
+					
+				End If
+			Next
+		End If
+		
+	Else
+		
+	End If
+	TracePrint("数组",arrayData)
+	排序 = 50
+	激活 = ""
+	JS = 1
+	If 加价=0
+		加价 = Dialog.InputBox("输入加价金额","设置加价",3500,True)
+		加价 = CInt(加价)
+		
+	Else
+		
+	End If
+	For Each value In arrayData
+		Rem 价格取值，第几位圈值
+		If value[1]= "○" And JS=设定位 
+			nub = DigitFromStr(value[0])
+			nub = CInt(nub)			
+			价格1 = CInt((nub+加价)/0.92)
+			JS = 1+JS
+		ElseIf value[1]= "○"
+			JS = 1+JS
+		End If
+		Demo1 = {"default":"","name":"","option":[],"selected":[],"type":"checkbox"}
+		Demo2 = {"active":False,"type":"checkbox","value":{"select":{"multiSelectArr":[],"multiSelectArrValue":[]},"title":""}}
+		ShopID = Regex.FindStr(value[3],"(?<=ShopCD=)\\d+",0)
+		ShopID = CInt(ShopID)
+		ShopID_str = CStr(ShopID)
+		If Kakaku_jan_dict[ShopID_str]<>Null And kakaku_jan =""
+			TracePrint("ShopID_str",ShopID_str,Kakaku_jan_dict[ShopID_str])
+			text_jan = Regex.FindStr(value[3],Kakaku_jan_dict[ShopID_str],0)
+			text_jan_num = Len(text_jan)
+			If text_jan_num>=9
+				kakaku_jan = text_jan
+				TracePrint("Kakaku_jan_dict",Kakaku_jan_dict[ShopID_str],value[3],Kakaku_jan)
+				
+			Else
+				
+			End If
+			
+		Else
+			
+		End If
+		// TracePrint(ShopID,value[3])
+		If meka_dict[value[2]]<>Null And ShopID = meka_dict[value[2]][0]
+			
+			Demo1["name"] = value[2]
+			If meka_dict[value[2]][1]=1
+				
+				JAN_Dict = {"selected":False,"text":"JAN","value":"0"}
+				Demo1["option"] = push(Demo1["option"],JAN_Dict)
+				D2_JAN_Dict = {"keyText":"JAN","valueText":"0"}
+				Demo2["value"]["select"]["multiSelectArr"] = push(Demo2["value"]["select"]["multiSelectArr"],D2_JAN_Dict)
+			Else
+				
+			End If
+			If meka_dict[value[2]][2]=1
+				番号_Dict = {"selected":False,"text":"番号","value":"1"}
+				Demo1["option"] = push(Demo1["option"],番号_Dict)
+				D2_番号_Dict = {"keyText":"番号","valueText":"1"}
+				Demo2["value"]["select"]["multiSelectArr"] = push(Demo2["value"]["select"]["multiSelectArr"],D2_番号_Dict)
+				
+			Else
+				
+			End If
+			If meka_dict[value[2]][3]=1
+				说明_Dict = {"selected":False,"text":"说明","value":"2"}
+				Demo1["option"] = push(Demo1["option"],说明_Dict)
+				D2_说明_Dict = {"keyText":"说明","valueText":"2"}
+				Demo2["value"]["select"]["multiSelectArr"] = push(Demo2["value"]["select"]["multiSelectArr"],D2_说明_Dict)
+				
+			Else
+				
+			End If
+			If meka_dict[value[2]][5]=1
+				说明_Dict = {"selected":False,"text":"下载图片","value":"3"}
+				Demo1["option"] = push(Demo1["option"],说明_Dict)
+				D2_说明_Dict = {"keyText":"下载图片","valueText":"3"}
+				Demo2["value"]["select"]["multiSelectArr"] = push(Demo2["value"]["select"]["multiSelectArr"],D2_说明_Dict)
+				
+			Else
+				
+			End If
+			Demo2["value"]["title"] = value[2]
+			dict_demo["component"] = push(dict_demo["component"],Demo1)
+			dict_demo["source"] = push(dict_demo["source"],Demo2)
+			If meka_dict[value[2]][4]<排序
+				// TracePrint(排序,meka_dict[value[2]][4])
+				排序 = meka_dict[value[2]][4]
+				激活 = value[2]
+				
+			Else
+				
+			End If
+		Else
+			
+		End If
+		
+	Next
+	If 价格1=""
+		UB_arrayData = UBound(arrayData)
+		nub = DigitFromStr(arrayData[UB_arrayData][0])
+		nub = CInt(nub)			
+		价格 = CInt((nub+加价)/0.92)
+		商品数量 = 0
+	Else
+		价格 = 价格1
+		商品数量 = 1
+	End If
+	list_write[4] = 价格
+	list_write[5] = 商品数量
+	TracePrint("排序:"&排序,"激活:"&激活,"价格:"&价格,"加价:"&加价)
+	For Each value In dict_demo["component"]
+		If value["name"]=激活
+			For i = 0 To 2 Step 1 
+				If meka_dict[激活][i+1]=1
+					nub_str = CStr(i)
+					
+					value["selected"] = push(value["selected"],nub_str)
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		
+	Next
+	For Each value In dict_demo["source"]
+		If value["value"]["select"]["title"]=激活
+			For i = 0 To 2 Step 1 
+				If meka_dict[激活][i+1]=1
+					value["value"]["select"]["multiSelectArrValue"] = push(value["value"]["select"]["multiSelectArrValue"],i)
+					
+				Else
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		
+	Next
+	If 记录尺寸=1
+		Getsaizi()
+	Else
+		
+	End If
+	strJSON = JSON.Stringify(dict_demo)
+	File.WriteFile(@res"1675131579633.json",strJSON,"utf-8")
+	dictRet = Dialog.UDFDialog("",@res"1675131579633.json",{},{"iTimeout":0,"strTimoutClick":"ok","bInterruptTimeout":True})
+	If dictRet["return"] = 0
+		停止出品 = 1
+		
+	Else
+		
+	End If
+	TracePrint(dictRet)
+	TracePrint("text_jan-kakaku_jan",kakaku_jan)
+	
+End Function
+Function Get_GX()
+	详情 = ""
+	JAN = ""
+	型号 = ""
+	图片URL = ""
+	image_dict = {}
+	Browser_dict = {}
+	If 停止出品=1
+		Return 
+	Else
+		
+	End If
+	获取图片 = False
+	If 单独子程序<>""
+		list_write = Array([20])
+		dictRet = {}
+		templist = []
+		For i = 1 To 3 Step 1 
+			If meka_dict[单独子程序][i]=1
+				str_sRet = CStr(i-1)
+				templist = push(templist,str_sRet)
+				
+			Else
+				
+			End If
+			
+		Next
+		dictRet[单独子程序] = templist
+		
+	Else
+		
+	End If
+	For Each key, value In dictRet
+		iRet_PD = UBound(value)
+		If iRet_PD>=0
+			If 单独子程序<>""
+				
+				hWeb_GX = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			Else
+				For i = 0 To 20 Step 1 
+					meka_URL = Regex.FindStr(kakaku_htmlcode,"ShopCD="&meka_dict[key][0]&"[\\s\\S]+?(?=\")",0)
+					If meka_URL<>"" 
+						Break
+						
+					ElseIf meka_URL = "" And i >= 10
+						TracePrint("获取网址失败，退出")
+						exit()
+						
+					End If
+					
+				Next
+				meka_URL = "https://c.kakaku.com/forwarder/forward.aspx?"&meka_URL
+				meka_URL = Replace(meka_URL,"&amp;","&",False)
+				hWeb_GX = WebBrowser.Create("chrome",meka_URL,30000,{"bContinueOnError":False,"iDelayAfter":2000,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+				
+			End If
+			getWebUrl = WebBrowser.GetURL(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+			Browser_dict[key] = getWebUrl
+			Do While True
+				GX_HTMLCODE = WebBrowser.GetHTML(hWeb_GX,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+				iRet_strPD = LenB(GX_HTMLCODE)
+				If iRet_strPD>10000
+					Break
+					
+				Else
+					
+				End If
+				
+			Loop
+			TracePrint("value",value)
+			If meka_GX[key]["图片"]<>Null
+				JS = 1
+				For Each value_图片 In meka_GX[key]["图片"]
+					If JS=1
+						
+						图片URL = Regex.FindStr(GX_HTMLCODE,value_图片,0)
+					Else
+						图片URL = Regex.FindStr(图片URL,value_图片,0)
+						
+					End If
+					
+					iRet_图片URL = Len(图片URL)
+					TracePrint(value_图片URL,iRet_图片URL)
+					JS = 1+JS
+				Next
+				
+				http_PD = StartsWith(图片URL,"http")
+				If http_PD
+					image_dict[key] = 图片URL
+					
+				Else
+					image_dict[key] = "https://"&图片URL
+					
+				End If
+				
+				TracePrint("获取图片URL",图片URL)
+			Else
+				
+			End If
+			For Each value_GX In value
+				If value_GX="0"
+					JS = 1
+					For Each value_JAN In meka_GX[key]["JAN"]
+						If JS=1
+							
+							JAN = Regex.FindStr(GX_HTMLCODE,value_JAN,0)
+						Else
+							JAN = Regex.FindStr(JAN,value_JAN,0)
+							
+						End If
+						TracePrint(value_JAN,JAN)
+						JS = 1+JS
+						
+					Next
+					
+				ElseIf value_GX="1"
+					JS = 1
+					For Each value_型号 In meka_GX[key]["型号"]
+						If JS=1
+							
+							型号 = Regex.FindStr(GX_HTMLCODE,value_型号,0)
+						Else
+							型号 = Regex.FindStr(型号,value_型号,0)
+							
+						End If
+						
+						TracePrint(value_型号,型号)
+						JS = 1+JS
+					Next
+					
+				ElseIf value_GX="2"
+					JS = 1
+					For Each value_详情 In meka_GX[key]["详情"]
+						If JS=1
+							
+							详情 = Regex.FindStr(GX_HTMLCODE,value_详情,0)
+						Else
+							详情 = Regex.FindStr(详情,value_详情,0)
+							
+						End If
+						
+						详情 = Replace(详情,"\n","",False)
+						iRet_详情 = Len(详情)
+						TracePrint(value_详情,iRet_详情)
+						JS = 1+JS
+					Next				
+					
+				End If
+				
+			Next
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	Image_Save_Path = "C:\\Users\\user\\Pictures\\"&型号&".jpg"
+	TracePrint("Image_Save_Path",Image_Save_Path)
+	list_write[0] = JAN
+	Rem 去掉商品详情内图片，动画，商家文字
+	rec_GX = ["仕様詳細[\\s\\S]+?\\</table>","商品情報","\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","■制限事項■[\\s\\S]+?\\<br\\s\\S>",'商品について','商品詳細']
+	For Each value In rec_GX
+		arrRet = Regex.FindAll(详情,value)
+		TracePrint(value,arrRet)
+		For Each value_GX In arrRet
+			详情 = Replace(详情,value_GX,"",False)
+			
+		Next
+		
+	Next
+	详情 = "<div align=\"left\"><b>■商品特徴</b><br>"&详情
+	list_write[2] = 详情
+	list_write[7] = 3
+	list_write[8] = 119079
+	If XingBan<>""
+		型号 = XingBan
+		
+	Else
+		list_write[1] = 型号
+		
+	End If
+	If 单独子程序<>""
+		list_write[10] = getWebUrl
+		list_write[1] = 型号
+		
+	Else
+		
+	End If
+	Try 1
+		Image_Save_Path = "C:\\Users\\user\\Pictures\\"&型号&".jpg"
+	Catch e
+	Else
+	End Try
+End Function
+Rem 写入EXCEL
+Function Excelwrite()
+	判断是否出品过()
+	If 停止出品=1
+		Return 
+	Else
+		
+	End If
+	Try 1
+		objExcelWorkBook = Excel.BindBook(excle文件)
+	Catch e
+		iRet = Dialog.MsgBox("绑定在库写入失败，查看原因","UiBot","0","1",0)
+		objExcelWorkBook = Excel.BindBook(excle文件)
+	Else
+	End Try
+	
+	Rows = Excel.GetRowsCount(objExcelWorkBook,工作表名)
+	Excel.WriteRow(objExcelWorkBook,工作表名,"A"&Rows+1,list_write,False)
+	File.WriteFile(商品説明_html_path,详情,"utf-8")
+	iPID = App.Start(商品説明_html_path, "0", "1")
+	TracePrint("kakaku_jan",kakaku_jan)
+	If 下载图片=1 And 图片URL <> ""
+		DownImage(图片URL)
+	Else
+		
+	End If
+End Function
+Rem 判断是否出品过
+Function 判断是否出品过()
+	dTime = Time.Now()
+	sRet_sta = Time.Format(dTime,"yyyy-mm-dd hh:mm:ss")
+	TracePrint("判断是否出品开始",sRet_sta)
+	JAN = CInt(JAN)
+	strJAN = CStr(JAN)
+	If (strJAN<>"" And JAN_arrayQ10data_dict[strJAN]<>Null) 
+		TracePrint(JAN,型号)
+		strtext = Format("JAN：%s，番号：%s\n\n以出品，'はい' 退出，不在出品",JAN,JAN_arrayQ10data_dict[strJAN])
+		strtext = Dialog.MsgBox(strtext,"重复提示",1,"1",0)
+		If strtext = 6
+			停止出品 = 1
+			Clipboard.SetText(JAN_arrayQ10data_dict[strJAN])
+			Return 停止出品
+			
+		Else
+			停止出品 = 0
+			
+		End If
+		
+	Else
+		
+	End If
+	
+	Rem 
+	TracePrint("型号",型号)
+	If (型号<>"" And 型号<>Null And Banhao_arrayQ10data_dict[型号]<>Null)
+		TracePrint(JAN,型号)
+		strtext = Format("型番：%s，番号：%s\n\n以出品，确认型番是否重复，或以出品。\n\n'はい' 退出，不在出品",型号,Banhao_arrayQ10data_dict[型号])
+		strtext = Dialog.MsgBox(strtext,"重复提示",1,"1",0)
+		If strtext = 6
+			停止出品 = 1
+			Clipboard.SetText(Banhao_arrayQ10data_dict[型号])
+			Return 停止出品
+			
+		Else
+			停止出品 = 0
+			
+		End If
+		
+	Else
+		
+	End If
+	dTime = Time.Now()
+	sRet_end = Time.Format(dTime,"yyyy-mm-dd hh:mm:ss")
+	TracePrint("判断是否出品结束",sRet_end)
+End Function
+Rem 主程序循环
+Do While True
+	单独子程序 = ""
+	TracePrint(窗口位置)
+	winForm = myUI.CreateForm("出品",363,190)
+	objControl = myUI.CreateControl(winForm,"Label","加　　价：",70,24,3,5)
+	obj加价 = myUI.CreateControl(winForm,"TextBox",2500,60,24,75,3)
+	objControl = myUI.CreateControl(winForm,"Label","价格取位：",70,24,138,5)
+	obj价格位 = myUI.CreateControl(winForm,"TextBox",5,60,24,210,3)
+	objzichengxu = myUI.CreateControl(winForm,"ComboBox","选择子程序",268,24,3,30)
+	For Each key, value In meka_dict
+		
+		ComboBox = myUI.AddComboBoxItem(objzichengxu,key)
+	Next
+	objButton = myUI.CreateButton(winForm,"No","Run子程序",88,24,273,30)
+	objimg = myUI.CreateControl(winForm,"ComboBox","选择图片",268,24,3,57)
+	For Each key, value In image_dict
+		
+		ComboBox = myUI.AddComboBoxItem(objimg,key)
+	Next
+	objButton = myUI.CreateButton(winForm,"Ignore","添加图片",88,24,273,57)
+	objButton = myUI.CreateButton(winForm,"Yes","下载图片",88,24,273,103)
+	objButton = myUI.CreateButton(winForm,"Retry","型号处理",88,24,3,103)
+	objControl = myUI.CreateControl(winForm,"Label",strXH_text,170,24,94,108)
+	objButton = myUI.CreateButton(winForm,"Confirm","运行",88,24,3,130)
+	obj下图 = myUI.CreateControl(winForm,"CheckBox","下载图片",70,24,125,78)
+	obj笔记本title = myUI.CreateControl(winForm,"CheckBox","获取笔记本title",115,24,3,78)
+	obj尺寸 = myUI.CreateControl(winForm,"CheckBox","获取尺寸",70,24,195,78)
+	objButton = myUI.CreateButton(winForm,"Cancel","退出",88,24,273,130)
+	objButton = myUI.CreateButton(winForm,"Suspend","查找",88,24,273,3)
+	INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+	myUI.ShowModal(winForm)
+	下载图片 = myUI.GetValue(obj下图)
+	get笔记本title = myUI.GetValue(obj笔记本title)
+	记录尺寸 = myUI.GetValue(obj尺寸)
+	Text加价 = myUI.GetControlText(obj加价)
+	加价 = CInt(Text加价)
+	设定位 = myUI.GetControlText(obj价格位)
+	设定位 = CInt(设定位)
+	指定图片 = myUI.GetControlText(objimg)
+	ButtonID = myUI.GetButtonID()
+	TracePrint("ButtonID："&ButtonID,"取价位置："&设定位,"加价："&加价&"记录尺寸:"&记录尺寸)
+	If ButtonID=1
+		停止出品 = 0
+		Get_meka()
+		Get_GX()
+		Excelwrite()
+		INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+		
+	ElseIf ButtonID=2
+		exit()
+	ElseIf ButtonID=3
+		x = Clipboard.GetText()
+		查找出品(x)	
+		INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+	ElseIf ButtonID=4
+		XingHaoZL()
+		INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+	ElseIf ButtonID=5
+		TracePrint(指定图片,image_dict[指定图片])
+		Try 3
+			Rows1 = Excel.GetRowsCount(objExcelWorkBook,工作表名)
+			Excel.WriteCell(objExcelWorkBook,工作表名,"Q"&Rows1,image_dict[指定图片],False)
+		Catch e
+			iRet = Dialog.MsgBox("exlce写入失败，检查后重试！","UiBot","0","1",0)
+		Else
+		End Try
+	ElseIf ButtonID=6
+		TracePrint(Browser_dict[指定图片])
+		型号 = Dialog.InputBox("请输入图片名称","指定图片名","",False)
+		DownImage(image_dict[指定图片])
+		INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+	ElseIf ButtonID=7
+		单独子程序 = myUI.GetControlText(objzichengxu)
+		TracePrint("运行子程序",单独子程序)
+		Get_GX()
+		Excelwrite()
+		INI.Write(@res"seting.ini", "基本信息", "位置", "0")
+		
+	End If
+	
+Loop
+Rem 替换字符
+Function textreplace(text)
+	text = Replace(text,"\\u0026","&",False)
+	Return text
+	
+End Function
+Rem 型号整理
+Function XingHaoZL()
+	strXH = Clipboard.GetText()
+	strXH_list = Regex.FindAll(strXH,"[\\S\\s]")
+	tesuzifu = ["[","]","(",")"," ","　","."]
+	strXH_text = ""
+	For Each value In strXH_list
+		For Each value_item In tesuzifu
+			If value_item=value
+				value = "-"
+				Break
+				
+			Else
+				
+			End If
+			
+		Next
+		
+		strXH_text = strXH_text&value
+	Next
+	
+	strXH_text = Replace(strXH_text,"--","-",False)
+	strXH_PD = EndsWith(strXH_text,"-")
+	If strXH_PD
+		
+		strXH_text = RTrim(strXH_text,"-")
+	Else
+		
+	End If
+	strXH_CD = Len(strXH_text)
+	If strXH_CD>20
+		strXH_text = Replace(strXH_text,"-","",False)
+		
+	Else
+		
+	End If
+	strXH_CD1 = Len(strXH_text)
+	If strXH_CD>20
+		
+		strXH_text = Replace(strXH_text,"/","",False)
+	Else
+		
+	End If
+	strXH_CD1 = Len(strXH_text)
+	If strXH_CD1>20
+		TracePrint(">20")
+		
+		iRet = Dialog.MsgBox("字符串长度：" & strXH_CD1 & "\n" & strXH_text,"UiBot","0","1",0)
+	Else
+		
+	End If
+	Clipboard.SetText(strXH_text)
+	strXH_text = strXH_text&":"&strXH_CD1
+	TracePrint(strXH_CD1,strXH_text)
+	窗口位置 = 0
+End Function
+Rem 测试
+Function test()
+	strJSON = JSON.Stringify(meka_GX)
+	File.WriteFile("C:\\Users\\user\\Downloads\\1.txt",strJSON,"utf-8")
+	meka_GX = {    "ソフマップ.com" : {       "JAN" : ["(?<=new_jan\\=)\\d+"],       "型号" : ["(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)","[^>]+(?!.*>)"],       "详情" : ["(?<=単品商品詳細 start -->)[\\s\\S]+?(?=\\<!-- 単品商品詳細 end)"]    },"Amazon.co.jp" : {       "JAN" : [],       "型号" : ["(?<=asin: \")\\S+?(?=\")"],       "详情" : ["(?<=show up to 2 reviews by default -->)[\\s\\S]+?(?=\\</div>)"]    },    "EDIONネットショップ" : {       "JAN" : [ "(?<=janCd:')[\\s\\S]+?(?=')" ],       "型号" : [ "(?<=word-break\">型番\\</dt>\\s<dd>)[\\s\\S]+?(?=</dd>)" ],       "详情" : [ "(?<= include PC8 -->)[\\s\\S]+?(?=\\<!-- フリー領域)" ]    },    "Joshin" : {       "JAN" : [ "(?<=item_id: ')\\d+?(?=')" ],       "型号" : [ "(?<=keywords\" content=\")[\\s\\S]+?(?=[,|\\s])" ],       "详情" : [ "(?<=title01\">商品の特長)[\\s\\S]+?(?=レビュー)" ]    },    "PREMOA" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\</span>)"]    },    "SAKURA" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : ["(?<=商品番号\\</span>)[\\s\\S]+?(?=\\</span>)","[^>]+(?!.*>)"],       "详情" : ["(?<=span class=\"item_desc\">)[\\s\\S]+?(?=\\</span>)"]    },    "WiNK" : {       "JAN" : ["(?<=商品コード：)[\\s\\S]+?(?=\\</dd>)","(?<=\\>)\\d+"],       "型号" : ["(?<=型番：)[\\s\\S]+?(?=\\</dd>)","(?<=\\>)\\S+"],       "详情" : ["(?<=\\<!-- .detail-box -->)[\\s\\S]+?(?=\\<!-- 商品ここまで -->)","(?<=\\<p class=\"text01\">)[\\s\\S]+"]    },    "XPRICE楽天" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=商品説明 ここから -->)[\\s\\S]+?(?=\\<!-- 商品仕様 ここまで)"]    },    "ひかりTVショッピング" : {       "JAN" : ["(?<=ProductID\" : \")\\d+?(?=\")"],       "型号" : ["(?<=型番)[\\s\\S]+?(?=\\</td>)","(?<=>)\\S+"],       "详情" : ["(?<=商品の特徴)[\\s\\S]+?(?=\\</div>)"]    },    "エディオン" : {       "JAN" : ["(?<=manage_number\\=)\\d+"],       "型号" : [],       "详情" : ["(?<=の商品説明)[\\s\\S]+?(?=\\</span>)"]    },    "コジマ" : {       "JAN" : [ "(?<=JANコード：)\\d+" ],       "型号" : [ "(?<=型式：)[\\s\\S]+?(?=\\<)" ],       "详情" : [          "(?<=【商品解説】)[\\s\\S]+?(?=\\</p>)"       ]    },    "ノジマオンライン" : {       "JAN" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=,)" ],       "型号" : [ "(?<=Keywords\" content=\")[\\s\\S]+?(?=>)", "(?<=,)[\\s\\S]+?(?=,)" ],       "详情" : [          "(?<=商品説明</h\\d>)[\\s\\S]+?(?=<img src=\"/contents/image/shohininfoicon.png)"       ]    },    "ヤマダウェブコム" : {       "JAN" : ["(?<=JAN\\</th>)[\\s\\S]+?(?=\\</td>)","(?<=>)\\d+"],       "型号" : ["(?<=型番\\</th>)[\\s\\S]+?(?=\\</td>)","(?<=>)\\S+"],       "详情" : ["(?<=div class=\"product-sammary__inner\">)[\\s\\S]+?(?=\\</section>)"]    },    "ヨドバシ.com" : {       "JAN" : [],       "型号" : [],       "详情" : ["(?<=pDescription -->)[\\s\\S]+?(?=\\<!-- /pdContainer -->)"]    },    "楽天ブックス" : {       "JAN" : [          "(?<=JAN</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"       ],       "型号" : [          "(?<=品番</span>：&nbsp;&nbsp;<span class=\"categoryValue\">)[\\s\\S]+?(?=\\</span>)"       ],       "详情" : [ "(?<=商品説明\\</h\\d>)[\\s\\S]+?(?=\\<!-- /div#editArea2 -->)" ]    } ,"ケーズデンキWEB" : {       "JAN" : ["(?<=JAN：)\\d+"],       "型号" : [],       "详情" : ["(?<=goodscomment1_ \">)[\\s\\S]+?(?=\\</tbody>)"]    },"楽天ビックカメラ" : {       "JAN" : ["(?<=mng_number\":\")\\d+"],       "型号" : [],       "详情" : ["(?<=c-list\" data-v-42ea0d56=\"\">)[\\s\\S]+?(?=\\</tbody>)"]    }}
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	GX_HTMLCODE = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = Regex.FindStr("","",0)
+	meke = "Amazon.co.jp" 
+	For Each key, value In meka_GX
+		If key=meke
+			TracePrint(key,meke,meka_GX[key]["JAN"])
+			JS = 1
+			For Each value_JAN In meka_GX[key]["JAN"]
+				If JS=1
+					
+					JAN = Regex.FindStr(GX_HTMLCODE,value_JAN,0)
+				Else
+					JAN = Regex.FindStr(JAN,value_JAN,0)
+					
+				End If
+				TracePrint(value_JAN,JAN)
+				JS = 1+JS
+				判断是否出品过()
+			Next
+			
+			JS = 1
+			For Each value_型号 In meka_GX[key]["型号"]
+				If JS=1
+					
+					型号 = Regex.FindStr(GX_HTMLCODE,value_型号,0)
+				Else
+					型号 = Regex.FindStr(型号,value_型号,0)
+					
+				End If
+				
+				TracePrint(value_型号,型号)
+				JS = 1+JS
+			Next
+			JS = 1
+			For Each value_详情 In meka_GX[key]["详情"]
+				If JS=1
+					
+					详情 = Regex.FindStr(GX_HTMLCODE,value_详情,0)
+				Else
+					详情 = Regex.FindStr(详情,value_详情,0)
+					
+				End If
+				
+				TracePrint(value_详情,详情)
+				JS = 1+JS
+			Next
+		Else
+			
+		End If
+		
+	Next
+	
+	Rem 去掉商品详情内图片，动画，商家文字
+	rec_GX = ["商品情報","\\<div class=\"goodscomment2_ \">[\\s\\S]+?\\</div>","[^>]+について[≫|＞]*","商品説明","\\<font[\\s\\S]+?\\</font>","\\<img[\\s\\S]+?>","\\<a[\\s\\S]+?\\</a>","\\<iframe[\\s\\S]+?\\</iframe>","[^>]+について[≫|＞]*"]
+	For Each value In rec_GX
+		arrRet = Regex.FindAll(详情,value)
+		TracePrint(arrRet)
+		For Each value_GX In arrRet
+			详情 = Replace(详情,value_GX,"",False)
+			
+		Next
+		
+	Next
+	TracePrint(JAN,型号,详情)
+End Function
+Rem 下载amazon图片
+Function GetIMAGE()
+	meka_Amazon = Regex.FindStr(kakaku_htmlcode,"ShopCD="&meka_dict["Amazon.co.jp"][0]&"[\\s\\S]+?(?=\")",0)
+	Amazon_URL = "https://c.kakaku.com/forwarder/forward.aspx?"&meka_Amazon
+	Amazon_URL = Replace(Amazon_URL,"&amp;","&",False)
+	hWeb_img = WebBrowser.Create("chrome",Amazon_URL,30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	IMG_code = WebBrowser.GetHTML(hWeb_img,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	IMG_code = Regex.FindStr(IMG_code,"id=\"landingImage[\\s\\S]+?</div>",0)
+	list_image = Regex.FindAll(IMG_code,"http[\\s\\S]+?jpg")
+	size = 0
+	amaon_URL = ""
+	For Each value In list_image
+		value_img = Regex.FindStr(value,"(?<=AC_S\\S)\\d+",0)
+		value_img = CInt(value_img)
+		If value_img>size
+			size = value_img
+			amaon_URL = value
+			
+		Else
+			
+		End If
+		
+	Next
+	
+	TracePrint(amaon_URL)
+	DownImage(amaon_URL)
+End Function
+Rem 下载图片
+Function DownImage(DowURL)
+	
+	If DowURL=""  Or Len(型号)>20
+		iRet = Dialog.MsgBox("URL空或型号字符串长度大于20，取消下载图片","图片取消下载","0","1",3000)
+		TracePrint("URL空或型号字符串长度大于20，取消下载图片")
+		Return 
+	Else
+		
+	End If
+	Image_Save_Path = "C:\\Users\\user\\Pictures\\"&型号&".jpg"
+	TracePrint("开始下载网页，输出型号，URL",型号,DowURL,Image_Save_Path)
+	Try 3
+		aa = HTTP.GetFile(DowURL, Image_Save_Path, {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'}, 60000)
+	Catch e
+		TracePrint("图片下载失败")
+	Else
+		iPID = App.Start(Image_Save_Path, "0", "1")
+	End Try
+	
+End Function
+Rem 获取尺寸
+Function Getsaizi()
+	TracePrint(记录尺寸)
+	#icon("@res:1paeslm3-4ggp-4g70-kb7r-nrotqqqomabg.png")
+	Window.SetActive({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*Google Chrome*","app":"chrome"}]})
+	Try 3
+		hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		点击スペック = WebBrowser.RunJS(hWeb,'''function(){document.evaluate("//a[contains(@href,'/spec/#tab')]",document).iterateNext().click();return 123}''',True,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Catch e
+		TracePrint("记录尺寸出错，没有记录")
+	Else
+		源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10})
+		点击价格比较 = WebBrowser.RunJS(hWeb,'''function(){document.evaluate("//a[contains(@href,'/#tab')]",document).iterateNext().click();return 123}''',True,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		源码1 = Regex.FindStr(源码,"(?<=サイズ・重量)[\\s\\S]+?(?=</td)",0)
+		源码1 = Regex.FindStr(源码1,"[^>]+(?!.*>)",0)
+		arrRet = Regex.FindAll(源码1,"\\d+")
+		单位 = Regex.FindStr(源码1,"[c|m|C|M][m|M]",0)
+		值 = 0
+		For Each value In arrRet
+			value = CInt(value)
+			值 = 值+value
+			
+		Next
+		If 单位="cm" Or 单位="CM" 
+			值 = CInt(值)
+			
+		Else
+			值 = CInt(值/10)
+			
+		End If
+		list_write[16] = 值
+	End Try
+	
+End Function
+Function getnotetitle()
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	getURL = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	getURL = Regex.FindStr(getURL,"https://kakaku.com/item/K\\d+/",0)
+	#icon("@res:default.png")
+	iRet = WebBrowser.GoURL(hWeb,getURL&"spec/#tab",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	Try 1
+		#icon("@res:b0r1h8rm-5l4e-vs68-l6s7-c0ocvqi1s6ml.png")
+		CPU = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"mainLeft"},{"tag":"TD"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		CPU = Regex.FindStr(CPU,"[Core|AMD|Celeron][\\s\\S]+(?=[\\(\n])*",0)
+		#icon("@res:j0110k3c-8qgn-4m9d-cgvp-11qeqp70mjmi.png")
+		画面サイズ = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"mainLeft"},{"tag":"TD","tableCol":"2"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		画面サイズ = Regex.FindStr(画面サイズ,"[\\d\\.]+",0)
+		#icon("@res:r5c0qvq5-rh1a-3deb-dm35-cgl3b9emod4o.png")
+		メモリ容量 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"mainLeft"},{"tag":"TD","isleaf":"1","tableRow":"7","tableCol":"1"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		#icon("@res:9q11qo0s-31ea-8mdq-7kfl-0c8r3f00fgc1.png")
+		ストレージ容量 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"mainLeft"},{"tag":"TD","isleaf":"1","tableRow":"8","tableCol":"2"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		#icon("@res:tlgf2p3d-us1v-5q2a-3dnr-ilpmsohs2s1i.png")
+		OS = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE","parentid":"mainLeft"},{"tag":"TD","isleaf":"1","tableRow":"11"}]},{"bContinueOnError":False,"iDelayAfter":0,"iDelayBefore":50})
+		OS = Regex.FindStr(OS,"\\d+",0)
+		Try 1
+			#icon("@res:6ipeuuie-s7ll-ghah-8q97-anr43o2velur.png")
+			Office詳細 = UiElement.GetValue({"wnd":[{"cls":"Chrome_WidgetWin_1","title":"*","app":"chrome"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}],"html":[{"tag":"TABLE"},{"tag":"TD","tableRow":"11","tableCol":"2"}]},{"bContinueOnError":False,"iDelayAfter":50,"iDelayBefore":50})
+		Catch ee
+			Office詳細 = ""
+		Else
+			Office詳細_PD = Regex.FindStr(Office詳細,"\\d+",0)
+			If Office詳細_PD<>""
+				Office詳細 = "OFFICE"
+				
+			Else
+				Office詳細 = ""
+				
+			End If
+		End Try
+		note_title = Format("ノートパソコン(%s型/%s/%s/%s/win %s/%s)",画面サイズ,CPU,メモリ容量,ストレージ容量,OS,Office詳細)
+		TracePrint("note_title",note_title)
+		list_write[3] = Title&" "&note_title
+	Catch e
+		list_write[3] = Title
+	Else
+		list_write[3] = Title&" "&note_title
+	End Try
+	WebBrowser.GoBack(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	
+End Function
+Regex.SetVerbose(True)
+
+
