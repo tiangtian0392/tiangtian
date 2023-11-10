@@ -1,0 +1,87 @@
+
+Dim iRet = ""
+Dim iPID = ""
+Dim 网址 = ""
+Dim 页数 = ""
+Dim 商品list = ""
+Dim 出品判断 = ""
+Dim arrRet = ""
+Dim arrayRet = ""
+Dim 商品dict = ""
+Dim 记数 = ""
+Dim temp = ""
+Dim objJSON = ""
+Dim K_list = ""
+Dim sRet = ""
+Dim hWeb = ""
+出品判断 = []
+Save_path = "D:\\对比标题.csv"
+read_Path = "Z:\\bazhuayu\\title_banhao.csv"
+arrayRet = CSV.Open(read_Path,{"encoding":"auto"})
+arraydict = {}
+For Each value In arrayRet
+	arraydict[value[1]] = [value[0],value[1]]
+	
+Next
+页数 = Dialog.InputBox("输入要抓取的页数","UiBot",2,True)
+页数 = CInt(页数)
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":10,"iDelayBefore":10})
+网址 = WebBrowser.GetURL(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+商品list  = []
+商品dict  = {}
+If 页数>0
+	
+	网址 = Regex.FindStr(网址,"[\\s\\S]+?(?=[\\d]+$)",0)
+	TracePrint(网址)
+	For i = 1 To 页数 Step 1 
+		#icon("@res:default.png")
+		iRet = WebBrowser.GoURL(hWeb,网址&i,True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		htmlcode = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+		
+		K_str = Regex.FindStr(htmlcode,"var variationPopupData =(.*?)</script>",0)
+		TracePrint(K_str)
+		K_dictstr = Regex.FindStr(K_str,"{[\\s\\S]+}",0)
+		objJSON = JSON.Parse(K_dictstr)
+		记数 = 1
+		For Each key, value In objJSON
+			左1 = Left(key,1)
+			If 左1="K"
+				If arraydict[value["ParentProduct"]]<>Null
+					商品list = push(商品list,[value["ParentProduct"],arraydict[value["ParentProduct"]][0],arraydict[value["ParentProduct"]][1],"https://kakaku.com/item/"&key])
+					
+					商品dict[value["ParentProduct"]]  = arraydict[value["ParentProduct"]]
+				Else
+					商品list = push(商品list,[value["ParentProduct"],"","","https://kakaku.com/item/"&key])
+					商品dict[value["ParentProduct"]]  = ""
+					
+				End If
+				
+			Else
+				For Each Items In value["Items"]
+					商品dict[Items["ChildProduct"]]  = Items["ChildProductID"]
+					If arraydict[Items["ChildProduct"]]<>Null
+						商品list = push(商品list,[Items["ChildProduct"],arraydict[Items["ChildProduct"]][0],arraydict[Items["ChildProduct"]][1],Items["Url"]["Item"]])
+						
+						商品dict[Items["ChildProduct"]]  = arraydict[Items["ChildProductID"]]
+						Continue
+					Else
+						商品list = push(商品list,[Items["ChildProduct"],"","",Items["Url"]["Item"]])
+						商品dict[Items["ChildProduct"]]  = ""
+						
+					End If
+					
+				Next
+				
+			End If
+			
+			记数 = 1+记数
+		Next
+	Next
+Else
+	
+End If
+TracePrint(商品list)
+CSV.Save(商品list,Save_path,{"encoding":"utf-8-sig"})
+iPID = App.Start(Save_path, "0", "1")
+
+
