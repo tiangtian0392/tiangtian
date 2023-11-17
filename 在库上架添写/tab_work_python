@@ -26,6 +26,9 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pause_Button.clicked.connect(self.pause_BT)
         self.stop_Button.clicked.connect(self.stop_BT)
 
+        #添加右键
+        self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableWidget.customContextMenuRequested.connect(self.table_right_menu)
     def start_BT(self):
         print('点击开始按键')
         self.URL = self.lineEdit.text()
@@ -45,22 +48,106 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def stop_BT(self):
         print('点击停止按键')
 
+    #右键
+    def table_right_menu(self, pos):
+        # 只有选中一行时才支持右键
+        try:
+            selected_item_list = self.tableWidget.selectedItems()
+            row_lsit = self.tableWidget.selectedItems()
+            index = row_lsit[0].row()
+
+        except:
+            return
+
+        if len(selected_item_list) == 0:
+            return
+
+        menu = QMenu()
+        item_open = menu.addAction('打开URL')
+        item_stop = menu.addAction('停止')
+        item_del = menu.addAction('删除')
+
+        action = menu.exec_(self.tableWidget.mapToGlobal(pos))
+
+        if action == item_open:
+            column = self.tableWidget.currentColumn()
+            url = self.tableWidget.item(index,column).text()
+
+            if 'http' in url:
+                print(url)
+                os.system(f"start \"\" {url}")
+        elif action == item_stop:
+            pass
+        elif action == item_del:
+            o_question = QMessageBox.question(self,'对话框','是否确认删除，删除后不可恢复。',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+
+            if o_question == QMessageBox.No:
+                return
+            self.tableWidget.removeRow(index)
+            current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
+            self.statusbar.showMessage(f'表格现有{current_row_count}行')
+
+
     # 创建并启动线程获取数据，并传递参数
     def start_data_thread(self):
-
+        self.start_Button.setEnabled(False)
         self.data_thread = Get_kakakutab_Thread(self.URL,[self.start_spinBox.value(),self.stop_spinBox.value()])
-        self.data_thread.data_ready.connect(self.updata_tab)
+        self.data_thread.data_ready.connect(self.on_geturls)
         self.data_thread.start()
 
-    #把线程获取到的数据回写到表格中
-    def updata_tab(self,data):
+    #把线程获取到的url传入线程获取数据
+    def on_geturls(self,urls_list):
         print('数据回写表格')
-        print(data)
+        print(urls_list)
+        if urls_list:
+            self.work_thread = Work_Thread(urls_list)
+            self.work_thread.get_OK.connect(self.on_update_tab)
+            self.work_thread.run_over.connect(self.on_run_over)
+            self.work_thread.start()
+
+    def on_run_over(self,data):
+        print('运行结束')
+        self.start_Button.setEnabled(True)
+    #把线程获取的数据回写到表格
+    def on_update_tab(self,data_list):
+        print(f'开始回写数据{data_list}到表格。')
+        title = data_list[0]
+        xingban = data_list[1]
+        img_num = data_list[2]
+        price = data_list[3]
+        url = data_list[4]
+
+        current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
+        self.tableWidget.insertRow(current_row_count)
+        cell = QTableWidgetItem(xingban)
+        self.tableWidget.setItem(current_row_count, 1, cell)
+        cell = QTableWidgetItem(title)
+        self.tableWidget.setItem(current_row_count, 3, cell)
+
+        cell = QTableWidgetItem(str(price))
+        self.tableWidget.setItem(current_row_count, 4, cell)
+        cell = QTableWidgetItem('0')
+        self.tableWidget.setItem(current_row_count, 5, cell)
+        cell = QTableWidgetItem(str(img_num))
+        self.tableWidget.setItem(current_row_count, 6, cell)
+        cell = QTableWidgetItem('3')
+        self.tableWidget.setItem(current_row_count, 7, cell)
+        cell = QTableWidgetItem('119079')
+        self.tableWidget.setItem(current_row_count, 8, cell)
+        cell = QTableWidgetItem(title)
+        self.tableWidget.setItem(current_row_count, 9, cell)
+        cell = QTableWidgetItem(url)
+        self.tableWidget.setItem(current_row_count, 10, cell)
+
+        self.statusbar.showMessage(f'表格现有{current_row_count+1}行')
+
+
+
 
 #创建获取价格网数据的类
 class Get_kakakutab_Thread(QThread):
     # 定义信号，用于在线程中传递数据
-    data_ready = pyqtSignal(str)
+    data_ready = pyqtSignal(list)
 
     def __init__(self, url,parameter):
         super().__init__()
@@ -68,7 +155,7 @@ class Get_kakakutab_Thread(QThread):
         self.url = url
         self.kakaku_urls = []
     def run(self):
-        print('线程开始获取')
+        print('线程开始获取URL')
 
         #获取网页源码中的javascript 部分并解析出字典后提取kakakuID,也就是K开始的部分
         if 'pdf_pg' in self.url:
@@ -76,30 +163,36 @@ class Get_kakakutab_Thread(QThread):
             print(url_value,self.parameter)
             pass
         self.html = self.get_kakaku_html(self.url)
-        K_str = re.findall(r'var variationPopupData\s*=\s*(.*?)\s*</script>', self.html, re.DOTALL)[0]
-        K_dict = re.findall(r'[\s\S]+}', K_str)[0]
-        self.data_dict = json.loads(K_dict)
-        # print(self.data_dict)
-        for key, value in self.data_dict.items():
-            # print(key)
-            # 如果字典中存在 "K" 键,则直接提取K
-            if "K" in key:
-                self.kakaku_urls.append(key)
 
-            # 如果字典中存在 "Items" 键，并且其值是一个列表
-            elif "Items" in value and isinstance(value["Items"], list):
-                # 遍历 "Items" 列表中的每个字典
-                for item in value["Items"]:
-                    # 如果字典中存在 "ChildProductID" 键
-                    if "ChildProductID" in item:
-                        # 将 "ChildProductID" 的值添加到数组中
-                        self.kakaku_urls.append(item["ChildProductID"])
+        #如果K在URL内，则直接把K添入数组
+        if 'K' in self.url:
+            K_ID = re.findall(r'K\d+',self.url)[0]
+            self.kakaku_urls.append(K_ID)
+        else:
+            K_str = re.findall(r'var variationPopupData\s*=\s*(.*?)\s*</script>', self.html, re.DOTALL)[0]
+            K_dict = re.findall(r'[\s\S]+}', K_str)[0]
+            self.data_dict = json.loads(K_dict)
+            # print(self.data_dict)
+            for key, value in self.data_dict.items():
+                # print(key)
+                # 如果字典中存在 "K" 键,则直接提取K
+                if "K" in key:
+                    self.kakaku_urls.append(key)
+
+                # 如果字典中存在 "Items" 键，并且其值是一个列表
+                elif "Items" in value and isinstance(value["Items"], list):
+                    # 遍历 "Items" 列表中的每个字典
+                    for item in value["Items"]:
+                        # 如果字典中存在 "ChildProductID" 键
+                        if "ChildProductID" in item:
+                            # 将 "ChildProductID" 的值添加到数组中
+                            self.kakaku_urls.append(item["ChildProductID"])
         print(self.kakaku_urls,len(self.kakaku_urls))
         # for item in self.kakaku_urls:
         #     print(item)
 
         # 发送信号，通知主线程数据已准备好
-        self.data_ready.emit('list_ID')
+        self.data_ready.emit(self.kakaku_urls)
 
     def get_kakaku_html(self,url):
         # print('getkakaku',filenumber)
@@ -123,6 +216,52 @@ class Get_kakakutab_Thread(QThread):
         htmlcode = htmlcode.replace("&gt;", ">")
 
         return htmlcode
+
+class Work_Thread(QThread):
+    # 定义信号，用于在线程中传递数据
+    get_OK = pyqtSignal(list)
+    run_over = pyqtSignal(str)
+
+    def __init__(self, urls_list):
+        super().__init__()
+
+        self.urls_list = urls_list
+
+    def run(self):
+        print('线程开始获取商品数据')
+
+        #遍历url数组，获取商品信息
+        for i,item in enumerate(self.urls_list):
+            url = 'https://kakaku.com/item/' + item
+            self.html = self.get_kakaku_html(url)
+            data = self.getxpath(self.html)
+            data.append(url)
+            # 发送信号，通知主线程数据已准备好
+            self.get_OK.emit(data)
+        self.run_over.emit('over')
+
+    def get_kakaku_html(self,url):
+        # print('getkakaku',filenumber)
+        hd = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8",
+
+        }
+        htmlcode = requests.get(url, headers=hd)
+        global  status_code
+        if htmlcode.status_code != 200:
+            status_code +=1
+        code = htmlcode.apparent_encoding
+        # print('code=', code)
+        htmlcode.encoding = code
+        htmlcode = htmlcode.text
+        htmlcode = htmlcode.replace("㈱", "(株)")
+        htmlcode = htmlcode.replace("デンキヤ.com	", "デンキヤ.com")
+        htmlcode = htmlcode.replace("&lt;", "<")
+        htmlcode = htmlcode.replace("&gt;", ">")
+        return htmlcode
+
     def getxpath(self, html):
         print('getxpath')
         tablecode = "//tr"
@@ -131,29 +270,37 @@ class Get_kakakutab_Thread(QThread):
         # mytree = etree.HTML(html.encode(code))
         tr_list = mytree.xpath(tablecode)
         # print('lentr',len(tr_list))
+        #设置图片数量
+        img_num = 0
+        img_tab_num = 0
+
+        #设置价格
+        price_ls = '9999999'
         try:
             title = mytree.xpath('//div[@id=\'titleBox\']/div[@class=\'boxL\']/h2/text()')[0]
+            # print(title)
         except:
             return ''
         try:
-            date = mytree.xpath('//div[@class=\'releaseDateWrap\']/span/text()')[0].strip()
+            img = mytree.xpath('//*[@id="imgBox"]/a/img/@src')[0]
+            # print(img)
+            if 'kakaku' in img:
+                img_num = 1
+        except:
+            img = 0
+        try:
+            img_tab = mytree.xpath('//*[@id="imgBox"]/div[1]/table/tbody/tr/td/a')
+            img_tab_num = len(img_tab)
+            # print(img_tab_num)
+        except:
+            img_tab_num = 0
 
-        except:
-            date = ""
-        try:
-            pm = mytree.xpath(
-                '//div[@id=\'ovBtnBox\']//span[@class=\'num\']/text()|//ul[@class=\'clearfix\']/li[1]/span[@class=\'rankNum\']/text()')[
-                0]
-        except:
-            pm = ""
-        try:
-            ds = mytree.xpath('//div[@class=\'subInfoObj4\']/span[1]/a/span/text()')[0]
-        except:
-            ds = 0
-        if int(ds) > 50:
-            ds = '50'
+        img_num = img_tab_num + img_num
+        print(f'共有{img_num}张图片')
+
         # print(title,date,pm,ds)
-        a = [[title, date, pm, ds], [title, date, pm, ds]]
+        #a 数组元素位置 1= title,2=图片数量，3=价格，4=0|1 ，0代表下架，○商家少于4家，
+        a = []
         quan_list = []
         for td in tr_list:
             try:
@@ -177,13 +324,38 @@ class Get_kakakutab_Thread(QThread):
                 # print(sj,sjurl)
 
                 if xl:
-                    a.append([title, date, pm, ds, xl, jg, zk, sj])
+                    a.append([title, img_num, 'pm', 'ds', xl, jg, zk, sj])
                 if zk == '○':
                     quan_list.append([xl, jg, zk, sj])
+                    if len(quan_list) >=4:
+                        price_ls = jg
+                        break
             except:
                 pass
+        # print(a)
+        if price_ls == '9999999':
+            try:
+                if len(a)>= 6:
+                    price_ls = a[5][5]
+                else:
+                    price_ls = a[-1][5]
+            except:
+                pass
+        # print(price_ls)
+        jg_zl = re.findall(r'\d',price_ls)
 
-        return a,quan_list
+        price = int((int(''.join(jg_zl)) +2500 )/ 0.92)     #计算价格，其它没必要，出品时全部下架状态，在扫描后才能上架
+        # print(price)
+
+        #在title中获取型号
+        try:
+            xingban = re.findall(r'([A-Za-z0-9]+[-/]+[A-Za-z0-9-/()]*)', title)
+            # print(xingban)
+            xingban = xingban[-1]
+        except:
+            xingban = ""
+
+        return [title,xingban,img_num,price]
 
     def getxpathphone(self,html, code):
         print('采集手机')
