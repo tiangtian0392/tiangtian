@@ -1,7 +1,7 @@
 import json
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from bs4 import BeautifulSoup
 from PyQt5.QtGui import QClipboard, QGuiApplication
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QColor
@@ -13,6 +13,7 @@ import pandas as pd
 import requests,time
 from lxml import etree
 from PyQt5.QtCore import QThreadPool
+from collections import Counter
 
 
 class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -26,9 +27,40 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pause_Button.clicked.connect(self.pause_BT)
         self.stop_Button.clicked.connect(self.stop_BT)
 
+        # 为表格单元格添加悬停事件
+        self.tableWidget.cellEntered.connect(self.show_tooltip)
+
         #添加右键
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.customContextMenuRequested.connect(self.table_right_menu)
+
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择Qoo10data文件，取消程序无法运行！", " ", "Excel Files (*.xlsx *.xls)")
+
+        if not file_path:
+            return
+
+        # 读取Excel文件
+        excel_data = pd.read_excel(file_path)
+        # 保留需要的列，例如 E 列和 AL 列
+        selected_columns = ['item_number', 'seller_unique_item_id','item_name','external_product_id']
+        self.excel_data = excel_data[selected_columns]
+
+        #JAN列改成数字列，现在不用
+        # self.excel_data['external_product_id'] = self.excel_data['external_product_id'].apply(pd.to_numeric, errors='coerce')
+        # # 设置显示格式
+        # pd.set_option('display.float_format', '{:.0f}'.format)
+        print(self.excel_data)
+
+    def show_tooltip(self, row, column):
+        try:
+            # 获取单元格内容
+            content = self.tableWidget.item(row, column).text()
+
+            # 显示气泡提示在鼠标当前位置
+            QToolTip.showText(QtGui.QCursor.pos(), content)
+        except:
+            pass
+
     def start_BT(self):
         print('点击开始按键')
         self.URL = self.lineEdit.text()
@@ -66,6 +98,7 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         item_open = menu.addAction('打开URL')
         item_stop = menu.addAction('停止')
         item_del = menu.addAction('删除')
+        item_set_value = menu.addAction('单元格设置值')
 
         action = menu.exec_(self.tableWidget.mapToGlobal(pos))
 
@@ -86,7 +119,18 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.tableWidget.removeRow(index)
             current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
             self.statusbar.showMessage(f'表格现有{current_row_count}行')
+        elif action == item_set_value:
+            self.set_selected_cells_to_minus_one()
 
+    # 选中列置-1
+    def set_selected_cells_to_minus_one(self):
+
+        selected_items = self.tableWidget.selectedItems()
+
+        text, ok = QInputDialog.getText(self, 'Input Dialog', '添入要设置的值，如-1:')
+        if ok:
+            for item in selected_items:
+                item.setText(text)
 
     # 创建并启动线程获取数据，并传递参数
     def start_data_thread(self):
@@ -98,7 +142,7 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #把线程获取到的url传入线程获取数据
     def on_geturls(self,urls_list):
         print('数据回写表格')
-        print(urls_list)
+        # print(urls_list)
         if urls_list:
             self.work_thread = Work_Thread(urls_list)
             self.work_thread.get_OK.connect(self.on_update_tab)
@@ -108,34 +152,85 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def on_run_over(self,data):
         print('运行结束')
         self.start_Button.setEnabled(True)
+        self.statusbar.showMessage('当前URL信息获取完成')
     #把线程获取的数据回写到表格
     def on_update_tab(self,data_list):
-        print(f'开始回写数据{data_list}到表格。')
+        print(f'开始回写数据到表格。')
         title = data_list[0]
         xingban = data_list[1]
         img_num = data_list[2]
         price = data_list[3]
-        url = data_list[4]
+        goods = data_list[4]
+        jan = data_list[5]
+        url = data_list[6]
+
+        PD = 0
+
+         # 对'item_name'进行包含判断
+        if self.excel_data['item_name'].str.contains(title, regex=False).any():
+            find_title_rows = self.excel_data[self.excel_data['item_name'].str.contains(title, regex=False)]
+            print(f"At least one row contains '{title}' in 'item_name' column.")
+            txt_str = '{}\n{}\n{}\n{}\n以出品，是否重新出品？'.format(find_title_rows['item_name'].to_string(index=False),
+                                                                  find_title_rows['item_number'].to_string(index=False),
+                                                                  find_title_rows['seller_unique_item_id'].to_string(index=False),
+                                                                  find_title_rows['external_product_id'].to_string(index=False))
+            o_question = QMessageBox.question(self, '标题重复', txt_str,
+                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if o_question == QMessageBox.No:
+                return
+            else:
+                PD = 1
+
+        # 检查'external_product_id'列是否与JAN相同
+        if self.excel_data['external_product_id'].str.contains(jan, regex=False).any() and PD == 0:
+            find_title_rows = self.excel_data[self.excel_data['external_product_id'].str.contains(jan, regex=False)]
+            print(f"At least one row contains '{title}' in 'item_name' column.")
+            txt_str = '{}\n{}\n{}\n{}\n以出品，是否重新出品？'.format(find_title_rows['item_name'].to_string(index=False),
+                                                                    find_title_rows['item_number'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['seller_unique_item_id'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['external_product_id'].to_string(
+                                                                        index=False))
+            o_question = QMessageBox.question(self, 'JAN重复', txt_str,
+                                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+            if o_question == QMessageBox.No:
+                return
 
         current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
         self.tableWidget.insertRow(current_row_count)
+
+        cell = QTableWidgetItem(jan)
+        self.tableWidget.setItem(current_row_count, 0, cell)
+
         cell = QTableWidgetItem(xingban)
         self.tableWidget.setItem(current_row_count, 1, cell)
+
+        cell = QTableWidgetItem(goods)
+        self.tableWidget.setItem(current_row_count, 2, cell)
+
         cell = QTableWidgetItem(title)
         self.tableWidget.setItem(current_row_count, 3, cell)
 
         cell = QTableWidgetItem(str(price))
         self.tableWidget.setItem(current_row_count, 4, cell)
+
         cell = QTableWidgetItem('0')
         self.tableWidget.setItem(current_row_count, 5, cell)
+
         cell = QTableWidgetItem(str(img_num))
         self.tableWidget.setItem(current_row_count, 6, cell)
+
         cell = QTableWidgetItem('3')
         self.tableWidget.setItem(current_row_count, 7, cell)
-        cell = QTableWidgetItem('119079')
+
+        cell = QTableWidgetItem('630158')
         self.tableWidget.setItem(current_row_count, 8, cell)
+
         cell = QTableWidgetItem(title)
         self.tableWidget.setItem(current_row_count, 9, cell)
+
         cell = QTableWidgetItem(url)
         self.tableWidget.setItem(current_row_count, 10, cell)
 
@@ -232,10 +327,12 @@ class Work_Thread(QThread):
 
         #遍历url数组，获取商品信息
         for i,item in enumerate(self.urls_list):
-            url = 'https://kakaku.com/item/' + item
-            self.html = self.get_kakaku_html(url)
+
+            self.url = 'https://kakaku.com/item/' + item
+            self.html = self.get_kakaku_html(self.url)
+
             data = self.getxpath(self.html)
-            data.append(url)
+            data.append(self.url)
             # 发送信号，通知主线程数据已准备好
             self.get_OK.emit(data)
         self.run_over.emit('over')
@@ -262,8 +359,105 @@ class Work_Thread(QThread):
         htmlcode = htmlcode.replace("&gt;", ">")
         return htmlcode
 
+    #正则获取tab表
+    def get_tab(self,html):
+        print('正则开始获取价格网tab')
+        url = self.url + '/spec/#tab'
+        html = self.get_kakaku_html(url)
+        tab_html = re.findall(r'<div id="mainLeft">[\s\S]+?</table>',html)[0]
+        try:
+            li_html = re.findall(r'<li>[\s\S]+</li>',tab_html)[0]
+        except:
+            li_html = ''
+        try:
+            tab_all_html = re.findall(r'<table[\s\S]+',tab_html)[0]
+        except:
+            tab_all_html = ''
+        goods_html = li_html + '\n' + tab_all_html
+        # 移除所有<a>标签
+        goods_html = re.sub(r'<a[\s\S]+?>', '', goods_html)
+        goods_html = re.sub(r'</a>', '', goods_html)
+
+        # 移除所有<img>标签
+        goods_html = re.sub(r'<img[\s\S]+?>', '', goods_html)
+
+        # 移除所有URL
+        goods_html = re.sub(r'https?://\S+', '', goods_html)
+
+        #表格宽度设为1
+        goods_html = re.sub(r'border="0"', ' border="1"', goods_html)
+
+        print(goods_html)
+        return goods_html
+
     def getxpath(self, html):
         print('getxpath')
+
+        #设置获取JAN的字典
+        kakaku_jan_dict = {"1877":"(?<=%252F)\\d{11,}",
+                           "1639":"(?<=%252F)\\d{11,}",
+                           '1924':'(?<=%252F)\\d{11,}',
+                           '1925':'(?<=prod%25253D)\\d{11,}',
+                           '74':'(?<=%2Fg)\\d{11,}',
+                           '1488':'(?<=%2Fg)\\d{11,}',
+                           '20':'(?<=%2Fg)\\d{11,}',
+                           '1733':'(?<=shop%252Fg%252Fg)\\d{11,}',
+                           '1827':'(?<=%252F)\\d{11,}',
+                           '218':'(?<=item%2F)\\d{11,}',
+                           '2305':'(?<=%2F)\\d{11,}',
+                           '1384':'(?<=%2F)\\d{11,}',
+                           '2506':'(?<=itemcode%3D)\\d{11,}',
+                           '2410':'(?<=itemcode%3D)\\d{11,}',
+                           '2789':'(?<=itemcode%3D)\\d{11,}',
+                           '2519':'(?<=itemcode%3D)\\d{11,}',
+                           '2626':'(?<=itemcode%253D)\\d{11,}',
+                           '2685':'(?<=itemcode%253D)\\d{11,}',
+                           '2524':'(?<=itemcode%3D)\\d{11,}',
+                           '2729':'(?<=itemcode%3D)\\d{11,}',
+                           '2411':'(?<=itemcode%3D)\\d{11,}',
+                           '2716':'(?<=itemcode%3D)\\d{11,}',
+                           '2213':'(?<=itemcode%3D)\\d{11,}',
+                           '2586':'(?<=itemcode%3D)\\d{11,}',
+                           '2726':'(?<=itemcode%3D)\\d{11,}',
+                           '2497':'(?<=itemcode%3D)\\d{11,}',
+                           '2546':'(?<=itemcode%3D)\\d{11,}',
+                           '2651':'(?<=itemcode%3D)\\d{11,}',
+                           '2649':'(?<=itemcode%3D)\\d{11,}',
+                           '2319':'(?<=itemcode%3D)\\d{11,}',
+                           '2781':'(?<=itemcode%3D)\\d{11,}',
+                           '3504':'(?<=%252F)\\d{11,}',
+                           '2585':'(?<=itemcode%3D)\\d{11,}',
+                           '3779':'(?<=%252F)\\d{11,}',
+                           '3757':'(?<=%252F)\\d{11,}',
+                           '3756':'(?<=%252F)\\d{11,}',
+                           '3720':'(?<=%2Fg)\\d{11,}',
+                           '3830':'(?<=%252F)\\d{11,}',
+                           '3729':'(?<=%252F)\\d{11,}',
+                           '3728':'(?<=%252F)\\d{11,}',
+                           '3832':'(?<=%252F)\\d{11,}',
+                           '3713':'(?<=%252F)\\d{11,}',
+                           '3748':'(?<=%2Fg)\\d{11,}',
+                           '2114':'(?<=%2F)\\d{11,}',
+                           '3708':'(?<=%252F)\\d{11,}',
+                           '3840':'(?<=%252F)\\d{11,}',
+                           '8090':'(?<=itemcode%3D)\\d{11,}',
+                           '2457':'(?<=itemcode%3D)\\d{11,}',
+                           '130':'(?<=%2F)\\d{11,}',
+                           '2510':'(?<=itemcode%3D)\\d{11,}',
+                           '2675':'(?<=itemcode%3D)\\d{11,}',
+                           '1914':'(?<=itemcode%3D)\\d{11,}',
+                           '2321':'(?<=itemcode%3D)\\d{11,}',
+                           '2640':'(?<=itemcode%3D)\\d{11,}',
+                           '380':'(?<=%2Fg)\\d{11,}',
+                           '2820':'(?<=itemcode%3D)\\d{11,}',
+                           '54188':'(?<=itemcode%3D)\\d{11,}',
+                           '3750':'(?<=%252F)\\d{11,}',
+                           '2632':'(?<=itemcode%3D)\\d{11,}',
+                           '54071':'(?<=%253D)\\d{11,}',
+                           '2302':'(?<=itemcode%3D)\\d{11,}',
+                           '54051':'(?<=itemcode%253D)\\d{11,}',
+                           '2507':'(?<=itemcode%3D)\\d{11,}'}
+
         tablecode = "//tr"
         mytree = etree.HTML(html)
         # 有时去掉编码可以正确识别网页
@@ -273,6 +467,7 @@ class Work_Thread(QThread):
         #设置图片数量
         img_num = 0
         img_tab_num = 0
+
 
         #设置价格
         price_ls = '9999999'
@@ -302,7 +497,10 @@ class Work_Thread(QThread):
         #a 数组元素位置 1= title,2=图片数量，3=价格，4=0|1 ，0代表下架，○商家少于4家，
         a = []
         quan_list = []
+        jan_list = []
+        jan = ''
         for td in tr_list:
+            # print(td)
             try:
                 # xl为序列，jg为价格，zk为在库状态，sj为商品名
                 xl = td.xpath('./td[1]/span[1]//text()')
@@ -327,11 +525,29 @@ class Work_Thread(QThread):
                     a.append([title, img_num, 'pm', 'ds', xl, jg, zk, sj])
                 if zk == '○':
                     quan_list.append([xl, jg, zk, sj])
-                    if len(quan_list) >=4:
+                    if len(quan_list) ==4:
                         price_ls = jg
-                        break
+
+                #下面获取JAN
+                shopcd_html = etree.tostring(td,encoding='unicode')
+                shopcd = re.findall(r'(?<=ShopCD=)\d+',shopcd_html)[0]
+                if kakaku_jan_dict[shopcd]:
+                    print(shopcd)
+                    jan_get = re.findall(kakaku_jan_dict[shopcd],shopcd_html)[0]
+                    jan_list.append(jan_get)
+                    print(jan_get)
+                # print(shopcd_html)
+
             except:
                 pass
+
+        #查看JAN数组哪个元素最多
+        counter = Counter(jan_list)
+        max_jan,min_jan = counter.most_common(1)[0]
+        if max_jan:
+            jan = max_jan
+        print(max_jan,min_jan,jan)
+
         # print(a)
         if price_ls == '9999999':
             try:
@@ -355,7 +571,10 @@ class Work_Thread(QThread):
         except:
             xingban = ""
 
-        return [title,xingban,img_num,price]
+        #开始获取表格数据
+        tab_data = self.get_tab(self.html)
+
+        return [title,xingban,img_num,price,tab_data,jan]
 
     def getxpathphone(self,html, code):
         print('采集手机')
