@@ -262,11 +262,31 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif action == item_stop:
             pass
         elif action == item_del:
-            o_question = QMessageBox.question(self,'对话框','是否确认删除，删除后不可恢复。',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+            # o_question = QMessageBox.question(self,'对话框','是否确认删除，删除后不可恢复。',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+            #
+            # if o_question == QMessageBox.No:
+            #     return
+            # self.tableWidget.removeRow(index)
+            select_list = self.tableWidget.selectionModel().selectedRows()
 
-            if o_question == QMessageBox.No:
+            if len(select_list) == 0:
+                self.messagebox('提示', '没有行被选中，请点左侧索引，全选行后重试')
                 return
-            self.tableWidget.removeRow(index)
+
+            # 弹出提示框，让用户确认是否删除原行
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("确认删除")
+            msg_box.setText("确定要删除选中行吗？")
+            msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+            button = msg_box.exec_()
+            if button == QMessageBox.Ok:
+                # 在源表格中删除选中行
+
+                for row in reversed(select_list):
+                    index = row.row()
+                    self.tableWidget.removeRow(index)
             current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
             self.statusbar.showMessage(f'表格现有{current_row_count}行')
         elif action == item_set_value:
