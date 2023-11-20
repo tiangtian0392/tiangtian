@@ -191,7 +191,9 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         xingban = data_list[1]
         img_num = data_list[2]
         price = data_list[3]
-        url = data_list[4]
+        mkrname = data_list[4]
+        ctgmane = data_list[5]
+        url = data_list[6]
 
         current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
         self.tableWidget.insertRow(current_row_count)
@@ -214,7 +216,10 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.tableWidget.setItem(current_row_count, 9, cell)
         cell = QTableWidgetItem(url)
         self.tableWidget.setItem(current_row_count, 10, cell)
-
+        cell = QTableWidgetItem(ctgmane)
+        self.tableWidget.setItem(current_row_count, 11, cell)
+        cell = QTableWidgetItem(mkrname)
+        self.tableWidget.setItem(current_row_count, 12, cell)
         self.statusbar.showMessage(f'表格现有{current_row_count+1}行')
 
 
@@ -308,10 +313,10 @@ class Work_Thread(QThread):
 
         #遍历url数组，获取商品信息
         for i,item in enumerate(self.urls_list):
-            url = 'https://kakaku.com/item/' + item
-            self.html = self.get_kakaku_html(url)
+            self.url = 'https://kakaku.com/item/' + item
+            self.html = self.get_kakaku_html(self.url)
             data = self.getxpath(self.html)
-            data.append(url)
+            data.append(self.url)
             # 发送信号，通知主线程数据已准备好
             self.get_OK.emit(data)
         self.run_over.emit('over')
@@ -340,6 +345,19 @@ class Work_Thread(QThread):
 
     def getxpath(self, html):
         print('getxpath')
+
+        #获取厂家分类和商品分类
+        try:
+            mkrname = re.findall(r"(?<=mkrname: ')[\s\S]+?(?=')",html)[0]
+        except:
+            mkrname = ''
+        try:
+            ctgname = re.findall(r"(?<=ctgname: ')[\s\S]+?(?=')",html)[0]
+        except:
+            ctgname = ''
+        print(mkrname,ctgname)
+
+
         tablecode = "//tr"
         mytree = etree.HTML(html)
         # 有时去掉编码可以正确识别网页
@@ -373,6 +391,9 @@ class Work_Thread(QThread):
 
         img_num = img_tab_num + img_num
         print(f'共有{img_num}张图片')
+
+        #如果img_num =0 也就是没有图片，则调用下面的程序获取图片
+        img_view = self.get_kakakuimg_view()
 
         # print(title,date,pm,ds)
         #a 数组元素位置 1= title,2=图片数量，3=价格，4=0|1 ，0代表下架，○商家少于4家，
@@ -431,7 +452,7 @@ class Work_Thread(QThread):
         except:
             xingban = ""
 
-        return [title,xingban,img_num,price]
+        return [title,xingban,img_num,price,mkrname,ctgname]
 
     def getxpathphone(self,html, code):
         print('采集手机')
@@ -489,6 +510,14 @@ class Work_Thread(QThread):
                 pass
 
         return a,quan_list
+
+    def get_kakakuimg_view(self):
+        print('开始获取价格网其它图片')
+        html = self.get_kakaku_html(self.url + '/imgview/')
+        with open(r"C:\Users\user\Documents\strJSON.txt", "w", encoding="utf-8") as file:
+            file.write(html)
+        td_list = re.findall(r'td width="33%">[\s\S]+?</td>',html)
+        print(html,td_list)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
