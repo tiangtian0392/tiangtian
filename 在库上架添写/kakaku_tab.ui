@@ -183,7 +183,7 @@
      <rect>
       <x>640</x>
       <y>20</y>
-      <width>413</width>
+      <width>671</width>
       <height>25</height>
      </rect>
     </property>
@@ -209,9 +209,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pause_Button">
+      <widget class="QPushButton" name="save_tab_Button">
        <property name="text">
-        <string>Pause</string>
+        <string>保存表</string>
        </property>
       </widget>
      </item>
@@ -256,44 +256,8 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>20</y>
-      <width>251</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QPushButton" name="save_tab_Button">
-       <property name="text">
-        <string>保存表</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="dell_tab_Button">
-       <property name="text">
-        <string>清空表</string>
-       </property>
-      </widget>
+      <widget class="QLineEdit" name="title_lineEdit"/>
      </item>
     </layout>
    </widget>
