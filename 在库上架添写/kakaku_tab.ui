@@ -115,6 +115,11 @@
       <string>价格网厂家</string>
      </property>
     </column>
+    <column>
+     <property name="text">
+      <string>图片链接</string>
+     </property>
+    </column>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
@@ -178,7 +183,7 @@
      <rect>
       <x>640</x>
       <y>20</y>
-      <width>671</width>
+      <width>413</width>
       <height>25</height>
      </rect>
     </property>
@@ -227,6 +232,66 @@
       <widget class="QPushButton" name="stop_Button">
        <property name="text">
         <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="auto_radioButton">
+       <property name="text">
+        <string>自动</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>重复跳过</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="shoudong_radioButton">
+       <property name="text">
+        <string>手动</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>1060</x>
+      <y>20</y>
+      <width>251</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QPushButton" name="save_tab_Button">
+       <property name="text">
+        <string>保存表</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="dell_tab_Button">
+       <property name="text">
+        <string>清空表</string>
        </property>
       </widget>
      </item>
