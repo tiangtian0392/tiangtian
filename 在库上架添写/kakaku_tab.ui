@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -18,262 +21,265 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>1333</width>
-    <height>708</height>
+    <width>65535</width>
+    <height>65536</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>价格网出品</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTableWidget" name="tableWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>60</y>
-      <width>1321</width>
-      <height>601</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>1261</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="verticalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOn</enum>
-    </property>
-    <property name="horizontalScrollBarPolicy">
-     <enum>Qt::ScrollBarAlwaysOn</enum>
-    </property>
-    <attribute name="horizontalHeaderDefaultSectionSize">
-     <number>100</number>
-    </attribute>
-    <column>
-     <property name="text">
-      <string>JAN</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>型番</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>商品说明</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>标题</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>预定价格</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>上架数量</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>图片数量</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>发送日</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>送料代码</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>价格网标题</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>价格网URL</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>价格网分类</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>价格网厂家</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>图片链接</string>
-     </property>
-    </column>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>607</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>URL</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>381</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="placeholderText">
+         <string>输入kakakuURL，包含pg=时可以设置多页</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>start_Page</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="start_spinBox">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>stop_Page</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="stop_spinBox">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="start_Button">
+        <property name="text">
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="save_tab_Button">
+        <property name="text">
+         <string>保存表</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="stop_Button">
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="banhao_pushButton">
+        <property name="text">
+         <string>型号处理</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="auto_radioButton">
+        <property name="text">
+         <string>自动</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>重复跳过</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="shoudong_radioButton">
+        <property name="text">
+         <string>手动</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="title_lineEdit">
+        <property name="whatsThis">
+         <string/>
+        </property>
+        <property name="inputMask">
+         <string/>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>输入标题关键词</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="minimumSize">
+       <size>
+        <width>1261</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <attribute name="horizontalHeaderDefaultSectionSize">
+       <number>100</number>
+      </attribute>
+      <column>
        <property name="text">
-        <string>URL</string>
+        <string>JAN</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit">
-       <property name="minimumSize">
-        <size>
-         <width>381</width>
-         <height>0</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_2">
+      </column>
+      <column>
        <property name="text">
-        <string>start_Page</string>
+        <string>型番</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSpinBox" name="start_spinBox">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_3">
+      </column>
+      <column>
        <property name="text">
-        <string>stop_Page</string>
+        <string>商品说明</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSpinBox" name="stop_spinBox">
-       <property name="minimum">
-        <number>1</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>640</x>
-      <y>20</y>
-      <width>671</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QPushButton" name="start_Button">
+      </column>
+      <column>
        <property name="text">
-        <string>Start</string>
+        <string>标题</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="save_tab_Button">
+      </column>
+      <column>
        <property name="text">
-        <string>保存表</string>
+        <string>预定价格</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="stop_Button">
+      </column>
+      <column>
        <property name="text">
-        <string>Stop</string>
+        <string>上架数量</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="auto_radioButton">
+      </column>
+      <column>
        <property name="text">
-        <string>自动</string>
+        <string>图片数量</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_4">
+      </column>
+      <column>
        <property name="text">
-        <string>重复跳过</string>
+        <string>发送日</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="shoudong_radioButton">
+      </column>
+      <column>
        <property name="text">
-        <string>手动</string>
+        <string>送料代码</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="title_lineEdit">
-       <property name="whatsThis">
-        <string/>
-       </property>
-       <property name="inputMask">
-        <string/>
-       </property>
+      </column>
+      <column>
        <property name="text">
-        <string/>
+        <string>价格网标题</string>
        </property>
-       <property name="placeholderText">
-        <string>输入标题关键词</string>
+      </column>
+      <column>
+       <property name="text">
+        <string>价格网URL</string>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+      </column>
+      <column>
+       <property name="text">
+        <string>价格网分类</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>价格网厂家</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>图片链接</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
