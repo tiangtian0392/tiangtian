@@ -1,7 +1,7 @@
 import json
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from bs4 import BeautifulSoup
 from PyQt5.QtGui import QClipboard, QGuiApplication
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QColor
@@ -13,7 +13,32 @@ import pandas as pd
 import requests,time
 from lxml import etree
 from PyQt5.QtCore import QThreadPool
+from collections import Counter
+import pyperclip
 
+
+paichu_dict = {
+    'KINUJO':'paichu',
+    'ベンキュー':'paichu',
+    'BenQ':'paichu',
+    'クック':'paichu',
+    'CUCKOO':'paichu',
+    'BRAIN MAGIC':'paichu',
+    'アイロボット':'paichu',
+    'iRobot':'paichu',
+    'Bowers & Wilkins':'paichu',
+    'ヴィダルサスーン':'paichu',
+    'コイズミ':'no_img',
+    'KOIZUMI':'no_img',
+    'MTG':'no_img',
+    'マジック・ザ・ギャザリング':'no_img',
+    'CyDen':'no_img',
+    'Vidal Sassoon':'no_img',
+    'KALOS BEAUTY TECHNOLOGY':'no_img',
+    'ANKER':'no_img',
+
+}
+status_code = 0
 
 class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     signal_1 = QtCore.pyqtSignal(str)
@@ -22,15 +47,97 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle('价格网表格获取 1.0')
 
+        #设置跳过的商品数组
+        self.jumb_goods = []
+
         self.start_Button.clicked.connect(self.start_BT)
-        self.pause_Button.clicked.connect(self.pause_BT)
         self.stop_Button.clicked.connect(self.stop_BT)
+        self.stop_Button.setText('对比型号')
+        self.banhao_pushButton.clicked.connect(self.zhengli_xingban)
+
         self.save_tab_Button.clicked.connect(self.save_tab_BT)
-        self.dell_tab_Button.clicked.connect(self.dell_tab_BT)
+
+        #设置自动跳过默认选中
+        self.auto_radioButton.setChecked(True)
+
+        # 为表格单元格添加悬停事件
+        self.tableWidget.cellEntered.connect(self.show_tooltip)
+
+        # 设置第2列宽度
+        self.tableWidget.setColumnWidth(4, 60)  # 100是列宽
+        self.tableWidget.setColumnWidth(5, 60)  # 100是列宽
+        self.tableWidget.setColumnWidth(6, 60)  # 100是列宽
+        self.tableWidget.setColumnWidth(7, 60)  # 100是列宽
 
         #添加右键
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.customContextMenuRequested.connect(self.table_right_menu)
+
+        # 监听表格项改动信号
+        self.tableWidget.itemChanged.connect(self.onItemChanged)
+
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择Qoo10data文件，取消程序无法运行！", " ", "Excel Files (*.xlsx *.xls)")
+
+        if not file_path:
+            exec
+
+        # 读取Excel文件
+        excel_data = pd.read_excel(file_path)
+        # 保留需要的列，例如 E 列和 AL 列
+        selected_columns = ['item_number', 'seller_unique_item_id','item_name','external_product_id']
+        self.excel_data = excel_data[selected_columns]
+
+        self.statusbar_lable = QLabel('工作中……')
+        self.statusbar.addPermanentWidget(self.statusbar_lable)
+
+    #监听表格项改动信号
+    def onItemChanged(self, item):
+        # 在表格项改动时触发的槽函数
+        row = item.row()
+        col = item.column()
+        text = item.text()
+
+        # 判断文本长度是否超过 20 个字符，设置背景色
+        if col == 1:
+            if len(text) > 20:
+                item.setBackground(QColor(237, 125, 49))  # 使用橙色
+            else:
+                item.setBackground(QColor(255, 255, 255))  # 恢复默认背景色
+        if col == 3:
+            if len(text) > 100:
+                item.setBackground(QColor(237, 125, 49))  # 使用橙色
+            else:
+                item.setBackground(QColor(255, 255, 255))  # 恢复默认背景色
+
+    def show_tooltip(self, row, column):
+        try:
+            # 获取单元格内容
+            content = self.tableWidget.item(row, column).text()
+
+            # 显示气泡提示在鼠标当前位置
+            QToolTip.showText(QtGui.QCursor.pos(), content)
+        except:
+            pass
+
+    def zhengli_xingban(self):
+
+        xb = pyperclip.paste()
+        xingban = xb.strip()
+        print('开始型号处理', xb,xingban)
+        characters_to_replace = ["[", "]", "(", ")", " ", "　", "/"]
+        original_string = "你的字符串[含有]这些(字符)之一 / 或者 空格 以及 全角空格"
+        replacement_string = ""
+
+        for char in xingban:
+            # 如果字符在替换列表中，就替换为空字符串，否则保留原字符
+            replacement_string += char if char not in characters_to_replace else "-"
+
+        if len(replacement_string) > 20:
+            replacement_string = replacement_string.replace('-','')
+        pyperclip.copy(replacement_string)
+        self.statusbar.showMessage(replacement_string)
+
+
     def start_BT(self):
         print('点击开始按键')
         self.URL = self.lineEdit.text()
@@ -44,25 +151,138 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return
 
         self.start_data_thread()
-    def pause_BT(self):
-        print('点击暂停按键')
 
     def stop_BT(self):
         print('点击停止按键')
+        print(self.jumb_goods)
+
+        #开始对比型号
+        # 获取表格行数
+        rowCount = self.tableWidget.rowCount()
+
+        # 创建一个集合（set）用于存储第2列的值
+        unique_values = set()
+
+        # 遍历表格的每一行
+        for row in range(rowCount):
+            # 获取第2列的单元格文本
+            cell_text = self.tableWidget.item(row, 1).text()
+            jan_text = self.tableWidget.item(row,0).text()
+
+            # 与字典的值进行比较,对比型号
+            if cell_text in self.excel_data['seller_unique_item_id'].values:
+                # 处理匹配的情况
+                self.tableWidget.item(row, 1).setBackground(QColor(237, 125, 49))  # 使用橙色
+                print(f'{cell_text}和字典内有')
+            else:
+                # 处理不匹配的情况
+                self.tableWidget.item(row,1).setBackground(QColor(255, 255, 255)) # 恢复默认背景色
+
+            # 与字典的值进行比较,对比JAN
+            if jan_text in self.excel_data['external_product_id'].values:
+                # 处理匹配的情况
+                self.tableWidget.item(row, 0).setBackground(QColor(237, 125, 49))  # 使用橙色
+                print(f'{jan_text}字典内有')
+            else:
+                # 处理不匹配的情况
+                self.tableWidget.item(row, 0).setBackground(QColor(255, 255, 255))  # 恢复默认背景色
+
+            # 检查值是否已经存在于集合中
+            if cell_text in unique_values:
+                # 处理重复的情况
+                self.tableWidget.item(row, 0).setBackground(QColor(237, 125, 49))  # 使用橙色
+                print(f'{cell_text}表格内重复')
+                # 在这里可以添加其他处理逻辑，比如更改单元格颜色等
+            else:
+                # 将值添加到集合中
+                unique_values.add(cell_text)
+
 
     def save_tab_BT(self):
         print('点击保存表，开始保存')
         options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getSaveFileName(self, "保存为CSV文件", "", "CSV Files (*.csv);;All Files (*)", options=options)
+        file_name, _ = QFileDialog.getSaveFileName(self, "保存为CSV文件", "", "CSV Files (*.csv);;All Files (*)",
+                                                   options=options)
 
         if file_name:
             print(file_name)
-            #生成上传用xlsx文件用表头
-            xlxs_data = [["item_number","seller_unique_item_id","category_number","brand_number","item_name","item_promotion_name","item_status_Y/N/D","end_date","price_yen","retail_price_yen","quantity","option_info","additional_option_info","additional_option_text","image_main_url","image_other_url","video_url","image_option_info","image_additional_option_info","header_html","footer_html","item_description","Shipping_number","option_number","available_shipping_date","desired_shipping_date","search_keyword","item_condition_type","origin_type","origin_region_id","origin_country_id","origin_others","medication_type","item_weight","item_material","model_name","external_product_type","external_product_id","manufacture_date","expiration_date_type","expiration_date_MFD","expiration_date_PAO","expiration_date_EXP","under18s_display_Y/N","A/S_info","buy_limit_type","buy_limit_date","buy_limit_qty"],["商品番号","販売者商品コード","カテゴリ","ブランド","商品名","広告文","販売ステータス","販売終了日","販売価格","参考価格","在庫数量","オプション","追加型オプション(選択)","追加型オプション(直接入力)","メイン画像","追加画像","動画","オプションの画像","追加型オプションの画像","ヘッダー","フッター","商品詳細","送料","オプション送料","発送可能日","お届け希望日","検索ワード","商品状態","原産地","原産地\n_地域名","原産地\n_国名","原産地\n_その他","医薬品分類","重量","素材","モデル名","商品識別コード","商品識別コード_コード","製造日","有効期間","有効期間_期間1","有効期間_期間2","有効期間__日付","18歳未満制限","アフターサービス情報","購入数量制限","購入数量制限_期間","購入数量制限_数量"],["必須入力","選択入力","必須入力","選択入力","必須入力","選択入力","必須入力","必須入力","必須入力","選択入力","必須入力","選択入力","選択入力","選択入力","必須入力","選択入力","選択入力","選択入力","選択入力","選択入力","選択入力","必須入力","必須入力","選択入力","必須入力","選択入力","選択入力","必須入力","必須入力","選択入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","選択入力","選択入力","選択入力","条件付き必須入力","選択入力","選択入力","条件付き必須入力","条件付き必須入力","条件付き必須入力","選択入力","選択入力","選択入力","条件付き必須入力","条件付き必須入力"],["*新規登録の際は入力しません。\n\n商品番号(半角数字)\n\n例) 1234567890","[ガイド] 販売者商品コードは同一アカウント内で重複させることはできません。\n\n最大100文字\n\n販売者の管理用商品コード","カテゴリコード9桁(半角数字)\n\n例) 320001873","ブランドコード(半角数字)\n\n例) 27450","*商品名ガイドに沿って入力してください。 \n[ガイド] ♡♠などの特殊記号は自動的に削除されます。\n\n最大50文字\n\n製品名+仕様+型番+商品分類\n\n例) パーフェクティングファンデーション35mlリキッドファンデーション","最大20文字","Y: 販売中\nN: 販売中止\nD: 商品削除","YYYY-MM-DD\n\n例) 2020-01-01","最大9桁(半角数字)\n\n例) 10,000","最大9桁(半角数字)","*[G列/販売ステータス]が「Y:販売中」の場合、1個以上の在庫数量を入力してください。\n\n最大9桁(半角数字)\n\n예) 200","オプション名1||*オプションの選択肢1||*オプション名2||*オプションの選択肢2||*オプション価格||*在庫数量||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\nオプション1段階 例) カラー||*レッド||*0||*200||*Red$$\nカラー||*ブルー||*0||*200||*Blue\n\nオプション2段階 例) カラー||*レッド||*サイズ||*Sl||*0||*200||*Red_S","オプション名1||*オプションの選択肢1||*追加型オプションの価格||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\n例) \nリフィル||*選択しない||*0||*code01$$\nリフィル||*選択||*0||*code02$$\nおまけ||*タイプA||*0||*code03$$\nおまけ||*タイプB||*0||*code04","オプション名$$\n{追加は$$で区分}\n\n最大3個\n最大20文字\n\n例1) イニシャル\n\n例2) 刻印する文字1$$\n刻印する文字2$$\n配送メッセージ","*画像ガイドに沿って登録してください。\n\n画像URL\n(JPG, PNG, GIF)\n\n最大200文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png","画像URL\n(JPG, PNG, GIF) \n\n最大10個\n(追加は$$で区分)\n\n最大2,000文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nhttps://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\n","動画URL\n\n最大200文字\n\n例) https://www.youtube.com/watch?v=Zhl4N5vd7NE","[ガイド] [L列/オプション]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) カラー||*レッド||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nカラー||*ブルー||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$","[ガイド] [M列/追加型オプション(選択)]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) おまけ||*ノート||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nおまけ||*ペン||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$","HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","HTML code\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">","送料コード(半角数字)\n\n例) 123456","送料コード(半角数字)\n(追加は$$で区分)\n\n最大2つ\n\n例) 123456$$\n123456","一般発送(4日以降)または発売日を設定する場合、配送ポイントが付与されません。\n\n一般発送: 1~14以内(所要日) 半角数字\n当日発送: hh:mm (時刻)\n発売日設定: YYYY-MM-DD (日付)\n\n例1) 1\n例2) 16:30\n例3) 2022-01-01\n","3~20以内(注文日基準の選択可能日)数字\n\n例1) 3\n例2) 20","最大10個\n\n各最大30文字\n(追加は$$で区分)\n\n例1) バカンス\n例2) バカンス$$カジュアル","1 : 新品\n2 : 中古品-未使用\n3 : 中古品-新古品\n4 : 中古品-ほぼ新品\n5 : 中古品-状態良好\n6 : 中古品-やや古い\n7 : 中古品-ジャンク品","1 : 国内\n2 : 海外\n3 : その他","[ガイド] [AC列/原産地]が国内の場合に適用されます。\n\n地域コード(英文)\n\n例1) TOKYO\n例2) FUKUOKA","[ガイド] [AC列/原産地]が「2: 海外」の場合、国コードが必須入力です。\n\n国コード 2桁(英文)\n\n例1) US\n例2) CN","[ガイド] [AC列/原産地]が「3: その他」の場合に必須入力です。\n\n最大50文字\n\n例) OOに限りOO国から発送","[ガイド] [C列/カテゴリ]が医薬品に該当するカテゴリの場合は必須入力です。\n\n1C : 第1類医薬品\n2C : 第2類医薬品\n3C : 第3類医薬品\nD2 : 指定第2類医薬品\nQD : 医薬部外品","[ガイド] [W列/送料]海外発送の場合は必須入力です。\n\n最大2桁(半角数字、小数点第1位まで可能)\n\n最大 30kg\n\n例1) 1\n例2) 1.5","最大500文字\n\n例1) ポリエステル80%, 綿20%\n例2) 表: 合成皮革、裏: ポリエステル","最大30文字\n\n例1) CUH-7218BB01\n例2) SV17","JAN : JANコード\nKAN : KANコード\nISBN : ISBNコード\nUPC : UPCコード\nEAN : EANコード\nHS : HSコード","[ガイド] [AK列/商品識別コード]入力時に適用されます。 \n\n最大30文字\n\n例1) TK-FBP019EBK\n例2) 85171290","YYYY-MM-DD\n\n例) 2020-01-01","1: 製造日から\n2: 開封日から\n3: 指定日まで","[ガイド] [AN列/有効期間]が「1: 製造日から」の場合に適用されます。\n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内","[ガイド] [AN列/有効期間]が「2: 開封日から」の場合に適用されます。 \n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内","[ガイド] [AN列/有効期間]が「3: 指定日まで」の場合に適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01","Y: 制限する\nN: 制限しない\n\n入力していない場合、Nとして適用","アフターサービス担当者の情報\n\n例) 電話番号: 090-0000-0000 / メールアドレス: xxx@xxx.xxx","1: 購入者別1回の購入数量制限\n2: 購入者別1日の購入数量制限","[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01","[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\n最大2桁 (半角数字)\n\n例) 13"]]
+            # 生成上传用xlsx文件用表头
+            xlxs_data = [["item_number", "seller_unique_item_id", "category_number", "brand_number", "item_name",
+                          "item_promotion_name", "item_status_Y/N/D", "end_date", "price_yen", "retail_price_yen",
+                          "quantity", "option_info", "additional_option_info", "additional_option_text",
+                          "image_main_url", "image_other_url", "video_url", "image_option_info",
+                          "image_additional_option_info", "header_html", "footer_html", "item_description",
+                          "Shipping_number", "option_number", "available_shipping_date", "desired_shipping_date",
+                          "search_keyword", "item_condition_type", "origin_type", "origin_region_id",
+                          "origin_country_id", "origin_others", "medication_type", "item_weight", "item_material",
+                          "model_name", "external_product_type", "external_product_id", "manufacture_date",
+                          "expiration_date_type", "expiration_date_MFD", "expiration_date_PAO", "expiration_date_EXP",
+                          "under18s_display_Y/N", "A/S_info", "buy_limit_type", "buy_limit_date", "buy_limit_qty"],
+                         ["商品番号", "販売者商品コード", "カテゴリ", "ブランド", "商品名", "広告文", "販売ステータス", "販売終了日",
+                          "販売価格", "参考価格", "在庫数量", "オプション", "追加型オプション(選択)", "追加型オプション(直接入力)",
+                          "メイン画像", "追加画像", "動画", "オプションの画像", "追加型オプションの画像", "ヘッダー", "フッター", "商品詳細",
+                          "送料", "オプション送料", "発送可能日", "お届け希望日", "検索ワード", "商品状態", "原産地",
+                          "原産地\n_地域名", "原産地\n_国名", "原産地\n_その他", "医薬品分類", "重量", "素材", "モデル名",
+                          "商品識別コード", "商品識別コード_コード", "製造日", "有効期間", "有効期間_期間1", "有効期間_期間2",
+                          "有効期間__日付", "18歳未満制限", "アフターサービス情報", "購入数量制限", "購入数量制限_期間",
+                          "購入数量制限_数量"],
+                         ["必須入力", "選択入力", "必須入力", "選択入力", "必須入力", "選択入力", "必須入力",
+                          "必須入力", "必須入力", "選択入力", "必須入力", "選択入力", "選択入力", "選択入力",
+                          "必須入力", "選択入力", "選択入力", "選択入力", "選択入力", "選択入力", "選択入力",
+                          "必須入力", "必須入力", "選択入力", "必須入力", "選択入力", "選択入力", "必須入力",
+                          "必須入力", "選択入力", "条件付き必須入力", "条件付き必須入力", "条件付き必須入力",
+                          "条件付き必須入力", "選択入力", "選択入力", "選択入力", "条件付き必須入力", "選択入力",
+                          "選択入力", "条件付き必須入力", "条件付き必須入力", "条件付き必須入力", "選択入力", "選択入力",
+                          "選択入力", "条件付き必須入力", "条件付き必須入力"],
+                         ["*新規登録の際は入力しません。\n\n商品番号(半角数字)\n\n例) 1234567890",
+                          "[ガイド] 販売者商品コードは同一アカウント内で重複させることはできません。\n\n最大100文字\n\n販売者の管理用商品コード",
+                          "カテゴリコード9桁(半角数字)\n\n例) 320001873", "ブランドコード(半角数字)\n\n例) 27450",
+                          "*商品名ガイドに沿って入力してください。 \n[ガイド] ♡♠などの特殊記号は自動的に削除されます。\n\n最大50文字\n\n製品名+仕様+型番+商品分類\n\n例) パーフェクティングファンデーション35mlリキッドファンデーション",
+                          "最大20文字", "Y: 販売中\nN: 販売中止\nD: 商品削除", "YYYY-MM-DD\n\n例) 2020-01-01",
+                          "最大9桁(半角数字)\n\n例) 10,000", "最大9桁(半角数字)",
+                          "*[G列/販売ステータス]が「Y:販売中」の場合、1個以上の在庫数量を入力してください。\n\n最大9桁(半角数字)\n\n예) 200",
+                          "オプション名1||*オプションの選択肢1||*オプション名2||*オプションの選択肢2||*オプション価格||*在庫数量||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\nオプション1段階 例) カラー||*レッド||*0||*200||*Red$$\nカラー||*ブルー||*0||*200||*Blue\n\nオプション2段階 例) カラー||*レッド||*サイズ||*Sl||*0||*200||*Red_S",
+                          "オプション名1||*オプションの選択肢1||*追加型オプションの価格||*販売者オプションコード$$\n(追加は$$で区分)\n\nオプション名: 最大3タイプ、最大50文字\nオプションの選択肢: オプション名別に最大 20個、最大50文字\n\n例) \nリフィル||*選択しない||*0||*code01$$\nリフィル||*選択||*0||*code02$$\nおまけ||*タイプA||*0||*code03$$\nおまけ||*タイプB||*0||*code04",
+                          "オプション名$$\n{追加は$$で区分}\n\n最大3個\n最大20文字\n\n例1) イニシャル\n\n例2) 刻印する文字1$$\n刻印する文字2$$\n配送メッセージ",
+                          "*画像ガイドに沿って登録してください。\n\n画像URL\n(JPG, PNG, GIF)\n\n最大200文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png",
+                          "画像URL\n(JPG, PNG, GIF) \n\n最大10個\n(追加は$$で区分)\n\n最大2,000文字\n\n例) https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nhttps://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\n",
+                          "動画URL\n\n最大200文字\n\n例) https://www.youtube.com/watch?v=Zhl4N5vd7NE",
+                          "[ガイド] [L列/オプション]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) カラー||*レッド||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nカラー||*ブルー||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$",
+                          "[ガイド] [M列/追加型オプション(選択)]に入力したオプション名-オプションの選択肢と一致する場合に適用されます。\n\nオプション名||*オプションの選択肢||*画像URL$$\n(追加は$$で区分)\n\n例) おまけ||*ノート||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$\nおまけ||*ペン||*https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png$$",
+                          "HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">",
+                          "HTML code\n\n最大2,500文字\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">",
+                          "HTML code\n\n例)\n<img src=\"https://dp.image-qoo10.jp/GMKT.IMG/loading_2017/qoo10_loading.v_20170420.png\">",
+                          "送料コード(半角数字)\n\n例) 123456",
+                          "送料コード(半角数字)\n(追加は$$で区分)\n\n最大2つ\n\n例) 123456$$\n123456",
+                          "一般発送(4日以降)または発売日を設定する場合、配送ポイントが付与されません。\n\n一般発送: 1~14以内(所要日) 半角数字\n当日発送: hh:mm (時刻)\n発売日設定: YYYY-MM-DD (日付)\n\n例1) 1\n例2) 16:30\n例3) 2022-01-01\n",
+                          "3~20以内(注文日基準の選択可能日)数字\n\n例1) 3\n例2) 20",
+                          "最大10個\n\n各最大30文字\n(追加は$$で区分)\n\n例1) バカンス\n例2) バカンス$$カジュアル",
+                          "1 : 新品\n2 : 中古品-未使用\n3 : 中古品-新古品\n4 : 中古品-ほぼ新品\n5 : 中古品-状態良好\n6 : 中古品-やや古い\n7 : 中古品-ジャンク品",
+                          "1 : 国内\n2 : 海外\n3 : その他",
+                          "[ガイド] [AC列/原産地]が国内の場合に適用されます。\n\n地域コード(英文)\n\n例1) TOKYO\n例2) FUKUOKA",
+                          "[ガイド] [AC列/原産地]が「2: 海外」の場合、国コードが必須入力です。\n\n国コード 2桁(英文)\n\n例1) US\n例2) CN",
+                          "[ガイド] [AC列/原産地]が「3: その他」の場合に必須入力です。\n\n最大50文字\n\n例) OOに限りOO国から発送",
+                          "[ガイド] [C列/カテゴリ]が医薬品に該当するカテゴリの場合は必須入力です。\n\n1C : 第1類医薬品\n2C : 第2類医薬品\n3C : 第3類医薬品\nD2 : 指定第2類医薬品\nQD : 医薬部外品",
+                          "[ガイド] [W列/送料]海外発送の場合は必須入力です。\n\n最大2桁(半角数字、小数点第1位まで可能)\n\n最大 30kg\n\n例1) 1\n例2) 1.5",
+                          "最大500文字\n\n例1) ポリエステル80%, 綿20%\n例2) 表: 合成皮革、裏: ポリエステル",
+                          "最大30文字\n\n例1) CUH-7218BB01\n例2) SV17",
+                          "JAN : JANコード\nKAN : KANコード\nISBN : ISBNコード\nUPC : UPCコード\nEAN : EANコード\nHS : HSコード",
+                          "[ガイド] [AK列/商品識別コード]入力時に適用されます。 \n\n最大30文字\n\n例1) TK-FBP019EBK\n例2) 85171290",
+                          "YYYY-MM-DD\n\n例) 2020-01-01", "1: 製造日から\n2: 開封日から\n3: 指定日まで",
+                          "[ガイド] [AN列/有効期間]が「1: 製造日から」の場合に適用されます。\n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内",
+                          "[ガイド] [AN列/有効期間]が「2: 開封日から」の場合に適用されます。 \n\n最大30文字\n\n例1) 120日まで\n例2) 1年以内",
+                          "[ガイド] [AN列/有効期間]が「3: 指定日まで」の場合に適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01",
+                          "Y: 制限する\nN: 制限しない\n\n入力していない場合、Nとして適用",
+                          "アフターサービス担当者の情報\n\n例) 電話番号: 090-0000-0000 / メールアドレス: xxx@xxx.xxx",
+                          "1: 購入者別1回の購入数量制限\n2: 購入者別1日の購入数量制限",
+                          "[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\nYYYY-MM-DD\n\n例) 2020-01-01",
+                          "[ガイド] [AT列/購入数量制限]1または2を入力すると適用されます。\n\n最大2桁 (半角数字)\n\n例) 13"]]
 
-            #生成csv文件用表头
-            data = [["商品ID","商品名","商品説明","タイトル","予定価格","商品個数","IMAGE有無","発送日","送料","商品状態","補足","追加４",
-                     "YSカテゴリ","カテゴリコード","単位","シリーズ","サイズ","手数料","jiajia","列1","login_date","last scan date"]]
+            # 生成csv文件用表头
+            data = [["商品ID", "商品名", "商品説明", "タイトル", "予定価格", "商品個数", "IMAGE有無", "発送日", "送料",
+                     "商品状態", "補足", "追加４",
+                     "YSカテゴリ", "カテゴリコード", "単位", "シリーズ", "サイズ", "手数料", "jiajia", "列1", "login_date",
+                     "last scan date"]]
 
             # 获取表格数据
             for row in range(self.tableWidget.rowCount()):
@@ -72,52 +292,58 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     col in range(self.tableWidget.columnCount())]
                 data.append(row_data)
 
-                #以下用于生成上传xlsx
-                item_list = [ "", "", "", "", "", "", "N", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-                              "", "", "", "", 1.0, 3.0, "", "", "その他", "", "", "", "", "JAN", "", "", " ", "", "", "",
-                              "N", "", "", "", "" ]     #临时数组
-                item_list[1] = row_data[1]                  #商品型番
-                                 #商品型番
-                item_list[4] = row_data[3]                  #标题
-                item_list[7] = "2023-12-22"                 #结束日期
-                item_list[8] = row_data[4]                  #预定价格
-                item_list[10] = '0'                         #上架数量
-                item_list[14] = row_data[10]                #kakaku——URL
-                item_list[21] = row_data[2]                 #商品说明
-                item_list[22] = row_data[8]                 #送料
-                #送料判断，如果为邮局，后面要加佐川
+                # 以下用于生成上传xlsx
+                item_list = ["", "", "", "", "", "", "N", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+                             "",
+                             "", "", "", "", 1.0, 3.0, "", "", "その他", "", "", "", "", "JAN", "", "", " ", "", "", "",
+                             "N", "", "", "", ""]  # 临时数组
+                item_list[1] = row_data[1]  # 商品型番
+                # 商品型番
+                item_list[4] = row_data[3]  # 标题
+                item_list[7] = "2023-12-22"  # 结束日期
+                item_list[8] = row_data[4]  # 预定价格
+                item_list[10] = '0'  # 上架数量
+                item_list[14] = row_data[10]  # kakaku——URL
+                item_list[21] = row_data[2]  # 商品说明
+                item_list[22] = row_data[8]  # 送料
+                # 送料判断，如果为邮局，后面要加佐川
 
-                item_list[24] = row_data[7]                 #发送日
+                item_list[24] = row_data[7]  # 发送日
                 item_list[35] = row_data[1]
-                item_list[37] = row_data[0]                 #JAN
-                img_num = int(row_data[6])                  #图片数量
+                item_list[37] = row_data[0]  # JAN
+                img_num = int(row_data[6])  # 图片数量
+                img_x = ''
                 if img_num > 0:
-                    K_id = re.findall(r'K\d+',row_data[10])[0]
+                    K_id = re.findall(r'K\d+', row_data[10])[0]
                     img_1 = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{K_id}.jpg'
                     item_list[14] = img_1
-                    img_x = ''
-                    if img_num >1:
+
+                    if img_num > 1:
                         x = f"https://img1.kakaku.k-img.com/images/productimage/fullscale/{K_id}"
-                        for i in range(1,img_num-1):
+                        for i in range(1, img_num - 1):
                             if i == 1:
                                 img_x = f'{x}_000{i}.jpg'
                             else:
                                 img_x = f'{img_x}$${x}_000{i}.jpg'
-                item_list[15] = img_x
+                    item_list[15] = img_x
+                else:
+                    if row_data[13] != '':
+                        item_list[14] = row_data[13]
+                    else:
+                        item_list[14] = 'https://gd.image-qoo10.jp/li/905/567/5162567905.jpg'
                 xlxs_data.append(item_list)
-
 
             # print(data)
             print(xlxs_data)
             # 使用 pandas 保存为 CSV 文件
             df = pd.DataFrame(data)
-            df.to_csv(file_name, index=False,encoding='utf-8-sig',header=None)
+            df.to_csv(file_name, index=False, encoding='utf-8-sig', header=None)
 
-            #保存上传用的excel文件
+            # 保存上传用的excel文件
             file_name_xlsx = re.sub(r'\.csv$', '.xlsx', file_name)
             df_xlsx = pd.DataFrame(xlxs_data)
             try:
-                df_xlsx.to_excel(file_name_xlsx,index=False,header=None)
+                df_xlsx.to_excel(file_name_xlsx, index=False, header=None)
             except:
                 print('xlsx文件保存出错')
 
@@ -142,6 +368,7 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         item_open = menu.addAction('打开URL')
         item_stop = menu.addAction('停止')
         item_del = menu.addAction('删除')
+        item_set_value = menu.addAction('单元格设置值')
 
         action = menu.exec_(self.tableWidget.mapToGlobal(pos))
 
@@ -155,17 +382,50 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
         elif action == item_stop:
             pass
         elif action == item_del:
-            o_question = QMessageBox.question(self,'对话框','是否确认删除，删除后不可恢复。',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+            # o_question = QMessageBox.question(self,'对话框','是否确认删除，删除后不可恢复。',QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
+            #
+            # if o_question == QMessageBox.No:
+            #     return
+            # self.tableWidget.removeRow(index)
+            select_list = self.tableWidget.selectionModel().selectedRows()
 
-            if o_question == QMessageBox.No:
+            if len(select_list) == 0:
+                self.messagebox('提示', '没有行被选中，请点左侧索引，全选行后重试')
                 return
-            self.tableWidget.removeRow(index)
+
+            # 弹出提示框，让用户确认是否删除原行
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("确认删除")
+            msg_box.setText("确定要删除选中行吗？")
+            msg_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+            button = msg_box.exec_()
+            if button == QMessageBox.Ok:
+                # 在源表格中删除选中行
+
+                for row in reversed(select_list):
+                    index = row.row()
+                    self.tableWidget.removeRow(index)
             current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
             self.statusbar.showMessage(f'表格现有{current_row_count}行')
+        elif action == item_set_value:
+            self.set_selected_cells_to_minus_one()
 
+    # 选中列置-1
+    def set_selected_cells_to_minus_one(self):
+
+        selected_items = self.tableWidget.selectedItems()
+
+        text, ok = QInputDialog.getText(self, 'Input Dialog', '添入要设置的值，如-1:')
+        if ok:
+            for item in selected_items:
+                item.setText(text)
 
     # 创建并启动线程获取数据，并传递参数
     def start_data_thread(self):
+
+        self.url_num = 0
         self.start_Button.setEnabled(False)
         self.data_thread = Get_kakakutab_Thread(self.URL,[self.start_spinBox.value(),self.stop_spinBox.value()])
         self.data_thread.data_ready.connect(self.on_geturls)
@@ -174,9 +434,11 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     #把线程获取到的url传入线程获取数据
     def on_geturls(self,urls_list):
         print('数据回写表格')
-        print(urls_list)
+        # print(urls_list)
+        self.urls_list = urls_list
+        title_key = self.title_lineEdit.text()
         if urls_list:
-            self.work_thread = Work_Thread(urls_list)
+            self.work_thread = Work_Thread(urls_list,title_key)
             self.work_thread.get_OK.connect(self.on_update_tab)
             self.work_thread.run_over.connect(self.on_run_over)
             self.work_thread.start()
@@ -184,42 +446,173 @@ class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def on_run_over(self,data):
         print('运行结束')
         self.start_Button.setEnabled(True)
+        self.statusbar.showMessage(data)
+
+
     #把线程获取的数据回写到表格
     def on_update_tab(self,data_list):
-        print(f'开始回写数据{data_list}到表格。')
+        print(f'开始回写数据到表格。')
+        self.url_num +=1
+        self.statusbar_lable.setText(f'当前：{self.url_num}/共计：{len(self.urls_list)}')
+
         title = data_list[0]
+        if title == 're':
+            print('排除商品，跳过出品')
+            return
         xingban = data_list[1]
         img_num = data_list[2]
         price = data_list[3]
-        mkrname = data_list[4]
-        ctgmane = data_list[5]
-        url = data_list[6]
+        goods = data_list[4]
+        jan = data_list[5]
+        mkrname = data_list[6]
+        ctgname = data_list[7]
+        viewurl = data_list[8]
+        kakaku_title = data_list[9]
+        url = data_list[10]
+
+        PD = 0
+
+        #设置自动跳过已出品
+        if self.auto_radioButton.isChecked():
+            auto = 1
+        else:
+            auto = 0
+
+        #先遍历表格JAN，标题，URL对比，确认表格是否重复
+        for row in range(self.tableWidget.rowCount()):
+            # 获取当前行的第1、9和10列数据
+            col0_data = self.tableWidget.item(row, 0).text()
+            col9_data = self.tableWidget.item(row, 9).text()
+            col10_data = self.tableWidget.item(row, 10).text()
+
+            # 与新行的相应列数据进行比较
+            if col0_data == jan or col9_data == title or col10_data == url:
+                # 发现重复数据，可以采取相应操作，例如弹窗提示
+                if auto == 1:
+                    print('表格内已有商品，跳过')
+                    self.jumb_goods.append([kakaku_title])
+                    return
+                else:
+                    o_question = QMessageBox.question(self, '表格重复','表格以添写过本行，是否在次写入',
+                                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    if o_question == QMessageBox.No:
+                        self.jumb_goods.append([kakaku_title])
+                        return
+                    else:
+                        break
+
+         # 对'item_name'进行包含判断
+        if self.excel_data['item_name'].str.contains(title, regex=False).any():
+            find_title_rows = self.excel_data[self.excel_data['item_name'].str.contains(title, regex=False)]
+            print(f"商品 '{title}' 已出品过")
+            txt_str = '{}\n{}\n{}\n{}\n以出品，是否重新出品？'.format(find_title_rows['item_name'].to_string(index=False),
+                                                                  find_title_rows['item_number'].to_string(index=False),
+                                                                  find_title_rows['seller_unique_item_id'].to_string(index=False),
+                                                                  find_title_rows['external_product_id'].to_string(index=False))
+
+            if auto == 1:
+                print('商品已出品，跳过')
+                self.jumb_goods.append([kakaku_title])
+                return
+            else:
+                o_question = QMessageBox.question(self, '标题重复', txt_str,
+                                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if o_question == QMessageBox.No:
+                    self.jumb_goods.append([kakaku_title])
+                    return
+                else:
+                    PD = 1
+
+        # 检查'external_product_id'列是否与JAN相同
+        if self.excel_data['external_product_id'].str.contains(jan, regex=False).any() and PD == 0:
+            find_title_rows = self.excel_data[self.excel_data['external_product_id'].str.contains(jan, regex=False)]
+            print(f"商品 '{title}' 已出品过")
+            txt_str = '{}\n{}\n{}\n{}\n以出品，是否重新出品？'.format(find_title_rows['item_name'].to_string(index=False),
+                                                                    find_title_rows['item_number'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['seller_unique_item_id'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['external_product_id'].to_string(
+                                                                        index=False))
+            if auto == 1:
+                print('商品已出品，跳过')
+                self.jumb_goods.append([kakaku_title])
+                return
+            else:
+                o_question = QMessageBox.question(self, 'JAN重复', txt_str,
+                                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if o_question == QMessageBox.No:
+                    self.jumb_goods.append([kakaku_title])
+                    return
+        num_jan = str(int(jan))
+        if self.excel_data['external_product_id'].str.contains(num_jan, regex=False).any() and PD == 0:
+            find_title_rows = self.excel_data[self.excel_data['external_product_id'].str.contains(jan, regex=False)]
+            print(f"商品 '{title}' 已出品过")
+            txt_str = '{}\n{}\n{}\n{}\n以出品，是否重新出品？'.format(find_title_rows['item_name'].to_string(index=False),
+                                                                    find_title_rows['item_number'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['seller_unique_item_id'].to_string(
+                                                                        index=False),
+                                                                    find_title_rows['external_product_id'].to_string(
+                                                                        index=False))
+            if auto == 1:
+                print('商品已出品，跳过')
+                self.jumb_goods.append([kakaku_title])
+                return
+            else:
+                o_question = QMessageBox.question(self, 'JAN重复', txt_str,
+                                                  QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+                if o_question == QMessageBox.No:
+                    self.jumb_goods.append([kakaku_title])
+                    return
 
         current_row_count = self.tableWidget.rowCount()  # 当前表格有多少行
         self.tableWidget.insertRow(current_row_count)
+
+        cell = QTableWidgetItem(jan)
+        self.tableWidget.setItem(current_row_count, 0, cell)
+
         cell = QTableWidgetItem(xingban)
         self.tableWidget.setItem(current_row_count, 1, cell)
+
+        cell = QTableWidgetItem(goods)
+        self.tableWidget.setItem(current_row_count, 2, cell)
+
         cell = QTableWidgetItem(title)
         self.tableWidget.setItem(current_row_count, 3, cell)
 
         cell = QTableWidgetItem(str(price))
         self.tableWidget.setItem(current_row_count, 4, cell)
+
         cell = QTableWidgetItem('0')
         self.tableWidget.setItem(current_row_count, 5, cell)
+
         cell = QTableWidgetItem(str(img_num))
         self.tableWidget.setItem(current_row_count, 6, cell)
+
         cell = QTableWidgetItem('3')
         self.tableWidget.setItem(current_row_count, 7, cell)
-        cell = QTableWidgetItem('119079')
+
+        cell = QTableWidgetItem('630158')
         self.tableWidget.setItem(current_row_count, 8, cell)
-        cell = QTableWidgetItem(title)
+
+        cell = QTableWidgetItem(kakaku_title)
         self.tableWidget.setItem(current_row_count, 9, cell)
+
         cell = QTableWidgetItem(url)
         self.tableWidget.setItem(current_row_count, 10, cell)
-        cell = QTableWidgetItem(ctgmane)
+
+        cell = QTableWidgetItem(ctgname)
         self.tableWidget.setItem(current_row_count, 11, cell)
+
         cell = QTableWidgetItem(mkrname)
         self.tableWidget.setItem(current_row_count, 12, cell)
+
+        cell = QTableWidgetItem(viewurl)
+        self.tableWidget.setItem(current_row_count, 13, cell)
+
         self.statusbar.showMessage(f'表格现有{current_row_count+1}行')
 
 
@@ -239,35 +632,44 @@ class Get_kakakutab_Thread(QThread):
         print('线程开始获取URL')
 
         #获取网页源码中的javascript 部分并解析出字典后提取kakakuID,也就是K开始的部分
-        if 'pdf_pg' in self.url:
-            url_value = re.findall(r'[\s\S]+pdf_pg',self.url)[0]
-            print(url_value,self.parameter)
-            pass
-        self.html = self.get_kakaku_html(self.url)
 
-        #如果K在URL内，则直接把K添入数组
-        if 'K' in self.url:
-            K_ID = re.findall(r'K\d+',self.url)[0]
-            self.kakaku_urls.append(K_ID)
-        else:
-            K_str = re.findall(r'var variationPopupData\s*=\s*(.*?)\s*</script>', self.html, re.DOTALL)[0]
-            K_dict = re.findall(r'[\s\S]+}', K_str)[0]
-            self.data_dict = json.loads(K_dict)
-            # print(self.data_dict)
-            for key, value in self.data_dict.items():
-                # print(key)
-                # 如果字典中存在 "K" 键,则直接提取K
-                if "K" in key:
-                    self.kakaku_urls.append(key)
+        satrt_num = int(self.parameter[0])
+        end_num = int(self.parameter[1]) + 1
+        for i in range(satrt_num,end_num):
+            print(f'i={i}')
+            if 'pdf_pg' in self.url:
+                url_value = re.findall(r'[\s\S]+pdf_pg', self.url)[0]
+                self.url = f'{url_value}={i}'
+                print(self.url)
 
-                # 如果字典中存在 "Items" 键，并且其值是一个列表
-                elif "Items" in value and isinstance(value["Items"], list):
-                    # 遍历 "Items" 列表中的每个字典
-                    for item in value["Items"]:
-                        # 如果字典中存在 "ChildProductID" 键
-                        if "ChildProductID" in item:
-                            # 将 "ChildProductID" 的值添加到数组中
-                            self.kakaku_urls.append(item["ChildProductID"])
+            self.html = self.get_kakaku_html(self.url)
+
+            #如果K在URL内，则直接把K添入数组
+            if 'K' in self.url:
+                K_ID = re.findall(r'K\d+',self.url)[0]
+                self.kakaku_urls.append(K_ID)
+            else:
+                K_str = re.findall(r'var variationPopupData\s*=\s*(.*?)\s*</script>', self.html, re.DOTALL)[0]
+                K_dict = re.findall(r'[\s\S]+}', K_str)[0]
+                self.data_dict = json.loads(K_dict)
+                # print(self.data_dict)
+                for key, value in self.data_dict.items():
+                    # print(key)
+                    # 如果字典中存在 "K" 键,则直接提取K
+                    if "K" in key:
+                        self.kakaku_urls.append(key)
+
+                    # 如果字典中存在 "Items" 键，并且其值是一个列表
+                    elif "Items" in value and isinstance(value["Items"], list):
+                        # 遍历 "Items" 列表中的每个字典
+                        for item in value["Items"]:
+                            # 如果字典中存在 "ChildProductID" 键
+                            if "ChildProductID" in item:
+                                # 将 "ChildProductID" 的值添加到数组中
+                                self.kakaku_urls.append(item["ChildProductID"])
+
+            if 'pdf_pg' not in self.url:
+                break
         print(self.kakaku_urls,len(self.kakaku_urls))
         # for item in self.kakaku_urls:
         #     print(item)
@@ -277,6 +679,7 @@ class Get_kakakutab_Thread(QThread):
 
     def get_kakaku_html(self,url):
         # print('getkakaku',filenumber)
+
         hd = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -301,25 +704,40 @@ class Get_kakakutab_Thread(QThread):
 class Work_Thread(QThread):
     # 定义信号，用于在线程中传递数据
     get_OK = pyqtSignal(list)
+
     run_over = pyqtSignal(str)
 
-    def __init__(self, urls_list):
+    def __init__(self, urls_list,title_key):
         super().__init__()
 
         self.urls_list = urls_list
+        self.title_key = title_key
+        self.html_err = 0
 
     def run(self):
         print('线程开始获取商品数据')
 
         #遍历url数组，获取商品信息
         for i,item in enumerate(self.urls_list):
+
             self.url = 'https://kakaku.com/item/' + item
             self.html = self.get_kakaku_html(self.url)
+            if self.html == None:
+                self.html_err +=1
+                continue
+            if self.html_err >= 3:
+                time.sleep(5000)
+            elif self.html_err >= 5:
+                self.run_over.emit('获取出错，结束工作')
+                return
             data = self.getxpath(self.html)
-            data.append(self.url)
-            # 发送信号，通知主线程数据已准备好
-            self.get_OK.emit(data)
-        self.run_over.emit('over')
+            if data == 're':
+                self.get_OK.emit(['re'])
+            else:
+                data.append(self.url)
+                # 发送信号，通知主线程数据已准备好
+                self.get_OK.emit(data)
+        self.run_over.emit('当前获取工作完成')
 
     def get_kakaku_html(self,url):
         # print('getkakaku',filenumber)
@@ -329,7 +747,11 @@ class Work_Thread(QThread):
             "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8",
 
         }
-        htmlcode = requests.get(url, headers=hd)
+        try:
+            htmlcode = requests.get(url, headers=hd,timeout=10)
+        except:
+            htmlcode = None
+            return htmlcode
         global  status_code
         if htmlcode.status_code != 200:
             status_code +=1
@@ -343,10 +765,122 @@ class Work_Thread(QThread):
         htmlcode = htmlcode.replace("&gt;", ">")
         return htmlcode
 
+    #正则获取tab表
+    def get_tab(self,html):
+        print('正则开始获取价格网tab')
+        url = self.url + '/spec/#tab'
+        html = self.get_kakaku_html(url)
+        tab_html = re.findall(r'<div id="mainLeft">[\s\S]+?</table>',html)[0]
+        try:
+            li_html = re.findall(r'<li>[\s\S]+</li>',tab_html)[0]
+        except:
+            li_html = ''
+        try:
+            tab_all_html = re.findall(r'<table[\s\S]+',tab_html)[0]
+        except:
+            tab_all_html = ''
+        goods_html = li_html + '\n' + tab_all_html
+        # 移除所有<a>标签
+        goods_html = re.sub(r'<a[\s\S]+?>', '', goods_html)
+        goods_html = re.sub(r'</a>', '', goods_html)
+
+        # 移除所有<img>标签
+        goods_html = re.sub(r'<img[\s\S]+?>', '', goods_html)
+
+        # 移除所有URL
+        goods_html = re.sub(r'https?://\S+', '', goods_html)
+
+        #表格宽度设为1
+        goods_html = re.sub(r'border="0"', ' border="1"', goods_html)
+
+        # print(goods_html)
+        return goods_html
+
     def getxpath(self, html):
         print('getxpath')
 
-        #获取厂家分类和商品分类
+        #设置获取JAN的字典
+        kakaku_jan_dict = {"1877":"(?<=%252F)\\d{11,}",
+                           "1639":"(?<=%252F)\\d{11,}",
+                           '1924':'(?<=%252F)\\d{11,}',
+                           '1925':'(?<=prod%25253D)\\d{11,}',
+                           '74':'(?<=%2Fg)\\d{11,}',
+                           '1488':'(?<=%2Fg)\\d{11,}',
+                           '20':'(?<=%2Fg)\\d{11,}',
+                           '1733':'(?<=shop%252Fg%252Fg)\\d{11,}',
+                           '1827':'(?<=%252F)\\d{11,}',
+                           '218':'(?<=item%2F)\\d{11,}',
+                           '2305':'(?<=%2F)\\d{11,}',
+                           '1384':'(?<=%2F)\\d{11,}',
+                           '2506':'(?<=itemcode%3D)\\d{11,}',
+                           '2410':'(?<=itemcode%3D)\\d{11,}',
+                           '2789':'(?<=itemcode%3D)\\d{11,}',
+                           '2519':'(?<=itemcode%3D)\\d{11,}',
+                           '2626':'(?<=itemcode%253D)\\d{11,}',
+                           '2685':'(?<=itemcode%253D)\\d{11,}',
+                           '2524':'(?<=itemcode%3D)\\d{11,}',
+                           '2729':'(?<=itemcode%3D)\\d{11,}',
+                           '2411':'(?<=itemcode%3D)\\d{11,}',
+                           '2716':'(?<=itemcode%3D)\\d{11,}',
+                           '2213':'(?<=itemcode%3D)\\d{11,}',
+                           '2586':'(?<=itemcode%3D)\\d{11,}',
+                           '2726':'(?<=itemcode%3D)\\d{11,}',
+                           '2497':'(?<=itemcode%3D)\\d{11,}',
+                           '2546':'(?<=itemcode%3D)\\d{11,}',
+                           '2651':'(?<=itemcode%3D)\\d{11,}',
+                           '2649':'(?<=itemcode%3D)\\d{11,}',
+                           '2319':'(?<=itemcode%3D)\\d{11,}',
+                           '2781':'(?<=itemcode%3D)\\d{11,}',
+                           '3504':'(?<=%252F)\\d{11,}',
+                           '2585':'(?<=itemcode%3D)\\d{11,}',
+                           '3779':'(?<=%252F)\\d{11,}',
+                           '3757':'(?<=%252F)\\d{11,}',
+                           '3756':'(?<=%252F)\\d{11,}',
+                           '3720':'(?<=%2Fg)\\d{11,}',
+                           '3830':'(?<=%252F)\\d{11,}',
+                           '3729':'(?<=%252F)\\d{11,}',
+                           '3728':'(?<=%252F)\\d{11,}',
+                           '3832':'(?<=%252F)\\d{11,}',
+                           '3713':'(?<=%252F)\\d{11,}',
+                           '3748':'(?<=%2Fg)\\d{11,}',
+                           '2114':'(?<=%2F)\\d{11,}',
+                           '3708':'(?<=%252F)\\d{11,}',
+                           '3840':'(?<=%252F)\\d{11,}',
+                           '8090':'(?<=itemcode%3D)\\d{11,}',
+                           '2457':'(?<=itemcode%3D)\\d{11,}',
+                           '130':'(?<=%2F)\\d{11,}',
+                           '2510':'(?<=itemcode%3D)\\d{11,}',
+                           '2675':'(?<=itemcode%3D)\\d{11,}',
+                           '1914':'(?<=itemcode%3D)\\d{11,}',
+                           '2321':'(?<=itemcode%3D)\\d{11,}',
+                           '2640':'(?<=itemcode%3D)\\d{11,}',
+                           '380':'(?<=%2Fg)\\d{11,}',
+                           '2820':'(?<=itemcode%3D)\\d{11,}',
+                           '54188':'(?<=itemcode%3D)\\d{11,}',
+                           '3750':'(?<=%252F)\\d{11,}',
+                           '2632':'(?<=itemcode%3D)\\d{11,}',
+                           '54071':'(?<=%253D)\\d{11,}',
+                           '2302':'(?<=itemcode%3D)\\d{11,}',
+                           '54051':'(?<=itemcode%253D)\\d{11,}',
+                           '2507':'(?<=itemcode%3D)\\d{11,}'}
+
+        tablecode = "//tr"
+        mytree = etree.HTML(html)
+        # 有时去掉编码可以正确识别网页
+        # mytree = etree.HTML(html.encode(code))
+        tr_list = mytree.xpath(tablecode)
+        # print('lentr',len(tr_list))
+
+        #获取商家数，如果小于5则不出品
+        try:
+            shangjishu_num = int(re.findall(r'(?<=itemprop="offerCount">)\d+',html)[0])
+            print(f'获取的商家数={shangjishu_num}')
+            if shangjishu_num < 5:
+                return 're'
+        except:
+            pass
+
+        #获取厂家 ，分类
         try:
             mkrname = re.findall(r"(?<=mkrname: ')[\s\S]+?(?=')",html)[0]
         except:
@@ -355,18 +889,11 @@ class Work_Thread(QThread):
             ctgname = re.findall(r"(?<=ctgname: ')[\s\S]+?(?=')",html)[0]
         except:
             ctgname = ''
-        print(mkrname,ctgname)
 
-
-        tablecode = "//tr"
-        mytree = etree.HTML(html)
-        # 有时去掉编码可以正确识别网页
-        # mytree = etree.HTML(html.encode(code))
-        tr_list = mytree.xpath(tablecode)
-        # print('lentr',len(tr_list))
         #设置图片数量
         img_num = 0
         img_tab_num = 0
+
 
         #设置价格
         price_ls = '9999999'
@@ -374,7 +901,7 @@ class Work_Thread(QThread):
             title = mytree.xpath('//div[@id=\'titleBox\']/div[@class=\'boxL\']/h2/text()')[0]
             # print(title)
         except:
-            return ''
+            return 're'
         try:
             img = mytree.xpath('//*[@id="imgBox"]/a/img/@src')[0]
             # print(img)
@@ -389,17 +916,63 @@ class Work_Thread(QThread):
         except:
             img_tab_num = 0
 
+        title = self.str_tihuanzifu(title)
+        mkrname = self.str_tihuanzifu(mkrname)
+
+        kakakutitle = title
+        #获取价格网商品简要说明并写入标题。
+        try:
+            title_tiem = re.findall(r'id="specBox"[\s\S]+?<span',html)[0]
+        except:
+            try:
+                title_tiem = re.findall(r'class="variInfo"[\s\S]+?<span', html)[0]
+            except:
+                title_tiem = []
+        title_tiem = re.findall(r'(?<=<p>)[\s\S]+?(?=<)',title_tiem)
+        # print(title_tiem,len(title_tiem))
+        if mkrname != '':
+            title = mkrname + ' ' + title
+        title = f'{title} {self.title_key} '
+        if len(title_tiem) > 0:
+            title_list = title_tiem[0].split(' ')
+            # print(title_list)
+            for item in title_list:
+                title_allnum = len(title) + 1 + len(item)
+                if title_allnum< 99:
+                    item = item.replace('○','有')
+                    title = title + ' ' + item
+                else:
+                    break
+        print(title,len(title))
+
         img_num = img_tab_num + img_num
         print(f'共有{img_num}张图片')
 
-        #如果img_num =0 也就是没有图片，则调用下面的程序获取图片
-        img_view = self.get_kakakuimg_view()
+        #如果图片是0，则获取kakaku的其图片
+        kakaku_view_imgurl = ''
+        if img_num == 0:
+            kakaku_view_imgurl = self.get_kakakuimg_view()
+            print(kakaku_view_imgurl)
+
+        print(mkrname)
+        if mkrname in paichu_dict:
+            if paichu_dict[mkrname] == 'no_img':
+                print(f'{mkrname} 厂家图片侵权，设置图片为空图！')
+                kakaku_view_imgurl = 'http://gd.image-qoo10.jp/li/516/601/4861601516.jpg'
+                img_num = 0
+            else:
+                print(f'{mkrname} 厂家不在出品，跳过！')
+                return 're'
+
 
         # print(title,date,pm,ds)
         #a 数组元素位置 1= title,2=图片数量，3=价格，4=0|1 ，0代表下架，○商家少于4家，
         a = []
         quan_list = []
+        jan_list = []
+        jan = ''
         for td in tr_list:
+            # print(td)
             try:
                 # xl为序列，jg为价格，zk为在库状态，sj为商品名
                 xl = td.xpath('./td[1]/span[1]//text()')
@@ -424,11 +997,34 @@ class Work_Thread(QThread):
                     a.append([title, img_num, 'pm', 'ds', xl, jg, zk, sj])
                 if zk == '○':
                     quan_list.append([xl, jg, zk, sj])
-                    if len(quan_list) >=4:
+                    if len(quan_list) ==4:
                         price_ls = jg
-                        break
+
+                #下面获取JAN
+                shopcd_html = etree.tostring(td,encoding='unicode')
+                shopcd = re.findall(r'(?<=ShopCD=)\d+',shopcd_html)[0]
+                if kakaku_jan_dict[shopcd]:
+                    # print(shopcd)
+                    jan_get = re.findall(kakaku_jan_dict[shopcd],shopcd_html)[0]
+                    jan_list.append(jan_get)
+                    # print(jan_get)
+                # print(shopcd_html)
+
             except:
                 pass
+
+        #查看JAN数组哪个元素最多
+        counter = Counter(jan_list)
+        try:
+            max_jan,min_jan = counter.most_common(1)[0]
+        except:
+            return 're'
+
+        if max_jan:
+            jan = max_jan
+
+        print(max_jan,min_jan,jan)
+
         # print(a)
         if price_ls == '9999999':
             try:
@@ -443,16 +1039,25 @@ class Work_Thread(QThread):
 
         price = int((int(''.join(jg_zl)) +2500 )/ 0.92)     #计算价格，其它没必要，出品时全部下架状态，在扫描后才能上架
         # print(price)
+        #设置大于15万的不出品
+        if price > 120000:
+            return 're'
 
         #在title中获取型号
         try:
-            xingban = re.findall(r'([A-Za-z0-9]+[-/]+[A-Za-z0-9-/()]*)', title)
+            xingban = re.findall(r'([A-Za-z0-9]+[-/]+[A-Za-z0-9-/()\.]*)', kakakutitle)
             # print(xingban)
             xingban = xingban[-1]
         except:
             xingban = ""
 
-        return [title,xingban,img_num,price,mkrname,ctgname]
+        #处理xingban
+        xingban = self.zhengli_xingban(xingban)
+
+        #开始获取表格数据
+        tab_data = self.get_tab(self.html)
+        #返回数组内容：标题，型号，图片数量，价格，商品详情，JAN，厂家，分类，没有图片时取得的其它家图片，价格网的原标题
+        return [title,xingban,img_num,price,tab_data,jan,mkrname,ctgname,kakaku_view_imgurl,kakakutitle]
 
     def getxpathphone(self,html, code):
         print('采集手机')
@@ -513,11 +1118,57 @@ class Work_Thread(QThread):
 
     def get_kakakuimg_view(self):
         print('开始获取价格网其它图片')
+        kakaku_img_view_list = ['qoo10.jp','amazon','rakuten','dospara','ark-pc']
+
+        #amazon的图片判断后，修改_SL160_为_SL800_
         html = self.get_kakaku_html(self.url + '/imgview/')
-        with open(r"C:\Users\user\Documents\strJSON.txt", "w", encoding="utf-8") as file:
-            file.write(html)
-        td_list = re.findall(r'td width="33%">[\s\S]+?</td>',html)
-        print(html,td_list)
+        # with open(r"C:\Users\user\Documents\strJSON.txt", "w", encoding="utf-8") as file:
+        #     file.write(html)
+        tab_html = re.findall(r'<div id="main">[\s\S]+?</table>',html)[0]
+        url_list = re.findall(r'(?<=src=")[\s\S]+?(?=")', tab_html)
+        print(len(url_list))
+
+        view_url = ''
+        for makeID in kakaku_img_view_list:
+
+            for url in url_list:
+
+                print(url)
+                if makeID in url:
+                    if makeID == 'amazon':
+                        view_url = re.sub(r'SL160','SL800',url)
+                        return view_url
+                    elif makeID == 'rakuten':
+                        view_url = re.findall(r'http[\s\S]+?jpg', url)[0]
+                        return view_url
+                    elif makeID in url:
+                        view_url = url
+                        return view_url
+        return view_url
+
+    def zhengli_xingban(self,xb):
+
+        xingban = xb.strip()
+        characters_to_replace = ["[", "]", "(", ")", " ", "　", "/"]
+        original_string = "你的字符串[含有]这些(字符)之一 / 或者 空格 以及 全角空格"
+        replacement_string = ""
+
+        for char in xingban:
+            # 如果字符在替换列表中，就替换为空字符串，否则保留原字符
+            replacement_string += char if char not in characters_to_replace else "-"
+
+        if len(replacement_string) > 20:
+            replacement_string = replacement_string.replace('-','')
+        return replacement_string
+
+    #替换字符串中的特殊字符
+    def str_tihuanzifu(self,str_txt):
+        str_txt = str_txt.replace('\\u0026','&')
+        str_txt = str_txt.replace('\\/', '/')
+        return str_txt
+
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
