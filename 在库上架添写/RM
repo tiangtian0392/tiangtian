@@ -3,8 +3,10 @@ https://kakaku.com/item/K0001556195/ Plasmacluster Beauty IB-WX901-B [ミッド�
 NJ-AWB10-W 加多少钱 46749 43009
 https://kakaku.com/watch_accessory/watch/itemlist.aspx?pdf_ma=17&pdf_vi=c カシオ(CASIO) 腕時計
 
-document.querySelector('input[name="viwb2050ActionBean.size"][value="S"]').click();  JS点击元素
-document.getElementById("form_viwb3040ActionBean_lastName").value = "你的姓";  JS，添写内容
+document.querySelector('input[name="viwb2050ActionBean.size"][value="S"]').click(); JS点击Sサイズ
+document.querySelector('input[type="checkbox"][value="01"]').click(); JS点击精密機械
+document.querySelector('input[name="viwb2050ActionBean.notProhibited"]').click(); JS点击今回の荷物は禁制品に該当しません
+document.getElementById("form_viwb3040ActionBean_lastName").value = "你的姓";  JS，添写姓
 
 
 以下按键精灵
