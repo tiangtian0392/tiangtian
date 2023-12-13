@@ -6,3 +6,42 @@ https://kakaku.com/watch_accessory/watch/itemlist.aspx?pdf_ma=17&pdf_vi=c カシ
 document.querySelector('input[name="viwb2050ActionBean.size"][value="S"]').click();  JS点击元素
 document.getElementById("form_viwb3040ActionBean_lastName").value = "你的姓";  JS，添写内容
 
+
+以下按键精灵
+
+Dim bRet = ""
+Dim hWeb = ""
+Dim Tel = ""
+Dim sRet = ""
+Dim name = ""
+Dim objDatatable = ""
+Dim temp = ""
+Dim title = ""
+Dim arrayData = ""
+title = ["","配送状態","注文番号","カート番号","配送会社","送り状番号","発送日","注文日","入金日","お届け希望日","発送予定日","配送完了日","配送方法","商品番号","商品名","数量","オプション情報","オプションコード","おまけ","受取人名","受取人名(フリガナ)","受取人電話番号","受取人携帯電話番号","住所","郵便番号","国家","送料の決済","決済サイト","通貨","購入者決済金額","販売価格","割引額","注文金額の合計","供給原価の合計","","購入者名","購入者名(フリガナ)","配送要請事項","購入者電話番号","購入者携帯電話番号","Email","販売者商品コード","JANコード","規格番号","プレゼント贈り主","外部広告","素材","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""]
+arrayData = UiElement.DataScrap({"html":[{"idx":1,"parentid":"__grid_goods_grid","tag":"TABLE"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[],"ExtractTable":1},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+arrayData[0] = title
+objDatatable = Datatable.BuildDataTable(arrayData,title)
+objDatatable = Datatable.DropDuplicatesDataTable(objDatatable,["住所"],"first")
+objDatatable = Datatable.SliceDataTable(objDatatable,[],["配送会社","受取人名","受取人電話番号","受取人携帯電話番号","住所","郵便番号","配送要請事項","販売者商品コード","JANコード","商品名"])
+arrayData = Datatable.GetDataTableByArray(objDatatable,False)
+For Each value In arrayData
+	If value[0]="ゆうパケット"
+		Continue
+		
+	Else
+		
+	End If
+	
+	姓名 = value[1]
+	电话 = DigitFromStr(value[3])
+	邮编 = DigitFromStr(value[5])
+	sRet = Replace(value[3],"","",False)
+	hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	bRet = WebBrowser.SwitchTab(hWeb,"url","https://sp-send.kuronekoyamato.co.jp/smpTaqWeb/Viwb3020Action_doNextDirect.action",{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	sRet = WebBrowser.RunJS(hWeb,'''document.getElementById("form_viwb3040ActionBean_lastName").value = "你的姓"''',True,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+Next
+
+
+
+
