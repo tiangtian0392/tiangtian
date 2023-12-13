@@ -7,8 +7,10 @@ document.querySelector('input[name="viwb2050ActionBean.size"][value="S"]').click
 document.querySelector('input[type="checkbox"][value="01"]').click(); JS点击精密機械
 document.querySelector('input[name="viwb2050ActionBean.notProhibited"]').click(); JS点击今回の荷物は禁制品に該当しません
 document.getElementById("form_viwb3040ActionBean_lastName").value = "你的姓";  JS，添写姓
-
-
+document.getElementById("form_viwb3040ActionBean_firstName").value = "你的名";  JS，添写名
+document.getElementById("form_viwb3040ActionBean_zipCode").value = "2380111";  JS，添邮编
+document.getElementById("btnSearch").click();  JS点击再検索  查找邮编
+document.getElementById("form_viwb3040ActionBean_phoneNumber").value = "电话";  JS，添电话
 以下按键精灵
 
 Dim bRet = ""
