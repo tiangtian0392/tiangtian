@@ -13,6 +13,32 @@ document.getElementById("form_viwb3040ActionBean_firstName").value = "你的名"
 document.getElementById("form_viwb3040ActionBean_zipCode").value = "2380111";  JS，添邮编
 document.getElementById("btnSearch").click();  JS点击再検索  查找邮编
 document.getElementById("form_viwb3040ActionBean_phoneNumber").value = "电话";  JS，添电话
+
+(function() {
+    function fun(text_str) {
+        document.getElementById("prompt-textarea").value = text_str;
+    }
+    fun('adafadsf');
+    return true;
+})();
+上面是还有参数的JS
+下面是个子 
+Dim sRet = ""
+Dim iRet = ""
+Dim hWeb = ""
+
+Dim userName,pwd
+userName = "admin"
+pwd = '1234'
+
+Dim jsCode = ''
+jsCode = 'function (){function fun(userName,pwd){ document.querySelector("#normal_form_userName").value=userName;document.querySelector("#normal_form_password").value=pwd;} fun("'&userName&'","'&pwd&'")  ;return true;}'
+
+hWeb = WebBrowser.Create("chrome","about:blank",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+iRet = WebBrowser.GoURL(hWeb,"https://d-commander.uibot.com.cn/",True,"",30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+sRet = WebBrowser.RunJS(hWeb,jsCode,True,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+TracePrint(sRet)
+
 以下按键精灵
 
 Dim bRet = ""
