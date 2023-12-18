@@ -1,0 +1,51 @@
+Dim 记数 = ""
+Dim sRet = ""
+Dim arrayRet = ""
+Dim iRet = ""
+Dim temp = ""
+Dim objExcelWorkBook = ""
+Function Getsaizi(tab_url)	
+	
+	Try 3
+		源码 = HTTP.Get(tab_url, {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, 60000)
+	Catch e
+		TracePrint("记录尺寸出错，没有记录")
+	Else
+		源码1 = Regex.FindStr(源码,"(?<=サイズ)[\\s\\S]+?(?=</td)",0)
+		源码1 = Regex.FindStr(源码1,"(?<=<td>)[\\s\\S]+",0)
+		arrRet = Regex.FindAll(源码1,"\\d+")
+		单位 = Regex.FindStr(源码1,"[c|m|C|M][m|M]",0)
+		值 = 0
+		For Each value In arrRet
+			value = CInt(value)
+			值 = 值+value
+			
+		Next
+		If 单位="cm" Or 单位="CM" 
+			值 = CInt(值)
+			
+		Else
+			值 = CInt(值/10)
+			
+		End If
+		Return 值
+	End Try
+	
+End Function
+在库出力文件名 = "在庫出力20231215.csv"
+objExcelWorkBook = Excel.BindBook(在库出力文件名)
+arrayRet = Excel.ReadColumn(objExcelWorkBook,0,"K2")
+记数 = 2
+For Each value In arrayRet
+	K_ID = Regex.FindStr(value,"K\\d+",0)
+	url = "https://kakaku.com/item/"&K_ID&"/spec/#tab"
+	TracePrint(url)
+	
+	saizi = Getsaizi(url)
+	Excel.WriteCell(objExcelWorkBook,0,"R"&记数,saizi,False)
+	TracePrint(saizi)
+	记数 = 记数+1
+	
+Next
+
+
