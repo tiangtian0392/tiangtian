@@ -1,0 +1,21 @@
+from window_API import Ui_MainWindow
+from PyQt5.QtWidgets import *
+import json
+import sys
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class mywindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    signal_1 = QtCore.pyqtSignal(str)
+    def __init__(self):
+        super(mywindow, self).__init__()
+        self.setupUi(self)
+        self.setWindowTitle('乐天API查询 1.0')
+
+
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    win = mywindow()
+
+    win.show()
+    sys.exit(app.exec_())
