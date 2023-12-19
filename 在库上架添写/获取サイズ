@@ -11,9 +11,11 @@ Function Getsaizi(tab_url)
 	Catch e
 		TracePrint("记录尺寸出错，没有记录")
 	Else
-		源码1 = Regex.FindStr(源码,"(?<=サイズ)[\\s\\S]+?(?=</td)",0)
-		源码1 = Regex.FindStr(源码1,"(?<=<td>)[\\s\\S]+",0)
-		arrRet = Regex.FindAll(源码1,"\\d+")
+		源码1 = Regex.FindStr(源码,"(?<=<strong>サイズ)[\\s\\S]+?(?=</table>)",0)
+		TracePrint(源码1)
+		源码1 = Regex.FindStr(源码1,"(?<=<td>)([\\s\\S]+x[\\s\\S]+[mm|MM|cm|CM])</td>",0)
+		arrRet = Regex.FindAll(源码1,"[\\d\\.]+")
+		TracePrint(源码1,arrRet)
 		单位 = Regex.FindStr(源码1,"[c|m|C|M][m|M]",0)
 		值 = 0
 		For Each value In arrRet
@@ -32,7 +34,7 @@ Function Getsaizi(tab_url)
 	End Try
 	
 End Function
-在库出力文件名 = "在庫出力20231215.csv"
+在库出力文件名 = "在庫出力.xlsx"
 objExcelWorkBook = Excel.BindBook(在库出力文件名)
 arrayRet = Excel.ReadColumn(objExcelWorkBook,0,"K2")
 记数 = 2
