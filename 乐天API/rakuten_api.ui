@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QComboBox" name="comboBox_API">
+        <item>
+         <property name="text">
+          <string>楽天API</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QRadioButton" name="radioButton_One">
+          <property name="text">
+           <string>单选</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButton_All">
+          <property name="text">
+           <string>全选</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox_paixu">
+        <item>
+         <property name="text">
+          <string>価格順（昇順）</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>価格順（降順）</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>レビュー件数順（昇順）</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>レビュー件数順（降順）</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="lineEdit_keyword">
+        <property name="placeholderText">
+         <string>JAN或搜索关键词</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>start</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <widget class="QTableWidget" name="tableWidget">
+      <column>
+       <property name="text">
+        <string>商家CODE</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>店舗名</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>商品名</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>商品価格</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>送料フラグ</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>商品説明文</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>商品URL</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menumenu">
+    <property name="title">
+     <string>menu</string>
+    </property>
+    <addaction name="actionaa"/>
+   </widget>
+   <addaction name="menumenu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionaa">
+   <property name="text">
+    <string>aa</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
