@@ -7,13 +7,19 @@ Dim arrRet = ""
 Dim sRet = ""
 Dim arrayRet = ""
 files_path_list = Dialog.OpenFiles("Z:\\bazhuayu","CSV文档 (csv、log)|*.csv;*.log|任意文件|*","选择多个文件")
+title_banhao_list = CSV.Open("Z:\\bazhuayu\\title_banhao.csv",{"encoding":"auto"})
+pinming_dict = {}
+For Each value In title_banhao_list
+	pinming_dict[value[1]] = value[21]
+	
+Next
 提取百分比 = 8
-out_list = [["商品名","差价比","价格1","价格2"]]
+out_list = [["商品名","差价比","价格1","价格2","URL"]]
 For Each value In files_path_list
 	TracePrint("读入",value,"文件")
 	arrayRet = CSV.Open(value,{"encoding":"auto"})
 	产品名 = ""
-		For Each file In arrayRet
+	For Each file In arrayRet
 		If 产品名<>file[0]
 			
 			产品名 = file[0]
@@ -41,7 +47,7 @@ For Each value In files_path_list
 			
 		End If
 		If 价格1<>0 And 价格2=0 And 价格<>""  
-						价格2 = file[5]
+			价格2 = file[5]
 			价格2 = DigitFromStr(价格2)
 			价格2 = CInt(价格2)
 			
@@ -51,9 +57,9 @@ For Each value In files_path_list
 			
 		End If
 		If 差价比>=提取百分比 And 写入=0
-			out_list = push(out_list,[file[0],差价比,价格1,价格2])
+			out_list = push(out_list,[file[0],差价比,价格1,价格2,pinming_dict[file[0]]])
 			写入 = 1
-			TracePrint([file[0],差价比,价格1,价格2])
+			TracePrint([file[0],差价比,价格1,价格2,pinming_dict[file[0]]])
 			
 		Else
 			
@@ -61,5 +67,7 @@ For Each value In files_path_list
 	Next
 	
 Next
-CSV.Save(out_list,"C:\\Users\\user\\Documents\\提取差价比.csv",{"encoding":"utf-8-sig"})
+save_path = Dialog.SaveFile("Z:\\bazhuayu","csv文档 (csv、log)|*.csv;*.log|任意文件|*","选择路径，添入文件名")
+CSV.Save(out_list,save_path,{"encoding":"utf-8-sig"})
+
 
