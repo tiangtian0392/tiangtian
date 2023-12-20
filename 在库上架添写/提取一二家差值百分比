@@ -1,0 +1,65 @@
+
+Dim 写入 = ""
+Dim iRet = ""
+Dim 价格1 = ""
+Dim temp = ""
+Dim arrRet = ""
+Dim sRet = ""
+Dim arrayRet = ""
+files_path_list = Dialog.OpenFiles("Z:\\bazhuayu","CSV文档 (csv、log)|*.csv;*.log|任意文件|*","选择多个文件")
+提取百分比 = 8
+out_list = [["商品名","差价比","价格1","价格2"]]
+For Each value In files_path_list
+	TracePrint("读入",value,"文件")
+	arrayRet = CSV.Open(value,{"encoding":"auto"})
+	产品名 = ""
+		For Each file In arrayRet
+		If 产品名<>file[0]
+			
+			产品名 = file[0]
+			价格 = ""
+			价格1 = 0
+			价格2 = 0
+			差价比 = 0
+			写入 = 0
+		Else
+			
+		End If
+		
+		Try 1
+			价格 = file[5]
+		Catch e
+		Else
+		End Try
+		If 价格1=0 And 价格<>""  
+			价格1 = file[5]
+			价格1 = DigitFromStr(价格1)
+			价格1 = CInt(价格1)
+			Continue
+			
+		Else
+			
+		End If
+		If 价格1<>0 And 价格2=0 And 价格<>""  
+						价格2 = file[5]
+			价格2 = DigitFromStr(价格2)
+			价格2 = CInt(价格2)
+			
+			差价比 = CInt((价格2-价格1)/价格1*100)
+			TracePrint(价格1,价格2,差价比)
+		Else
+			
+		End If
+		If 差价比>=提取百分比 And 写入=0
+			out_list = push(out_list,[file[0],差价比,价格1,价格2])
+			写入 = 1
+			TracePrint([file[0],差价比,价格1,价格2])
+			
+		Else
+			
+		End If
+	Next
+	
+Next
+CSV.Save(out_list,"C:\\Users\\user\\Documents\\提取差价比.csv",{"encoding":"utf-8-sig"})
+
