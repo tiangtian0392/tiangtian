@@ -6,8 +6,15 @@ Dim temp = ""
 Dim arrRet = ""
 Dim sRet = ""
 Dim arrayRet = ""
-files_path_list = Dialog.OpenFiles("Z:\\bazhuayu","CSV文档 (csv、log)|*.csv;*.log|任意文件|*","选择多个文件")
-title_banhao_list = CSV.Open("Z:\\bazhuayu\\title_banhao.csv",{"encoding":"auto"})
+files_path_list = Dialog.OpenFiles("\\\\LS410D8E6\\tool\\bazhuayu\\","CSV文档 (csv、log)|*.csv;*.log|任意文件|*","选择多个文件")
+list_num = UBound(files_path_list)
+If list_num=-1
+	exit()
+	
+Else
+	
+End If
+title_banhao_list = CSV.Open("\\\\LS410D8E6\\tool\\bazhuayu\\title_banhao.csv",{"encoding":"auto"})
 pinming_dict = {}
 For Each value In title_banhao_list
 	pinming_dict[value[1]] = value[21]
@@ -67,7 +74,7 @@ For Each value In files_path_list
 	Next
 	
 Next
-save_path = Dialog.SaveFile("Z:\\bazhuayu","csv文档 (csv、log)|*.csv;*.log|任意文件|*","选择路径，添入文件名")
+save_path = Dialog.SaveFile("\\\\LS410D8E6\\tool\\bazhuayu\\","csv文档 (csv、log)|*.csv;*.log|任意文件|*","选择路径，添入文件名")
 CSV.Save(out_list,save_path,{"encoding":"utf-8-sig"})
 
 
