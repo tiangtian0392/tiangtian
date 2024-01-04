@@ -1,0 +1,45 @@
+https://www.kuajingyifan.com/ja-JP/c/0
+
+
+Dim from_dizhi = ""
+Dim colors = ""
+Dim arrayData = ""
+Dim pice_str = ""
+Dim title = ""
+Dim iRet = ""
+Dim arrRet = ""
+Dim sRet = ""
+Dim hWeb = ""
+Dim temp = ""
+Dim 源码 = ""
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+源码 = WebBrowser.GetHTML(hWeb,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+menu_list = Regex.FindAll(源码,'data-testid=\\Sproduct-card[\\s\\S]+?</button>')
+iRet = UBound(arrRet)
+TracePrint(menu_list[0],iRet)
+For Each menu In menu_list
+	url_test = Regex.FindStr(menu,'(?<=href=")[\\s\\S]+?(?=")',0)
+	url = "https://www.kuajingyifan.com"&url_test
+	hWeb1 = WebBrowser.Create("chrome",url,30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200,"sBrowserPath":"","sStartArgs":""})
+	goods_html = WebBrowser.GetHTML(hWeb1,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+	title = Regex.FindStr(goods_html,"(?<=<title>)[\\s\\S]+?(?=</title>)",0)
+	pice_str = Regex.FindStr(goods_html,'(?<=<span class="sf-price__regular" data-v-4dad0216 data-v-4dad0216="">).*?(?=</span>)',0)
+	TracePrint(pice_str)
+	pice = DigitFromStr(pice_str)
+	from_dizhi = Regex.FindStr(goods_html,'(?<=<p class="product__description desktop-only" data-v-4dad0216="">).*?(?=</p>)',0)
+	from_dizhi = Replace(from_dizhi,"\n","",False)
+	from_dizhi = Replace(from_dizhi,"\r","",False)
+	
+	colors = ""
+	color_list = UiElement.DataScrap({"html":[{"id":"product","tag":"DIV"}],"wnd":[{"app":"chrome","cls":"Chrome_WidgetWin_1","title":"*"},{"cls":"Chrome_RenderWidgetHostHWND","title":"Chrome Legacy Window"}]},{"Columns":[{"props":["text"],"selecors":[{"className":"product","index":0,"prefix":"","tag":"div","value":"div.product"},{"className":"product__info","index":0,"prefix":">","tag":"div","value":"div.product__info"},{"className":"","index":3,"prefix":">","tag":"div","value":"div:nth-child(3)"},{"className":"product__price-and-rating","index":0,"prefix":">","tag":"div","value":"div.product__price-and-rating"},{"className":"","index":0,"prefix":">","tag":"div","value":"div"},{"className":"","index":1,"prefix":">","tag":"div","value":"div:nth-child(1)"},{"className":"spec","index":0,"prefix":">","tag":"div","value":"div.spec"},{"index":0,"prefix":">","tag":"div","value":"div"},{"className":"cell-name","index":0,"prefix":">","tag":"span","value":"span.cell-name"}]}],"ExtractTable":0},{"objNextLinkElement":"","iMaxNumberOfPage":5,"iMaxNumberOfResult":-1,"iDelayBetweenMS":1000,"bContinueOnError":False})
+	For Each color In color_list
+		colors = colors&color[0]&","
+		
+	Next
+	goods_shuoming = Regex.FindStr(goods_html,'(?<=詳細説明)[\\s\\S]+?(?=搭配)',0)
+	TracePrint(title,pice,from_dizhi,colors)
+	TracePrint(goods_shuoming)
+Next
+
+
+
