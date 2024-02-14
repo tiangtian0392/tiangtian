@@ -1,0 +1,25 @@
+Sub ExportToHTML()
+    Dim selectedCell As Range
+    Dim filePath As String
+
+    ' ?庢?拞揑?尦奿
+    Set selectedCell = Selection
+
+    ' 擛壥杤桳?拞?尦奿丆?戅弌巕掱彉
+    If selectedCell Is Nothing Then
+        MsgBox "?愭??堦槩?尦奿両", vbExclamation
+        Exit Sub
+    End If
+
+    ' 掕?曐懚楬宎
+    filePath = "D:\Users\Documents\彜昳愢柧.html"
+
+    ' 彨?拞?尦奿揑撪梕曐懚? HTML 暥審
+    Open filePath For Output As #1
+    Print #1, selectedCell.Value
+    Close #1
+
+    ' MsgBox "?尦奿撪梕涍幨擖摓丗" & filePath, vbInformation
+    Debug.Print "PrintOK"
+End Sub
+
