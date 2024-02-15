@@ -1,0 +1,41 @@
+
+Dim objRet = ""
+Dim i = ""
+Dim temp = ""
+Dim hWeb = ""
+Dim iPID = ""
+Dim iRet = ""
+Dim arrayRet = ""
+Dim objExcelWorkBook = ""
+Dim bRet = ""
+objExcelWorkBook = Excel.BindBook("Q-20240215.xlsx")
+arrayRet = Excel.ReadColumn(objExcelWorkBook,0,"V5")
+iRet_num = UBound(arrayRet)
+hWeb = WebBrowser.BindBrowser("chrome",10000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+i = 0
+Do While True
+	
+	iRet = Dialog.MsgBox("当前为第"&i+5&"行","UiBot",3,"1",0)
+	If iRet = 6
+		If i>=1
+			
+			i = i-1
+		Else
+			i = 0
+			
+		End If
+		
+	ElseIf iRet = 7
+		
+	ElseIf iRet = 2
+		i = i+1
+	End If
+	TracePrint("当前为第"&i+5&"行")
+	Excel.ActiveBook(objExcelWorkBook)
+	str_text = Excel.ReadCell(objExcelWorkBook,0,"V"&i+5)
+	File.WriteFile("D:\\Users\\Documents\\商品説明.html",str_text,"utf-8")
+	#icon("@res:default.png")
+	iRet = WebBrowser.GoURL(hWeb,"file:///D:\\Users\\Documents\\商品説明.html",True,{},30000,{"bContinueOnError":False,"iDelayAfter":300,"iDelayBefore":200})
+Loop
+iPID = App.Start("D:\\Users\\Documents\\商品説明.html", "0", "1")
+
