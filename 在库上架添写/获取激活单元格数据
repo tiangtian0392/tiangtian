@@ -1,0 +1,26 @@
+
+Dim temp = ""
+Dim arrRet = ""
+Dim objExcelWorkBook_hong = ""
+Dim iRet = ""
+Dim sRet = ""
+Dim objRet = ""
+Dim objExcelWorkBook = ""
+Dim file_name = ""
+hong = "Sub GetRowCol()    Dim selectedCell As Range    Dim cellAddress As String    'Getrow    Set selectedCell = Selection    ' 如果没有?中?元格，?退出子程序    If selectedCell Is Nothing Then        MsgBox \"?先??一个?元格！\", vbExclamation        Exit Sub    End If        ' Get所在的工作表名称    sheetName = selectedCell.Worksheet.Name    ' Get行列号    cellAddress = selectedCell.Row & \"，\" & selectedCell.Column & \"，\" & sheetName    ' 将行列号放入剪?板    With CreateObject(\"New:{1C3B4210-F441-11CE-B9EA-00AA006B1A69}\")        .SetText cellAddress        .PutInClipboard    End With    ' 提示行列号已?制到剪?板    ' MsgBox \"当前?中?元格的行列号已?制到剪?板：\" & vbCrLf & cellAddress, vbInformationEnd Sub"
+file_name = "paichu.xlsx"
+objExcelWorkBook = Excel.BindBook(file_name)
+Excel.ActiveBook(objExcelWorkBook)
+objExcelWorkBook_hong = Excel.BindBook("personal.xlsb")
+objRet = Excel.ExecuteMacro(objExcelWorkBook_hong,"GetRowCol",[])
+sRet = Clipboard.GetText()
+TracePrint(sRet)
+arrRet = Split(sRet,"，")
+arrRet[0] = CInt(arrRet[0])
+arrRet[1] = CInt(arrRet[1])
+TracePrint(arrRet)
+Sheetname = arrRet[2]
+objRet = Excel.ReadCell(objExcelWorkBook,Sheetname,arrRet)
+iRet = Dialog.MsgBox(sRet&"，"&objRet,"UiBot","0","1",0)
+
+
