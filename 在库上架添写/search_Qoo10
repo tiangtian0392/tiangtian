@@ -1,0 +1,81 @@
+import re
+import requests,time
+from bs4 import BeautifulSoup
+
+def get_Qoo10_data(str_text,sortType='SELL_PRICE_ASC'):
+    
+    # sortType='SELL_PRICE_ASC'  价格从低到高排列
+    url = f'https://www.qoo10.jp/s/?keyword_hist={str_text}&sortType={sortType}'
+    hd = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8",
+
+    }
+    htmlcode = requests.get(url, headers=hd)
+    code = htmlcode.apparent_encoding
+    # print('code=', code)
+    htmlcode.encoding = code
+    htmlcode = htmlcode.text
+
+    # print(f'Qoo10价格={htmlcode}')
+
+    return htmlcode
+
+def work_Qoo10(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
+    soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有的 <tr> 标签
+    trs = soup.find_all('tr')
+
+    # 遍历每个 <tr> 标签，提取所需数据
+    print(f'共有商家{len(trs)-1}个')
+    for tr in trs:
+        # print(tr)
+        # 获取该行的 id 属性值
+        tr_id = tr.get('id')
+
+        if tr_id == None:
+            continue
+
+        print('------------------------')
+        # 提取 goodscode
+        goodscode = tr.get('goodscode')
+
+        # 提取商家名
+        merchant_name = tr.find('a', class_='lnk_sh').get('title')
+
+        # 提取 td_prc 值
+        td_prc = tr.find('td', class_='td_prc').find('strong').text
+
+        # 提取 dc_prc 值
+        try:
+            dc_prc = tr.find('span', class_='dc_prc').find('del').text
+        except:
+            dc_prc = ''
+
+        # 使用正则表达式提取 style="width: 93%" 的值
+        try:
+            style_value = tr.find('div', class_='review_rating_star')['style']
+            pingjia = re.search(r'width:\s*([\d.]+)%', style_value).group(1)
+        except:
+            pingjia = ''
+
+        shipping_text = tr.find('div', class_='ship').get_text(strip=True)
+
+        # 提取运费信息
+        if '無料' in shipping_text:  # 如果包含 "無料"，表示免费运费
+            shipping_cost = '無料'
+        else:  # 否则提取运费金额
+            shipping_cost = shipping_text.replace('Shipping rate:', '').strip()
+
+        print("Goodscode:", goodscode)
+        print("店名:", merchant_name)
+        print("现销价:", td_prc)
+        print("原价:", dc_prc)
+        print("好评率:", pingjia)
+        print('运费：',shipping_cost)
+
+html = get_Qoo10_data('4549526807084')
+tr = work_Qoo10(html)
