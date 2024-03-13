@@ -1,13 +1,9 @@
 import re
-import requests
-import sys
-import time
+import requests,time
 from bs4 import BeautifulSoup
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QHeaderView
-from PyQt5.QtCore import pyqtSignal, Qt
 
-
-def get_Qoo10_data(str_text, sortType='SELL_PRICE_ASC'):
+def get_Qoo10_data(str_text,sortType='SELL_PRICE_ASC'):
+    # import requests, re
     url = f'https://www.qoo10.jp/s/?keyword_hist={str_text}&sortType={sortType}'
     hd = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
@@ -17,32 +13,48 @@ def get_Qoo10_data(str_text, sortType='SELL_PRICE_ASC'):
     }
     htmlcode = requests.get(url, headers=hd)
     code = htmlcode.apparent_encoding
+    # print('code=', code)
     htmlcode.encoding = code
     htmlcode = htmlcode.text
 
+    # print(f'Qoo10价格={htmlcode}')
+
     return htmlcode
 
-
 def work_Qoo10(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
     soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有的 <tr> 标签
     trs = soup.find_all('tr')
 
-    data = []
+    # 遍历每个 <tr> 标签，提取所需数据
+    print(f'共有商家{len(trs)-1}个')
     for tr in trs:
+        # print(tr)
+        # 获取该行的 id 属性值
         tr_id = tr.get('id')
 
-        if tr_id is None:
+        if tr_id == None:
             continue
 
+        print('------------------------')
+        # 提取 goodscode
         goodscode = tr.get('goodscode')
+
+        # 提取商家名
         merchant_name = tr.find('a', class_='lnk_sh').get('title')
+
+        # 提取 td_prc 值
         td_prc = tr.find('td', class_='td_prc').find('strong').text
 
+        # 提取 dc_prc 值
         try:
             dc_prc = tr.find('span', class_='dc_prc').find('del').text
         except:
             dc_prc = ''
 
+        # 使用正则表达式提取 style="width: 93%" 的值
         try:
             style_value = tr.find('div', class_='review_rating_star')['style']
             pingjia = re.search(r'width:\s*([\d.]+)%', style_value).group(1)
@@ -51,91 +63,28 @@ def work_Qoo10(htmlcode):
 
         shipping_text = tr.find('div', class_='ship').get_text(strip=True)
 
-        if '無料' in shipping_text:
+        # 提取运费信息
+        if '無料' in shipping_text:  # 如果包含 "無料"，表示免费运费
             shipping_cost = '無料'
-        else:
+        else:  # 否则提取运费金额
             shipping_cost = shipping_text.replace('Shipping rate:', '').strip()
+        try:
+            grade_title = tr.find('span', class_='grd_pw')['title']
+            grade_title = '优秀'
+        except:
+            try:
+                grade_title = tr.find('span', class_='grd_gd')['title']
+                grade_title = '一般'
+            except:
+                grade_title = tr.find('span', class_='grd_gn')['title']
+                grade_title = '普通'
+        print("Goodscode:", goodscode)
+        print("店名:", merchant_name)
+        print("现销价:", td_prc)
+        print("原价:", dc_prc)
+        print("好评率:", pingjia)
+        print('运费：',shipping_cost)
+        print("商家等级标题:", grade_title)
 
-        data.append([goodscode, merchant_name, td_prc, dc_prc, pingjia, shipping_cost])
-
-    return data
-
-
-class Qoo10SearchResultWindow(QMainWindow):
-    itemDoubleClicked = pyqtSignal(str)  # 定义双击信号
-
-    def __init__(self, data):
-        super().__init__()
-        self.data = data
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle('Qoo10 Search Result')
-        self.setGeometry(100, 100, 800, 600)
-
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setGeometry(10, 10, 780, 580)
-        self.tableWidget.setColumnCount(6)
-        self.tableWidget.setHorizontalHeaderLabels(
-            ["Goodscode", "店名", "现销价", "原价", "好评率", "运费"])
-
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget.itemDoubleClicked.connect(self.on_item_double_clicked)  # 连接双击事件到槽函数
-
-        self.populateTable()
-
-    def populateTable(self):
-        for row_index, row_data in enumerate(self.data):
-            for col_index, cell_data in enumerate(row_data):
-                self.tableWidget.setItem(row_index, col_index, QTableWidgetItem(str(cell_data)))
-
-    def on_item_double_clicked(self, item):
-        # 发射双击信号，传递 goodscode
-        goodscode = self.tableWidget.item(item.row(), 0).text()
-        self.itemDoubleClicked.emit(goodscode)
-
-
-class AnotherWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle('Another Window')
-        self.setGeometry(400, 200, 500, 400)
-
-        # 假设这里有一个表格
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setGeometry(10, 10, 480, 380)
-        self.tableWidget.setColumnCount(3)
-        self.tableWidget.setHorizontalHeaderLabels(["Column 1", "Column 2", "Column 3"])
-
-        # 连接双击事件到槽函数
-        self.tableWidget.itemDoubleClicked.connect(self.on_table_item_double_clicked)
-
-    def on_table_item_double_clicked(self, item):
-        # 获取双击行的第一个单元格内容作为关键词
-        keyword = item.text()
-        # 执行 Qoo10 搜索并在窗口中显示结果
-        html = get_Qoo10_data(keyword)
-        data = work_Qoo10(html)
-        q
-        self.qoo10_result_window = Qoo10SearchResultWindow(data)
-        # 连接结果窗口的双击信号到槽函数，用于处理双击行事件
-        self.qoo10_result_window.itemDoubleClicked.connect(self.on_qoo10_result_double_clicked)
-        self.qoo10_result_window.show()
-
-    def on_qoo10_result_double_clicked(self, goodscode):
-        print("Double clicked goodscode:", goodscode)
-        # 在这里可以处理双击行事件，例如打开新的窗口展示更多详细信息等
-
-
-def main():
-    app = QApplication(sys.argv)
-    another_window = AnotherWindow()
-    another_window.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()
+html = get_Qoo10_data('HAC-A-JAQAA')
+tr = work_Qoo10(html)
