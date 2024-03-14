@@ -42,7 +42,7 @@ class Ui_Form(object):
         self.tableWidget.setRowCount(0)
 
         #设置列宽
-        column_width_list = [60,60,50,90,30,30]
+        column_width_list = [55,55,40,80,30,30]
         for i ,item in enumerate(column_width_list):
             self.tableWidget.setColumnWidth(i, item)
 
@@ -118,16 +118,24 @@ class Ui_Form(object):
             # 添加每个单元格的数据
             for col, item in enumerate(rowData):
                 # 创建QTableWidgetItem对象并设置文本
+
                 if '円' in item:
                     item = item.replace('円','')
                 tableItem = QTableWidgetItem(item)
                 # 设置对应单元格
+
+                # 如果是最后一列（title列），则设置提示内容
+                if col == len(rowData) - 1:
+                    continue
                 self.tableWidget.setItem(row, col, tableItem)
+
+                # 设置对应单元格的提示内容为该行的标题
+                tableItem.setToolTip(self.data[row][-1])
 
     #在窗口程序的类中，添加一个公共函数search_with_params，用于接收搜索参数并执行搜索操作
     def search_with_params(self, keyword, sort_type):
         # 设置搜索参数
- 
+
         # 调用点击查找按钮的函数
         self.BT_start(str_txt=None,sortType= sort_type,)
     def get_Qoo10_data(self,str_text, sortType='SELL_PRICE_ASC'):
@@ -212,7 +220,10 @@ class Ui_Form(object):
                     grade_title = tr.find('span', class_='grd_gn')['title']
                     grade_title = '普通'
 
-            self.data.append([td_prc,dc_prc,shipping_cost,merchant_name,grade_title,pingjia,])
+            #提取标题
+            goodstitle = tr.find('img','').get('alt', '')
+
+            self.data.append([td_prc,dc_prc,shipping_cost,merchant_name,grade_title,pingjia,goodstitle])
             print("Goodscode:", goodscode)
             print("店名:", merchant_name)
             print("现销价:", td_prc)
@@ -220,6 +231,7 @@ class Ui_Form(object):
             print("好评率:", pingjia)
             print('运费：', shipping_cost)
             print("商家等级标题:", grade_title)
+            print('商品标题',goodstitle)
 
 
 if __name__ == '__main__':
