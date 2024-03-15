@@ -1,0 +1,186 @@
+import re
+import requests,time
+from bs4 import BeautifulSoup
+
+def get_html_data(url):
+
+    hd = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8,en-US;q=0.7,en;q=0.6",
+
+    }
+    htmlcode = requests.get(url, headers=hd)
+    code = htmlcode.apparent_encoding
+    # print('code=', code)
+    htmlcode.encoding = code
+    htmlcode = htmlcode.text
+
+    # print(f'Qoo10价格={htmlcode}')
+
+    return htmlcode
+
+def work_Qoo10(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
+    soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有的 <tr> 标签
+    trs = soup.find_all('tr')
+
+    # 遍历每个 <tr> 标签，提取所需数据
+    print(f'共有商家{len(trs)-1}个')
+    for tr in trs:
+        # print(tr)
+        # 获取该行的 id 属性值
+        tr_id = tr.get('id')
+
+        if tr_id == None:
+            continue
+
+        print('------------------------')
+        # 提取 goodscode
+        goodscode = tr.get('goodscode')
+
+        # 提取商家名
+        merchant_name = tr.find('a', class_='lnk_sh').get('title')
+
+        # 提取 td_prc 值
+        td_prc = tr.find('td', class_='td_prc').find('strong').text
+
+        # 提取 dc_prc 值
+        try:
+            dc_prc = tr.find('span', class_='dc_prc').find('del').text
+        except:
+            dc_prc = ''
+
+        # 使用正则表达式提取 style="width: 93%" 的值
+        try:
+            style_value = tr.find('div', class_='review_rating_star')['style']
+            pingjia = re.search(r'width:\s*([\d.]+)%', style_value).group(1)
+        except:
+            pingjia = ''
+
+        shipping_text = tr.find('div', class_='ship').get_text(strip=True)
+
+        # 提取运费信息
+        if '無料' in shipping_text:  # 如果包含 "無料"，表示免费运费
+            shipping_cost = '無料'
+        else:  # 否则提取运费金额
+            shipping_cost = shipping_text.replace('Shipping rate:', '').strip()
+
+        #提取商家评级
+        try:
+            grade_title = tr.find('span', class_='grd_pw')['title']
+            grade_title = '优秀'
+        except:
+            try:
+                grade_title = tr.find('span', class_='grd_gd')['title']
+                grade_title = '良好'
+            except:
+                grade_title = tr.find('span', class_='grd_gn')['title']
+                grade_title = '普通'
+        print("Goodscode:", goodscode)
+        print("店名:", merchant_name)
+        print("现销价:", td_prc)
+        print("原价:", dc_prc)
+        print("好评率:", pingjia)
+        print('运费：',shipping_cost)
+        print("商家等级标题:", grade_title)
+
+def work_kaago(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
+    soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有的 <div class="item"> 标签
+    items = soup.find_all('div', class_='item')
+
+    # 遍历每个商品
+    for item in items:
+        # 提取价格信息
+        price = item.find('p', class_='price').em.text.strip()
+
+        # 提取运费信息
+        shipping_cost = item.find('span', class_='free')
+        if shipping_cost:
+            shipping_cost = shipping_cost.text.strip()
+        else:
+            shipping_cost = '送料不明'
+
+        # 提取商家信息
+        shop = item.find('p', class_='shopText').span.text.strip()
+
+        print('价格:', price)
+        print('运费:', shipping_cost)
+        print('商家:', shop)
+        print('---------------------')
+
+def work_Rakuten(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
+    print('开始分析Rakuten代码')
+    soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有商品
+    products = soup.find_all('div', class_='dui-card searchresultitem overlay-control-wrapper--2W6PV title-control-wrapper--1YBX9')
+
+    # 遍历每个商品并提取价格、运费和商家名
+    for product in products:
+        # 提取价格
+        price = product.find('div', class_='price--OX_YW').text.strip()
+        # 提取运费
+        shipping = product.find('span', class_='free-shipping-label--HpFaT').text.strip()
+        # 提取商家名
+        merchant = product.find('div', class_='content merchant _ellipsis').text.strip()
+        print("价格:", price)
+        print("运费:", shipping)
+        print("商家:", merchant)
+        print('---------------------')
+
+def work_Yahoo(htmlcode):
+    # 使用 BeautifulSoup 解析 HTML 代码
+    print('开始分析yahoo代码')
+    soup = BeautifulSoup(htmlcode, 'html.parser')
+
+    # 找到所有商品
+    # Define the pattern for matching the class name
+    class_pattern = re.findall(r'SearchResult_SearchResult__detailsContainer__\w+',htmlcode)[0]
+    print(class_pattern)
+    # Find all the product details containers using the regex pattern
+    product_containers = soup.find_all('div', class_=class_pattern)
+
+    # print(product_containers)
+    # Iterate over each product container and extract information
+    for container in product_containers:
+        # Extract product name
+        product_name = container.find('span',
+                                      class_='SearchResultItemTitle_SearchResultItemTitle__name__BwTpC').text.strip()
+
+        # Extract product price
+        price_pattern = re.compile(r'SearchResultItemPrice_SearchResultItemPrice__value__\w+')
+        product_price = container.find('span', class_=price_pattern).text.strip()
+
+        # Extract store name
+        try:
+            store_pattern = re.compile(r'SearchResultItemTitle_SearchResultItemTitle__name__\w+')
+            store_name = container.find('span', class_=store_pattern).text.strip()
+        except:
+            store_name = ""
+        # Print the extracted information
+        print("Product:", product_name)
+        print("Price:", product_price)
+        print("Store:", store_name)
+        print('---------------------')
+searchword = '4974019214924'
+meka_url = {
+    'kaago_Url' : f'https://kaago.com/%E3%81%99%E3%81%B9%E3%81%A6/?alignmentSequence=1&categorycode=0&searchWord={searchword}',
+    'Qoo10_url' : f'https://www.qoo10.jp/s/?keyword_hist={searchword}&sortType=SELL_PRICE_ASC',
+    'Rakuten_url' : f'https://search.rakuten.co.jp/search/mall/{searchword}/?s=11&used=0',
+    'Yahoo_url' : f'https://shopping.yahoo.co.jp/search?X=2&p={searchword}&prom=1&sc_i=shopping-pc-web-result-item-itmcond-slctitm&used=2'
+
+}
+print(meka_url['Yahoo_url'])
+html = get_html_data(meka_url['Yahoo_url'])
+print(html)
+# tr = work_Qoo10(html)
+# work_kaago(html)
+# work_Rakuten(html)
+work_Yahoo(html)
