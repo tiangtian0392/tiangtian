@@ -1,0 +1,385 @@
+import re
+import threading
+
+import requests,time
+from bs4 import BeautifulSoup
+from price_window import Ui_Form
+import sys
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QClipboard, QGuiApplication
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QColor
+from PyQt5.QtCore import Qt
+import os,re,csv
+from PyQt5.QtCore import QUrl, QCoreApplication
+from PyQt5.QtGui import QDesktopServices
+from urllib.parse import quote   #用于解码URL网址
+
+
+class mywindow(QtWidgets.QMainWindow, Ui_Form):
+    signal_1 = QtCore.pyqtSignal(str)
+
+    def __init__(self):
+        super(mywindow, self).__init__()
+        self.setupUi(self)
+
+
+
+        self.Button_Qoo10.clicked.connect(self.BT_Qoo10)
+        self.Button_kaago.clicked.connect(self.BT_kaago)
+        self.Button_Yahoo.clicked.connect(self.BT_Yahoo)
+        self.Button_kakaku.clicked.connect(self.BT_kakaku)
+        self.Button_Rakuten.clicked.connect(self.BT_Rakuten)
+
+        self.pushButton.clicked.connect(self.BT_search)
+
+
+    def BT_search(self):
+        print('点击查找')
+        self.search_text = self.lineEdit.text()
+        if self.search_text == '':
+            return
+        print(self.search_text)
+        # thread_start = threading.Thread(target=self.threading_work)
+        # thread_start.start()
+        self.threading_work()
+
+    def threading_work(self):
+        print('超线程工作开始')
+        # 模拟耗时操作
+        searchword = self.search_text
+        self.meka_url = {
+            'kaago_Url': f'https://kaago.com/%E3%81%99%E3%81%B9%E3%81%A6/?alignmentSequence=1&categorycode=0&searchWord={searchword}',
+            'Qoo10_url': f'https://www.qoo10.jp/s/?keyword_hist={searchword}&sortType=SELL_PRICE_ASC',
+            'Rakuten_url': f'https://search.rakuten.co.jp/search/mall/{searchword}/?s=11&used=0',
+            'Yahoo_url': f'https://shopping.yahoo.co.jp/search?X=2&p={searchword}&prom=1&sc_i=shopping-pc-web-result-item-itmcond-slctitm&used=2',
+
+        }
+
+        if self.checkBox_Qoo10.isChecked():
+            print('开始查找Qoo10')
+            print(self.meka_url['Qoo10_url'])
+            Qoo10html = self.get_html_data(self.meka_url['Qoo10_url'])
+            Qoo10data = self.work_Qoo10(Qoo10html)
+            print(Qoo10data)
+            if Qoo10data:
+                # 清空表格数据
+                self.tableWidget_Qoo10.clearContents()
+                self.tableWidget_Qoo10.setRowCount(0)
+
+                # 添加新数据行
+                for row_number, row_data in enumerate(Qoo10data):
+                    self.tableWidget_Qoo10.insertRow(row_number)
+                    self.tableWidget_Qoo10.setItem(row_number, 0, QtWidgets.QTableWidgetItem(row_data[2]))
+                    self.tableWidget_Qoo10.setItem(row_number, 1, QtWidgets.QTableWidgetItem(row_data[1]))
+        if self.checkBox_kaago.isChecked():
+            print('开始查找kaago')
+            kaagohtml = self.get_html_data(self.meka_url['kaago_Url'])
+            kaagodata = self.work_kaago(kaagohtml)
+            print(kaagodata)
+            if kaagodata:
+                # 清空表格数据
+                self.tableWidget_kaago.clearContents()
+                self.tableWidget_kaago.setRowCount(0)
+
+                # 添加新数据行
+                for row_number, row_data in enumerate(kaagodata):
+                    self.tableWidget_kaago.insertRow(row_number)
+                    self.tableWidget_kaago.setItem(row_number, 0, QtWidgets.QTableWidgetItem(row_data[0]))
+                    self.tableWidget_kaago.setItem(row_number, 1, QtWidgets.QTableWidgetItem(row_data[1]))
+        if self.checkBox_Rakuten.isChecked():
+            print('开始查找Rakuten')
+            Rakutenhtml = self.get_html_data(self.meka_url['Rakuten_url'])
+            Rakutendata = self.work_Rakuten(Rakutenhtml)
+            print(Rakutenhtml)
+
+            if Rakutendata:
+                # 清空表格数据
+                self.tableWidget_Rakuter.clearContents()
+                self.tableWidget_Rakuter.setRowCount(0)
+
+                # 添加新数据行
+                for row_number, row_data in enumerate(Rakutendata):
+                    self.tableWidget_Rakuter.insertRow(row_number)
+                    self.tableWidget_Rakuter.setItem(row_number, 0, QtWidgets.QTableWidgetItem(row_data[0]))
+                    self.tableWidget_Rakuter.setItem(row_number, 1, QtWidgets.QTableWidgetItem(row_data[1]))
+        if self.checkBox_Yahoo.isChecked():
+            print('开始查找Yahoo')
+            Yahoohtml = self.get_html_data(self.meka_url['Yahoo_url'])
+            Yahoodata = self.work_Yahoo(Yahoohtml)
+            print(Yahoodata)
+            if Yahoodata:
+                # 清空表格数据
+                self.tableWidget_Yahoo.clearContents()
+                self.tableWidget_Yahoo.setRowCount(0)
+
+                # 添加新数据行
+                for row_number, row_data in enumerate(Yahoodata):
+                    self.tableWidget_Yahoo.insertRow(row_number)
+                    self.tableWidget_Yahoo.setItem(row_number, 0, QtWidgets.QTableWidgetItem(row_data[0]))
+                    self.tableWidget_Yahoo.setItem(row_number, 1, QtWidgets.QTableWidgetItem(row_data[1]))
+        if self.checkBox_kakaku.isChecked():
+            print('开始查找kakaku')
+            original_str = self.lineEdit.text()
+            searchword = quote(original_str, encoding='shift-jis')
+
+            kakaku_url = f'https://kakaku.com/search_results/{searchword}'
+            kakakuhtml = self.get_html_data(kakaku_url)
+            print(kakakuhtml)
+            kakakudata = self.work_kakaku(kakakuhtml)
+            print(kakakudata)
+            if kakakudata:
+                # 清空表格数据
+                self.tableWidget_Kakaku.clearContents()
+                self.tableWidget_Kakaku.setRowCount(0)
+
+                # 添加新数据行
+                for row_number, row_data in enumerate(kakakudata):
+                    self.tableWidget_Kakaku.insertRow(row_number)
+                    self.tableWidget_Kakaku.setItem(row_number, 0, QtWidgets.QTableWidgetItem(row_data[0]))
+                    self.tableWidget_Kakaku.setItem(row_number, 1, QtWidgets.QTableWidgetItem(row_data[1]))
+        print('超线程工作完成')
+    def BT_Rakuten(self):
+        print('点击Rakuten')
+        searchword = self.lineEdit.text()
+        Rakuten_url = f'https://search.rakuten.co.jp/search/mall/{searchword}/?s=11&used=0'
+        QDesktopServices.openUrl(QUrl(Rakuten_url))
+    def BT_kakaku(self):
+        print('点击kakaku')
+        original_str = self.lineEdit.text()
+        searchword = quote(original_str, encoding='shift-jis')
+
+        kakaku_url = f'https://kakaku.com/search_results/{searchword}'
+        QDesktopServices.openUrl(QUrl(kakaku_url))
+    def BT_Yahoo(self):
+        print('点击Yahoo按键')
+        searchword = self.lineEdit.text()
+        encoded_search_term = quote(searchword, encoding='shift-jis', safe='')
+        Yahoo_url = f'https://shopping.yahoo.co.jp/search?X=2&p={searchword}&prom=1&sc_i=shopping-pc-web-result-item-itmcond-slctitm&used=2'
+        QDesktopServices.openUrl(QUrl(Yahoo_url))
+    def BT_kaago(self):
+        print('点击kaago按键')
+        searchword = self.lineEdit.text()
+        kaago_url = f'https://kaago.com/%E3%81%99%E3%81%B9%E3%81%A6/?alignmentSequence=1&categorycode=0&searchWord={searchword}'
+        QDesktopServices.openUrl(QUrl(kaago_url))
+    def BT_Qoo10(self):
+        print('点击Qoo10按键')
+        searchword = self.lineEdit.text()
+        Qoo10_url = f'https://www.qoo10.jp/s/?keyword_hist={searchword}&sortType=SELL_PRICE_ASC'
+        QDesktopServices.openUrl(QUrl(Qoo10_url))
+    def get_html_data(self,url):
+
+        hd = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8,en-US;q=0.7,en;q=0.6",
+
+        }
+        htmlcode = requests.get(url, headers=hd)
+        code = htmlcode.apparent_encoding
+        # print('code=', code)
+        htmlcode.encoding = code
+        htmlcode = htmlcode.text
+
+        # print(f'Qoo10价格={htmlcode}')
+
+        return htmlcode
+
+    def work_Qoo10(self,htmlcode):
+        # 使用 BeautifulSoup 解析 HTML 代码
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+
+        # 找到所有的 <tr> 标签
+        trs = soup.find_all('tr')
+
+        # 遍历每个 <tr> 标签，提取所需数据
+        print(f'共有商家{len(trs)-1}个')
+        data = []
+        for tr in trs:
+            # print(tr)
+            # 获取该行的 id 属性值
+            tr_id = tr.get('id')
+
+            if tr_id == None:
+                continue
+
+            print('------------------------')
+            # 提取 goodscode
+            goodscode = tr.get('goodscode')
+
+            # 提取商家名
+            merchant_name = tr.find('a', class_='lnk_sh').get('title')
+
+            # 提取 td_prc 值
+            td_prc = tr.find('td', class_='td_prc').find('strong').text
+
+            # 提取 dc_prc 值
+            try:
+                dc_prc = tr.find('span', class_='dc_prc').find('del').text
+            except:
+                dc_prc = ''
+
+            # 使用正则表达式提取 style="width: 93%" 的值
+            try:
+                style_value = tr.find('div', class_='review_rating_star')['style']
+                pingjia = re.search(r'width:\s*([\d.]+)%', style_value).group(1)
+            except:
+                pingjia = ''
+
+            shipping_text = tr.find('div', class_='ship').get_text(strip=True)
+
+            # 提取运费信息
+            if '無料' in shipping_text:  # 如果包含 "無料"，表示免费运费
+                shipping_cost = '無料'
+            else:  # 否则提取运费金额
+                shipping_cost = shipping_text.replace('Shipping rate:', '').strip()
+
+            #提取商家评级
+            try:
+                grade_title = tr.find('span', class_='grd_pw')['title']
+                grade_title = '优秀'
+            except:
+                try:
+                    grade_title = tr.find('span', class_='grd_gd')['title']
+                    grade_title = '良好'
+                except:
+                    grade_title = tr.find('span', class_='grd_gn')['title']
+                    grade_title = '普通'
+            print("Goodscode:", goodscode)
+            print("店名:", merchant_name)
+            print("现销价:", td_prc)
+            print("原价:", dc_prc)
+            print("好评率:", pingjia)
+            print('运费：',shipping_cost)
+            print("商家等级标题:", grade_title)
+            data.append([goodscode,merchant_name,td_prc,dc_prc,pingjia,shipping_cost,grade_title])
+        return data
+
+    def work_kaago(self,htmlcode):
+        # 使用 BeautifulSoup 解析 HTML 代码
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+
+        # 找到所有的 <div class="item"> 标签
+        items = soup.find_all('div', class_='item')
+        data = []
+        # 遍历每个商品
+        for item in items:
+            # 提取价格信息
+            price = item.find('p', class_='price').em.text.strip()
+
+            # 提取运费信息
+            shipping_cost = item.find('span', class_='free')
+            if shipping_cost:
+                shipping_cost = shipping_cost.text.strip()
+            else:
+                shipping_cost = '送料不明'
+
+            # 提取商家信息
+            shop = item.find('p', class_='shopText').span.text.strip()
+
+            print('价格:', price)
+            print('运费:', shipping_cost)
+            print('商家:', shop)
+            print('---------------------')
+            data.append([price,shop])
+        return data
+
+    def work_Rakuten(self,htmlcode):
+        # 使用 BeautifulSoup 解析 HTML 代码
+        print('开始分析Rakuten代码')
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+
+        # 找到所有商品
+        products = soup.find_all('div', class_='dui-card searchresultitem overlay-control-wrapper--2W6PV title-control-wrapper--1YBX9')
+        data = []
+        # 遍历每个商品并提取价格、运费和商家名
+        for product in products:
+            # 提取价格
+            price = product.find('div', class_='price--OX_YW').text.strip()
+            # 提取运费
+            try:
+                shipping = product.find('span', class_='free-shipping-label--HpFaT').text.strip()
+            except:
+                shipping = ''
+            # 提取商家名
+            merchant = product.find('div', class_='content merchant _ellipsis').text.strip()
+            print("价格:", price)
+            print("运费:", shipping)
+            print("商家:", merchant)
+            print('---------------------')
+            data.append([price,merchant])
+        return data
+
+    def work_Yahoo(self,htmlcode):
+        # 使用 BeautifulSoup 解析 HTML 代码
+        print('开始分析yahoo代码')
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+
+        # 找到所有商品
+        # Define the pattern for matching the class name
+        class_pattern = re.findall(r'SearchResult_SearchResult__detailsContainer__\w+',htmlcode)[0]
+        print(class_pattern)
+        # Find all the product details containers using the regex pattern
+        product_containers = soup.find_all('div', class_=class_pattern)
+        data = []
+        # print(product_containers)
+        # Iterate over each product container and extract information
+        for container in product_containers:
+            # Extract product name
+            product_name = container.find('span',
+                                          class_='SearchResultItemTitle_SearchResultItemTitle__name__BwTpC').text.strip()
+
+            # Extract product price
+            price_pattern = re.compile(r'SearchResultItemPrice_SearchResultItemPrice__value__\w+')
+            product_price = container.find('span', class_=price_pattern).text.strip()
+
+            # Extract store name
+            try:
+                store_pattern = re.compile(r'SearchResultItemTitle_SearchResultItemTitle__name__\w+')
+                store_name = container.find('span', class_=store_pattern).text.strip()
+            except:
+                store_name = ""
+            # Print the extracted information
+            print("Product:", product_name)
+            print("Price:", product_price)
+            print("Store:", store_name)
+            print('---------------------')
+            data.append([product_price,store_name])
+        return data
+
+    def work_kakaku(self,htmlcode):
+        # 使用 BeautifulSoup 解析 HTML 代码
+        print('开始分析kakaku代码')
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+
+        # 找到所有商品
+        products = soup.find_all('div', class_='c-list1_cell p-result_item')
+        print(products)
+        data = []
+        # 遍历每个商品并提取价格、运费和商家名
+        for product in products:
+            # 提取价格
+            try:
+                price = product.find('span', class_='c-num p-item_price_num').text.strip()
+            except AttributeError:
+                price = "N/A"
+            # 提取运费
+            try:
+                shipping = product.find('span', class_='p-item_shopCounts_num c-num').text.strip()
+            except AttributeError:
+                try:
+                    shipping = product.find('p', class_='p-result_item_mall').text.strip()
+                except AttributeError:
+                    shipping = "N/A"
+
+            print("价格:", price)
+            print("运费:", shipping)
+            print('---------------------')
+            data.append([price, shipping])
+        return data
+
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    window = mywindow()
+    window.show()
+    sys.exit(app.exec_())
