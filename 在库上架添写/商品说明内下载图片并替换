@@ -1,0 +1,24 @@
+import re
+import requests
+
+JAN = "4548736132566"
+htmlcode = open("D:\\Users\\Documents\\Q10htmlcode.txt", "r", encoding="utf-8").read()
+arrRet = re.findall('http.*?(?=")', htmlcode)
+arrRet = list(set(arrRet))  # Convert to set to remove duplicates, then back to list
+iRet = len(arrRet)
+print(iRet)
+记数 = 1
+for value in arrRet:
+    save_path = "D:\\八爪鱼下载\\{}_{}.jpg".format(JAN, 记数)
+    sRet = requests.get(value, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"}, timeout=60)
+    print(sRet)
+    if sRet.ok:
+        with open(save_path, "wb") as file:
+            file.write(sRet.content)
+        iRet = htmlcode.find(value)
+        print(iRet, value, save_path)
+        htmlcode = htmlcode.replace(value, save_path)
+    记数 += 1
+
+with open("D:\\Users\\Documents\\Q10htmlcode-1.txt", "w", encoding="utf-8") as file:
+    file.write(htmlcode)
