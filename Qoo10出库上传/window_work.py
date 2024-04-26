@@ -147,6 +147,8 @@ class StockManager(QThread):
     def __init__(self, checkbox_dict, log_config, window, no_list=''):
 
         super().__init__()
+        self.yujuup_path = None
+        self.chuku_path = None
         self.config = log_config
         self.no_list = no_list
 
@@ -167,15 +169,24 @@ class StockManager(QThread):
         # 出库失败记录
         self.chuku_err_str = ''
 
+
+
     def Q_path(self, path, str_text):
-        print(f'主线程回写path {path}')
+
         path = path.replace('/', '\\')
+        print(f'主线程回写path {path}')
         if path == '':
+            print('文件选择为空，程序停止！')
             self.stop()
         if '下载' in str_text:
             self.Qoo10filepath = path
-        else:
+        elif '上传' in str_text:
             self.path = path
+        elif 'chuku' in str_text:
+            self.chuku_path = path
+        else:
+            self.yujuup_path = path
+        print('路径变量完成',path)
 
     def open_Stockc(self):
         from pywinauto.application import Application
@@ -246,8 +257,8 @@ class StockManager(QThread):
         if self.checkbox_dict["定单下载"]:
             if self.running == False:
                 return
-            chrom_ = chrome_set()
-            Qoo10_file = chrom_.down_all_order()
+            self.chrom_ = chrome_set()
+            Qoo10_file = self.chrom_.down_all_order()
             if Qoo10_file:
                 self.Qoo10filepath = Qoo10_file
 
@@ -257,21 +268,15 @@ class StockManager(QThread):
             if self.Qoo10filepath is None:
                 self.get_path.emit('选择Qoo10定单下载文件')
 
-                for i in range(100):
-                    if self.Qoo10filepath is not None:
-                        if self.Qoo10filepath == '':
-                            print('取消了选择操作')
-
-                            return
-                        else:
-                            print('成功获取到 Qoo10 文件路径：', self.Qoo10filepath)
-                            break
+                jj = 0
+                while self.Qoo10filepath is None:
+                    print(jj)
+                    if jj >= 100:
+                        return
                     time.sleep(1)
-                else:
-                    print('获取Qoo10path 失败，请重试！')
-                    return
-            set_Qoo10 = OrderDataProcessor(self.config, Qoo10data_file=self.Qoo10filepath)
-            self.path = set_Qoo10.generate_output_files()
+                    jj += 1
+            self.set_Qoo10 = OrderDataProcessor(self.config, Qoo10data_file=self.Qoo10filepath)
+            self.path,self.chuku_path,self.yujuup_path = self.set_Qoo10.generate_output_files()
             if self.path is None:
                 self.Qmessbox.emit('可発貨表为空，程序中止！')
                 self.stop()
@@ -283,56 +288,64 @@ class StockManager(QThread):
             if self.path is None:
                 self.get_path.emit('选择定单上传文件')
 
-                for i in range(100):
-                    if self.path is not None:
-                        if self.path == '':
-                            print('取消了选择操作')
-
-                            return
-                        else:
-                            print('选择的上传文件路径：', self.path)
-                            break
+                jj = 0
+                while self.path is None:
+                    print(jj)
+                    if jj >= 100:
+                        self.stop()
+                        return
                     time.sleep(1)
-                else:
-                    print('获取Qoo10path 失败，请重试！')
-                    return
-            chrom_ = chrome_set()
-            Qoo10_ = chrom_.up_order(self.path)
+                    jj += 1
+            print('sdss',self.path)
+            if not self.path:
+                return
+            self.chrom_ = chrome_set()
+            self.chrom_.up_order(self.path)
             # if Qoo10_file != True:
             #     self.running = False
         if self.checkbox_dict["クリックポスト上传"]:
             if self.running == False:
                 return
-            pass
+            if self.yujuup_path is None:
+                self.get_path.emit('クリックポスト')
+
+                jj = 0
+                while self.yujuup_path is None:
+                    print(jj)
+                    if jj >= 100:
+                        return
+                    time.sleep(1)
+                    jj += 1
+            if not self.yujuup_path:
+                return
         if self.checkbox_dict["出库上传"]:
             # 打开文件对话框选择 CSV 文件
             if self.running == False:
                 return
-            self.open_Stockc()
-            if self.path == '':
-                try:
-                    self.get_path.emit('path')
-                    for i in range(100):
-                        print('i path', i)
-                        if self.path != '':
-                            break  # 如果 Qoo10filepath 更新了，立即退出循环
-                        time.sleep(1)
-                    else:
-                        print('获取Qoo10path 失败，请重试！')
-                        return
-                    print(f'出库上传文件路径={self.path}')
 
-                except Exception as e:
-                    print(f'打开文件出错，{e}')
-                    return
-            if self.path:
-                with open(self.path, 'r', newline='', encoding='ANSI') as csvfile:
+            if self.chuku_path is None:
+
+                self.get_path.emit('chuku')
+                # print('获取文件路径完成',self.chuku_path)
+                jj = 0
+                while self.chuku_path is None:
+                    print(jj)
+                    if jj >= 100:
+                        return
+                    time.sleep(1)
+                    jj += 1
+                print(f'出库上传文件路径={self.chuku_path}')
+
+
+            if self.chuku_path:
+                with open(self.chuku_path, 'r', newline='', encoding='ANSI') as csvfile:
                     reader = csv.reader(csvfile)
                     next(reader)  # 跳过标题行
                     self.no_list = [row[0] for row in reader]  # 从 CSV 文件中读取数据并填充 self.no_list
             else:
                 return
-            self.write_path(self.path)
+            self.open_Stockc()
+            self.write_path(self.chuku_path)
         if self.checkbox_dict["出库"]:
             if self.running == False:
                 return
@@ -371,6 +384,14 @@ class StockManager(QThread):
         # print(f'以下商品出库失败 {self.chuku_err_str}')
         self.running = False
         self.run_over.emit(f'程序停止')
+        try:
+            self.chrom_.stop()
+        except:
+            pass
+        try:
+            self.set_Qoo10.stop()
+        except:
+            pass
         if self.chuku_err_str != '':
             self.Qmessbox.emit(f'以下商品在库变更失败 {self.chuku_err_str}')
         else:
@@ -589,7 +610,7 @@ class StockManager(QThread):
         file_open_dialog = win32gui.FindWindow("#32770", "ファイルを開く")
         print("ファイルを開く", file_open_dialog)
         for i in range(5):
-            if self.running == False:
+            if not self.running:
                 return
             if not file_open_dialog:
                 # 如果不存在，则重复之前的动作打开窗口
@@ -626,6 +647,9 @@ class StockManager(QThread):
 # 处理定单类
 class OrderDataProcessor:
     def __init__(self, config, Qoo10data_file=None, zaiku_file_path=None, output_folder=None):
+
+        self.running = True
+
         self.Qoo10data_file = Qoo10data_file
         self.zaiku_file_path = config["zaiku_file_path"]
         self.output_folder = config["output_folder"]
@@ -634,8 +658,12 @@ class OrderDataProcessor:
         # self.root = Tk()
         print(f'Orderdataprocessor Qoo10path = {self.Qoo10data_file}')
 
+    def stop(self):
+        self.running = False
     def generate_output_files(self):
         # 读取第一个表和在库表的数据
+        if not self.running:
+            return
         if self.zaiku_file_path is None:
             self.zaiku_file_path = r"\\LS410D8E6\tool\bazhuayu\在庫.csv"
         if self.output_folder is None:
@@ -674,7 +702,9 @@ class OrderDataProcessor:
 
         # 对于第一个表中的每个订单
         for index, row in Qdata.iterrows():
-            # 在在库表中查找匹配的商品
+            if not self.running:
+                return
+                # 在在库表中查找匹配的商品
             matching_items = zaiku_data[(zaiku_data['商品ID'] == row['JANコード']) & (zaiku_data['在庫数'] > 0)]
 
             # 获取地址和注文番号
@@ -712,8 +742,12 @@ class OrderDataProcessor:
         # 遍历dizhi_dict
         for address, order_numbers in dizhi_dict.items():
             # 检查对应地址的订单是否都有对应的在库商品
+            if not self.running:
+                return
             all_orders_have_stock = True
             for order_number in order_numbers:
+                if not self.running:
+                    return
                 if order_number not in zhuwenbanhao_dict:
                     all_orders_have_stock = False
                     break
@@ -722,6 +756,7 @@ class OrderDataProcessor:
             if all_orders_have_stock:
                 for order_number in order_numbers:
                     # 写入可出货表
+
                     available_for_shipping = available_for_shipping.append(zhuwenbanhao_dict[order_number][0],
                                                                            ignore_index=True)
 
@@ -740,7 +775,8 @@ class OrderDataProcessor:
             "販売者商品コード",
             "JANコード", "規格番号", "プレゼント贈り主", "外部広告", "素材"
         ]
-
+        if not self.running:
+            return
         # 创建新的空表格
         available_for_shipping_new = pd.DataFrame(columns=new_columns)
 
@@ -755,7 +791,7 @@ class OrderDataProcessor:
             available_for_shipping_new.to_csv(f"{self.output_folder}\\可発貨表{now_date}.csv", index=False, encoding='ANSI')
         else:
             # QMessageBox.information(None,'提示','可発貨表空，不保存！')
-            return None
+            return None,None,None
         available_for_shipping.to_csv(f"{self.output_folder}\\可発貨表_old_{now_date}.csv", index=False, encoding='ANSI')
         in_stock_UP.to_csv(f"{self.output_folder}\\出庫UP{now_date}.csv", index=False, encoding='ANSI')
 
@@ -808,7 +844,7 @@ class OrderDataProcessor:
             new_data = new_data.append(pd.Series(new_row, index=new_data.columns), ignore_index=True)
         # 保存新表
         new_data.to_csv(f"{self.output_folder}\\ゆうパケット{now_date}.csv", index=False, encoding='ANSI')
-        return f"{self.output_folder}\\出庫UP{now_date}.csv"
+        return f"{self.output_folder}\\可発貨表{now_date}.csv",f"{self.output_folder}\\出庫UP{now_date}.csv",f"{self.output_folder}\\ゆうパケット{now_date}.csv"
 
 
 # 配置文件弹窗
@@ -943,11 +979,11 @@ def check_config():
 class chrome_set:
 
     def __init__(self):
+        self.run = True
         # 切换标签
-        tab_title = '配送管理'
         self.tab_name_select()
 
-        app_name = "配送管理 - Google Chrome"
+        app_name = " Google Chrome"
 
         self.app = self.get_app('uia', app_name)
 
@@ -955,9 +991,12 @@ class chrome_set:
             print('窗口不存在，程序退出！')
             return
 
+    def stop(self):
+        self.run = False
     def get_app(self,fid, app_name):
         from pywinauto import Desktop, findwindows
-
+        if not self.run:
+            return
         try:
             # 使用Desktop对象来获取窗口
             app = Desktop(backend=fid).window(title_re=f".*{app_name}.*")
@@ -979,6 +1018,8 @@ class chrome_set:
 
         print(f'num={num}')
         for i in range(3):
+            if not self.run:
+                return
             pyautogui.press('pageup')
         for i in range(num):
             pyautogui.press('pagedown')
@@ -1000,6 +1041,8 @@ class chrome_set:
 
         attempt = 0  # 初始化尝试计数器
         while attempt < 4:
+            if not self.run:
+                return
             bb_pd = But_bb()
 
             if bb_pd:
@@ -1014,6 +1057,10 @@ class chrome_set:
 
     def down_all_order(self):
         # 点击配送要請(詳細を見る)
+        if not self.run:
+            return
+
+
         for i in range(3):
             pyautogui.press('pageup')
         # 获取窗口位置
@@ -1063,6 +1110,12 @@ class chrome_set:
         return
 
     def up_order(self, up_filename):
+
+        if not self.run:
+            return
+        print(self.run)
+        # # 切换标签
+        # self.tab_name_select()
         from pywinauto.application import Application
         # 测试点击上传发货文件
         # 点击発送予定日の入力
@@ -1085,6 +1138,8 @@ class chrome_set:
         except Exception as e:
             print("点击失败:", e)
             return
+        if not self.run:
+            return
         time.sleep(3)
         # 上传出库文件
         # up_filename = 'asdfafsd'
@@ -1102,6 +1157,8 @@ class chrome_set:
         return True
     # 根据关键词切换标签
     def tab_name_select(self):
+        if not self.run:
+            return
         from pywinauto.application import Application
         app = Application(backend='uia')
         app.connect(title_re='.*Chrome')
