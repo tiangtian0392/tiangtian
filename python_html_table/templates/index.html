@@ -113,7 +113,7 @@
                 }
                 modifiedPrice = Math.round(modifiedPrice);
                 // 更新“改后价格”输入框的值
-                $modifiedPrice.val(modifiedPrice.toFixed(2)); // 四舍五入保留两位小数
+                $modifiedPrice.val(modifiedPrice.toFixed(0)); // 四舍五入保留两位小数
                 console.log("Input event triggered!",modifiedPrice);
                 // 比较“改后价格”与之前的值，如果不同则添加价格变化类
                 if ($modifiedPrice.data("previous-value") !== $modifiedPrice.val()) {
