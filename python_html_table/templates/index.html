@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Email To table</title>
+
+<!-- 在 index.html 中引用 CSS -->
+<link href="{{ url_for('static', filename='tablecloth/tablecloth.css') }}" rel="stylesheet" type="text/css" media="screen" />
+
+<style>
+    /* 自定义 CSS 样式 */
+    .edit-input {
+        border: none;
+        background-color: transparent;
+        width: 100%;
+    }
+    @keyframes highlight {
+    0% { background-color: inherit; } /* 初始颜色 */
+    33% { background-color: orange; } /* 橙色 */
+    66% { background-color: inherit; } /* 恢复初始颜色 */
+}
+
+.price-changed {
+    animation: highlight 1.5s 3; /* 播放动画，持续1.5秒，重复3次 */
+}
+</style>
+
+<!-- 在 index.html 中引用 JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+</head>
+
+<body>
+
+<div id="container">
+    <h1>邮箱监测__</h1>
+    <h2>最后更新日期：{{nowtime}}  执行任务：{{dongzuo}}</h2>
+    <button id="selectAllButton">全选</button>
+    <button id="deleteSelected">删除选中行</button>
+    <button id="saveData">保存</button>
+    <button id="refreshPage">刷新</button>
+    <table id="dataTable" cellspacing='0' cellpadding='0'>
+        <tr>
+            <th></th>
+            <th>序号</th>
+            <th>番号</th>
+            <th>排除/在库</th>
+            <th>加价</th>
+            <th>手续料</th>
+            <th>标题</th>
+            <th>涨幅</th>
+            <th>Q10现在价格</th>
+            <th>○商家数量</th>
+            <th>改后价格</th>
+            <th>供给原价</th>
+            <th>JAN</th>
+            <th>更新日期</th>
+        </tr>
+            {% for data in update_list %}
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>{{ loop.index }}</td>
+                {% for item in data %}
+                    {% if loop.index0 == 4 %}
+                        <td>{{ item|safe }}</td>
+                    {% else %}
+                        <td class="editable"><input type="text" class="edit-input" value="{{ item }}" /></td>
+
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+    </table>
+</div>
+
+</body>
+<script>
+
+    $(document).ready(function() {
+        // 其他代码...
+
+        // 监听“供给原价”输入框的变化事件
+        $("#dataTable").on("input", ".edit-input", function() {
+            get_price($(this));
+        });
+
+        // 计算“改后价格”函数
+        function get_price($input) {
+            console.log("Input event triggered!");
+            var $row = $input.closest("tr");
+            var $originalPrice = $row.find(".edit-input:eq(8)"); // “供给原价”输入框
+            var $markup = $row.find(".edit-input:eq(2)"); // “加价”输入框
+            var $handlingFee = $row.find(".edit-input:eq(3)"); // “手续料”输入框
+            var $modifiedPrice = $row.find(".edit-input:eq(7)"); // “改后价格”输入框
+
+            var originalPriceValue = parseFloat($originalPrice.val());
+            var markupValue = parseFloat($markup.val());
+            var handlingFeeValue = parseFloat($handlingFee.val());
+
+            console.log("Input event triggered!",originalPriceValue);
+            console.log($originalPrice.val());
+            console.log($markup.val());
+            console.log($handlingFee.val());
+            console.log($modifiedPrice.val());
+            // 检查输入是否为有效的数字
+            if (!isNaN(originalPriceValue) && !isNaN(markupValue) && !isNaN(handlingFeeValue)) {
+                // 检查“供给原价”是否大于或等于 60000
+                if (originalPriceValue >= 60000) {
+                    var modifiedPrice = (originalPriceValue + markupValue) / 0.983 / handlingFeeValue;
+                } else {
+                    var modifiedPrice = (originalPriceValue + markupValue) / handlingFeeValue;
+                }
+                modifiedPrice = Math.round(modifiedPrice);
+                // 更新“改后价格”输入框的值
+                $modifiedPrice.val(modifiedPrice.toFixed(2)); // 四舍五入保留两位小数
+                console.log("Input event triggered!",modifiedPrice);
+                // 比较“改后价格”与之前的值，如果不同则添加价格变化类
+                if ($modifiedPrice.data("previous-value") !== $modifiedPrice.val()) {
+                    $modifiedPrice.data("previous-value", $modifiedPrice.val()); // 更新之前的值
+                    $modifiedPrice.addClass("price-changed"); // 添加价格变化类
+
+                    // 在 1.5 秒后移除价格变化类，触发动画效果
+                    setTimeout(function() {
+                        $modifiedPrice.removeClass("price-changed");
+                    }, 1500);
+                }
+            }
+        }
+
+
+        // 全选/取消全选
+        $("#selectAllButton").click(function() {
+            if ($(this).text() === "全选") {
+                $("input[type=checkbox]").not(":disabled").prop('checked', true);
+                $(this).text("取消全选");
+            } else {
+                $("input[type=checkbox]").prop('checked', false);
+                $(this).text("全选");
+            }
+        });
+
+        // 删除选中行
+        $("#deleteSelected").click(function() {
+            var checkedRows = $("input[type=checkbox]:checked").not(":disabled").closest('tr');
+            if (checkedRows.length > 0) {
+                if (confirm("确定要删除选中的行吗？")) {
+                    checkedRows.remove();
+                }
+            } else {
+                alert("请先选择要删除的行！");
+            }
+        });
+
+        // 刷新页面
+        $("#refreshPage").click(function() {
+            location.reload();
+        });
+
+        // 保存数据
+        $("#saveData").click(function() {
+            var savedData = [];
+            $("table tbody tr").each(function() {
+                if ($(this).find('input[type="checkbox"]').prop('checked')) {
+                    var rowData = [];
+                    $(this).find('td').each(function() {
+                        if ($(this).find('.edit-input').length > 0) {
+                            rowData.push($(this).find('.edit-input').val());
+                        } else {
+                            rowData.push($(this).text());
+                        }
+                    });
+                    savedData.push(rowData);
+                }
+            });
+
+            // 将数据以 JSON 格式发送到后端处理
+            $.ajax({
+                type: "POST",
+                url: "/save_data",
+                contentType: "application/json",
+                data: JSON.stringify(savedData),
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("保存数据时发生错误：" + error);
+                }
+            });
+        });
+    });
+</script>
+</html>

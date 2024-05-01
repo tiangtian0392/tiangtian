@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Email To table</title>
+
+<!-- paste this code into your webpage -->
+<link href="tablecloth/tablecloth.css" rel="stylesheet" type="text/css" media="screen" />
+<script type="text/javascript" src="tablecloth/tablecloth.js"></script>
+<!-- end -->
+<style>
+
+body{
+	margin:0;
+	padding:0;
+	background:#f1f1f1;
+	font:70% Arial, Helvetica, sans-serif; 
+	color:#555;
+	line-height:150%;
+	text-align:left;
+}
+a{
+	text-decoration:none;
+	color:#057fac;
+}
+a:hover{
+	text-decoration:none;
+	color:#999;
+}
+h1{
+	font-size:140%;
+	margin:0 20px;
+	line-height:80px;	
+}
+h2{
+	font-size:120%;
+}
+#container{
+	margin:0 auto;
+	width:680px;
+	background:#fff;
+	padding-bottom:20px;
+}
+#content{margin:0 20px;}
+p.sig{	
+	margin:0 auto;
+	width:680px;
+	padding:1em 0;
+}
+form{
+	margin:1em 0;
+	padding:.2em 20px;
+	background:#eee;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<div id="container">
+        <h1>邮箱监测__</h1>
+        <table id="dataTable" cellspacing='0' cellpadding='0'>
+        <tr>				
+		<th>番号</th>
+		<th>排除/在库</th>
+		<th>加价</th>
+		<th>手续料</th>
+		<th>标题</th>
+		<th>涨幅</th>
+		<th>Q10现在价格</th>
+		<th>○商家数量</th>
+		<th>改后价格</th>
+		<th>JAN</th>
+	</tr>
+            <!-- 初始表格内容。您可以将其保留为空或使用一些默认数据 -->
+		{% for data in update_list %}
+   			 <tr>
+        		<td>{{ data }}</td>
+    			</tr>
+		{% endfor %}
+   
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    // 更新表格内容的函数
+    function updateTable(data) {
+        console.log('Received data:', data);
+
+        // 遍历数组中的每个元素
+        for (var i = 0; i < data.length; i++) {
+            // 如果元素是数组，则再次遍历嵌套数组
+            if (Array.isArray(data[i])) {
+                for (var j = 0; j < data[i].length; j++) {
+                    var tableRow = '<tr><td>' + data[i][j] + '</td></tr>';
+                    // 使用 append 方法将新行追加到表格末尾
+                    $('#dataTable').append(tableRow);
+                }
+            } else {
+                // 如果元素不是数组，则创建表格行
+                var tableRow = '<tr><td>' + data[i] + '</td></tr>';
+                // 使用 append 方法将新行追加到表格末尾
+                $('#dataTable').append(tableRow);
+            }
+        }
+    }
+
+    // 从服务器获取更新后的数据的函数
+    function fetchDataAndUpdateTable() {
+        $.ajax({
+            type: 'POST',
+            url: '/update_data',  // 替换为实际用于获取更新数据的端点
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(['New Data']),  // 这里可以替换为实际数据
+            success: function (response) {
+                console.log(response.message);
+            },
+            error: function (error) {
+                console.error('获取数据时发生错误：', error);
+            }
+        });
+    }
+
+    // 最初调用 fetchDataAndUpdateTable
+    fetchDataAndUpdateTable();
+
+    // 设置定时器，每隔5秒获取并更新数据一次（根据需要调整）
+    setInterval(fetchDataAndUpdateTable, 5000);
+</script>
+
+
+</body>
+</html>

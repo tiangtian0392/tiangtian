@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Email To table</title>
+
+<!-- 在 index.html 中引用 CSS -->
+<link href="{{ url_for('static', filename='tablecloth/tablecloth.css') }}" rel="stylesheet" type="text/css" media="screen" />
+
+<style>
+    /* 自定义 CSS 样式 */
+    .edit-input {
+        border: none;
+        background-color: transparent;
+        width: 100%;
+    }
+</style>
+
+<!-- 在 index.html 中引用 JavaScript -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // 全选/取消全选
+        $("#selectAllButton").click(function() {
+            if ($(this).text() === "全选") {
+                $("input[type=checkbox]").not(":disabled").prop('checked', true);
+                $(this).text("取消全选");
+            } else {
+                $("input[type=checkbox]").prop('checked', false);
+                $(this).text("全选");
+            }
+        });
+
+        // 删除选中行
+        $("#deleteSelected").click(function() {
+            var checkedRows = $("input[type=checkbox]:checked").not(":disabled").closest('tr');
+            if (checkedRows.length > 0) {
+                if (confirm("确定要删除选中的行吗？")) {
+                    checkedRows.remove();
+                }
+            } else {
+                alert("请先选择要删除的行！");
+            }
+        });
+        // 刷新页面
+        $("#refreshPage").click(function() {
+            location.reload();
+        });
+
+        // 保存数据
+        $("#saveData").click(function() {
+            var savedData = [];
+            $("table tbody tr").each(function() {
+                if ($(this).find('input[type="checkbox"]').prop('checked')) {
+                    var rowData = [];
+                    $(this).find('td').each(function() {
+                        if ($(this).find('.edit-input').length > 0) {
+                            rowData.push($(this).find('.edit-input').val());
+                        } else {
+                            rowData.push($(this).text());
+                        }
+                    });
+                    savedData.push(rowData);
+                }
+            });
+
+            // 将数据以 JSON 格式发送到后端处理
+            $.ajax({
+                type: "POST",
+                url: "/save_data",
+                contentType: "application/json",
+                data: JSON.stringify(savedData),
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(xhr, status, error) {
+                    alert("保存数据时发生错误：" + error);
+                }
+            });
+        });
+    });
+</script>
+
+</head>
+
+<body>
+
+<div id="container">
+    <h1>邮箱监测__</h1>
+    <h2>最后更新日期：{{nowtime}}  执行任务：{{dongzuo}}</h2>
+    <button id="selectAllButton">全选</button>
+    <button id="deleteSelected">删除选中行</button>
+    <button id="saveData">保存</button>
+    <button id="refreshPage">刷新</button>
+    <table id="dataTable" cellspacing='0' cellpadding='0'>
+        <tr>
+            <th></th>
+            <th>序号</th>
+            <th>番号</th>
+            <th>排除/在库</th>
+            <th>加价</th>
+            <th>手续料</th>
+            <th>标题</th>
+            <th>涨幅</th>
+            <th>Q10现在价格</th>
+            <th>○商家数量</th>
+            <th>改后价格</th>
+            <th>JAN</th>
+            <th>更新日期</th>
+        </tr>
+            {% for data in update_list %}
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>{{ loop.index }}</td>
+                {% for item in data %}
+                    {% if loop.index0 == 8 %}
+                        <td class="editable"><input type="text" class="edit-input" value="{{ item }}" /></td>
+                    {% else %}
+                        <td>{{ item|safe }}</td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+    </table>
+</div>
+
+</body>
+</html>
