@@ -9,6 +9,10 @@ client_secret.json 文件可以用于 Python 应用，但需要确保申请的 O
 点击 创建凭据 按钮，然后选择 OAuth 客户端 ID。
 在 应用类型 中选择 桌面应用。
 创建凭据并下载 client_secret.json 文件。
+OAuth 权限请求页面，OAuth  同意屏幕 中，添加测试用户为要连接的email
+
+
+
 安装依赖库
 安装所需的 Python 库：
 
