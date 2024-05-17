@@ -1,0 +1,254 @@
+client_secret.json 文件可以用于 Python 应用，但需要确保申请的 OAuth 2.0 凭据是适用于桌面应用（Installed App）的，而不是 Web 应用。
+
+以下是一个完整的示例，包括如何使用正确的 client_secret.json 文件来获取 OAuth 2.0 凭据并连接到 Gmail IMAP 服务器。请确保你的 client_secret.json 文件是为桌面应用生成的。
+
+申请 OAuth 2.0 凭据
+登录到 Google Cloud Console.
+创建一个新的项目或选择一个现有项目。
+导航到 API 和服务 > 凭据。
+点击 创建凭据 按钮，然后选择 OAuth 客户端 ID。
+在 应用类型 中选择 桌面应用。
+创建凭据并下载 client_secret.json 文件。
+安装依赖库
+安装所需的 Python 库：
+
+bash
+コードをコピーする
+pip install google-auth google-auth-oauthlib google-auth-httplib2
+Python 脚本
+以下是完整的 Python 脚本，用于获取 OAuth 2.0 凭据，连接到 Gmail IMAP 服务器，并搜索邮件内容：
+
+python
+コードをコピーする
+import os
+import imaplib
+import email
+from email.header import decode_header
+import re
+from datetime import datetime, timedelta
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+# OAuth 2.0 相关信息
+SCOPES = ['https://mail.google.com/']
+CLIENT_SECRET_FILE = 'path_to_your_client_secret.json'  # 替换为你的client_secret.json文件路径
+TOKEN_FILE = 'token.json'
+
+# 获取 OAuth 2.0 凭据
+def get_credentials():
+    creds = None
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+    return creds
+
+# 获取 OAuth 2.0 凭据
+creds = get_credentials()
+auth_string = f'user={username}\1auth=Bearer {creds.token}\1\1'
+
+# 连接到Gmail的IMAP服务器
+mail = imaplib.IMAP4_SSL("imap.gmail.com")
+
+# 登录
+mail.authenticate('XOAUTH2', lambda x: auth_string)
+
+# 选择收件箱
+mail.select("inbox")
+
+# 获取当前日期和5天前的日期
+date_format = "%d-%b-%Y"
+today = datetime.today()
+since_date = (today - timedelta(days=5)).strftime(date_format)
+
+# 搜索5天以内的邮件
+search_criteria = f'(SINCE {since_date})'
+status, messages = mail.search(None, search_criteria)
+
+# 将邮件ID转换为列表
+email_ids = messages[0].split()
+
+# 初始化一个列表来保存价格变化
+price_changes = []
+
+# 遍历每封邮件
+for email_id in email_ids:
+    # 获取邮件数据
+    status, msg_data = mail.fetch(email_id, "(RFC822)")
+    
+    for response_part in msg_data:
+        if isinstance(response_part, tuple):
+            # 从消息数据中获取邮件内容
+            msg = email.message_from_bytes(response_part[1])
+            
+            # 解码邮件主题
+            subject, encoding = decode_header(msg["Subject"])[0]
+            if isinstance(subject, bytes):
+                subject = subject.decode(encoding if encoding else "utf-8")
+            
+            # 遍历邮件的各个部分
+            if msg.is_multipart():
+                for part in msg.walk():
+                    # 如果邮件内容是文本或HTML
+                    if part.get_content_type() == "text/plain" or part.get_content_type() == "text/html":
+                        # 解码邮件内容
+                        body = part.get_payload(decode=True).decode(part.get_content_charset())
+                        # 检查邮件内容是否包含关键词
+                        if keyword in body:
+                            # 使用正则表达式查找价格
+                            prices = re.findall(r'\d+\.\d{2}', body)
+                            # 将找到的价格添加到价格变化列表
+                            price_changes.extend(prices)
+            else:
+                # 如果邮件内容不是多部分
+                body = msg.get_payload(decode=True).decode(msg.get_content_charset())
+                if keyword in body:
+                    prices = re.findall(r'\d+\.\d{2}', body)
+                    price_changes.extend(prices)
+
+# 打印价格变化
+print("价格变化列表:")
+for price in price_changes:
+    print(price)
+
+# 关闭连接
+mail.logout()
+详细说明
+OAuth 2.0 认证：
+
+调用 get_credentials() 函数。它会检查 token.json 文件是否存在，并从中加载凭据。如果 token.json 不存在或无效，则启动 OAuth 2.0 流程，用户需在浏览器中登录并授权，授权成功后会生成 token.json 文件。
+连接到 Gmail IMAP 服务器：
+
+使用 imaplib.IMAP4_SSL 连接到 Gmail 的 IMAP 服务器。
+使用 authenticate('XOAUTH2', lambda x: auth_string) 方法进行 OAuth 2.0 认证。
+搜索和处理邮件：
+
+计算当前日期和 5 天前的日期，并格式化为 IMAP 支持的日期格式。
+使用 mail.search(None, f'(SINCE {since_date})') 搜索最近 5 天内的邮件。
+遍历每封邮件，检查内容是否包含指定关键词，并提取价格信息。
+在首次运行时，脚本会打开一个浏览器窗口，请求授权访问 Gmail。授权成功后会生成 token.json 文件，之后的运行将使用该文件中的凭据，无需再次授权。
+
+现在显示The authentication flow has completed. You may close this window.  
+ChatGPT
+这个信息表示 OAuth 2.0 认证流程已成功完成。此时，OAuth 2.0 凭据已经生成并保存到 token.json 文件中。接下来，你可以继续运行脚本以连接到 Gmail IMAP 服务器并执行邮件搜索和处理操作。
+
+请确保你的脚本已正确连接到 Gmail IMAP 服务器并按预期工作。如果在认证完成后还有问题，可以检查以下内容：
+
+确保凭据正确保存：确认 token.json 文件已生成并包含有效的 OAuth 2.0 凭据。
+确保你正确连接到 IMAP 服务器：检查 imaplib.IMAP4_SSL 和 authenticate 方法是否正确执行。
+如果一切正常，你可以运行完整的脚本，以下是带有所有步骤的完整脚本：
+
+python
+コードをコピーする
+import os
+import imaplib
+import email
+from email.header import decode_header
+import re
+from datetime import datetime, timedelta
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+# OAuth 2.0 相关信息
+SCOPES = ['https://mail.google.com/']
+CLIENT_SECRET_FILE = 'path_to_your_client_secret.json'  # 替换为你的client_secret.json文件路径
+TOKEN_FILE = 'token.json'
+
+# 获取 OAuth 2.0 凭据
+def get_credentials():
+    creds = None
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+    return creds
+
+# 获取 OAuth 2.0 凭据
+creds = get_credentials()
+auth_string = f'user={"asutbp92810@gmail.com"}\1auth=Bearer {creds.token}\1\1'
+
+# 连接到Gmail的IMAP服务器
+mail = imaplib.IMAP4_SSL("imap.gmail.com")
+
+# 登录
+mail.authenticate('XOAUTH2', lambda x: auth_string)
+
+# 选择收件箱
+mail.select("inbox")
+
+# 获取当前日期和5天前的日期
+date_format = "%d-%b-%Y"
+today = datetime.today()
+since_date = (today - timedelta(days=5)).strftime(date_format)
+
+# 搜索5天以内的邮件
+search_criteria = f'(SINCE {since_date})'
+status, messages = mail.search(None, search_criteria)
+
+# 将邮件ID转换为列表
+email_ids = messages[0].split()
+
+# 初始化一个列表来保存价格变化
+price_changes = []
+
+# 遍历每封邮件
+for email_id in email_ids:
+    # 获取邮件数据
+    status, msg_data = mail.fetch(email_id, "(RFC822)")
+    
+    for response_part in msg_data:
+        if isinstance(response_part, tuple):
+            # 从消息数据中获取邮件内容
+            msg = email.message_from_bytes(response_part[1])
+            
+            # 解码邮件主题
+            subject, encoding = decode_header(msg["Subject"])[0]
+            if isinstance(subject, bytes):
+                subject = subject.decode(encoding if encoding else "utf-8")
+            
+            # 遍历邮件的各个部分
+            if msg.is_multipart():
+                for part in msg.walk():
+                    # 如果邮件内容是文本或HTML
+                    if part.get_content_type() == "text/plain" or part.get_content_type() == "text/html":
+                        # 解码邮件内容
+                        body = part.get_payload(decode=True).decode(part.get_content_charset())
+                        # 检查邮件内容是否包含关键词
+                        if "CF-FV4CDTCR" in body:  # 替换为你的关键词
+                            # 使用正则表达式查找价格
+                            prices = re.findall(r'\d+\.\d{2}', body)
+                            # 将找到的价格添加到价格变化列表
+                            price_changes.extend(prices)
+            else:
+                # 如果邮件内容不是多部分
+                body = msg.get_payload(decode=True).decode(msg.get_content_charset())
+                if "CF-FV4CDTCR" in body:  # 替换为你的关键词
+                    prices = re.findall(r'\d+\.\d{2}', body)
+                    price_changes.extend(prices)
+
+# 打印价格变化
+print("价格变化列表:")
+for price in price_changes:
+    print(price)
+
+# 关闭连接
+mail.logout()
+解释
+获取 OAuth 2.0 凭据：使用 get_credentials() 函数获取 OAuth 2.0 凭据。如果 token.json 文件存在且有效，则加载凭据；否则启动 OAuth 2.0 流程进行授权并生成新的凭据。
+连接到 Gmail IMAP 服务器：使用 imaplib.IMAP4_SSL 连接到 Gmail 的 IMAP 服务器，并使用 authenticate('XOAUTH2', lambda x: auth_string) 进行 OAuth 2.0 认证。
+搜索和处理邮件：搜索最近 5 天内的邮件，检查邮件内容是否包含指定关键词，并提取价格信息。
+运行脚本后，应该能正确连接到 Gmail 服务器，并根据关键词搜索和处理邮件内容。
