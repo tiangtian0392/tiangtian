@@ -95,6 +95,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # page_html = self.selenium_open_url('https://kakaku.com/item/K0001580674/')
         url = self.get_kakaku_url()
         if url != '':
+            self.lineEdit_jiagewangURL.setText(url)
             htmlcode = self.get_htmlcode(url)
             # print(htmlcode)
             price = self.getxpath(htmlcode)
@@ -105,6 +106,21 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         soup = BeautifulSoup(htmlcode, 'html.parser')
         rows = soup.find_all('tr')
+        try:
+            title = soup.find('h2', itemprop="name").text.strip()
+            self.lineEdit_jiagewangbiaoti.setText(title)
+
+            make = soup.find('li', class_='makerLabel').text.strip()
+            self.lineEdit_changjia.setText(make)
+
+            breadcrumb_items = soup.find_all('span', itemprop='title')
+
+            # Extract the text from the third breadcrumb item
+            cmaker_text = breadcrumb_items[2].get_text()
+            self.lineEdit_jiage_jiagewangfenlei.setText(cmaker_text)
+            print(title)
+        except Exception as e:
+            pass
 
         result = []
 
@@ -128,7 +144,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 print(e)
         print(result)
-        
+
 
     def selenium_open_url(self, url):
         driver = webdriver.Chrome()
