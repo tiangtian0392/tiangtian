@@ -3,10 +3,12 @@ from selenium import webdriver
 from chupin_window import Ui_MainWindow
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QShortcut, QMessageBox, QMainWindow, QVBoxLayout, QTextEdit, QDialog, \
-    QDialogButtonBox, QLabel,QPlainTextEdit
+    QDialogButtonBox, QLabel, QPlainTextEdit
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer
 import requests
 from lxml import etree
+from bs4 import BeautifulSoup
+
 
 class MyWindow(QMainWindow, Ui_MainWindow):
     re_path = pyqtSignal(str, str)
@@ -46,6 +48,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         # 点击开始
         self.pushButton_kaishi.clicked.connect(self.kaishi)
+
     # 获取Qoo10biaoti字符数
     def Qoo10biaoti(self):
         Qoo10biaoti = self.lineEdit_Qoo10biaoti.text()
@@ -57,6 +60,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         xingban = self.lineEdit_xingban.text()
         numstr = len(xingban)
         self.label_zishu_2.setText(f'字数：{numstr}')
+
     def get_kakaku_url(self):
         # 获取 DevTools 协议的 JSON
         response = requests.get('http://localhost:3556/json')
@@ -71,7 +75,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def on_error_occurred(self, error_message):
         QMessageBox.warning(self, '提醒', f'出错: {error_message}')
-    def get_htmlcode(self,url):
+
+    def get_htmlcode(self, url):
         hd = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -84,68 +89,48 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         htmlcode = htmlcode.text
         # print(f'Qoo10价格={htmlcode}')
         return htmlcode
+
     # 点击开始
     def kaishi(self):
         # page_html = self.selenium_open_url('https://kakaku.com/item/K0001580674/')
         url = self.get_kakaku_url()
         if url != '':
             htmlcode = self.get_htmlcode(url)
-            print(htmlcode)
+            # print(htmlcode)
+            price = self.getxpath(htmlcode)
         else:
             self.on_error_occurred(f'获取url出错！获取内容={url}')
 
     def getxpath(self, htmlcode):
-        # 定义正则表达式模式。可查是否是手机
-        pattern = r'<div class="path btmPath">(.*?)</div>'
 
-        # 使用正则表达式匹配源码中的指定部分
-        match = re.search(pattern, htmlcode, re.DOTALL)
-        print(match)
-        zaikupanduan = '○'
-        for i in range(0, 3):
-            # print('运行次数-%i' % i)
-            if match:
-                if '携帯電話' in match.group(1):
-                    print('开始获取手机数据')
-                    zaikupanduan = "有"
-                    
-        tablecode = "//tr"
-        mytree = etree.HTML(htmlcode)
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+        rows = soup.find_all('tr')
 
-        tr_list = mytree.xpath(tablecode)
+        result = []
 
-        # 记录在库数
-        zaiku_num = 0
-        # 商家取位值
-        shangjiquwei = int(self.spinBox_jiagequwei.value())
-        print(f'目前价格取位={shangjiquwei}')
-        zaiku_list = []
-        for i, td in enumerate(tr_list):
+        for row in rows:
             try:
-                # xl为序列，jg为价格，zk为在库状态，sj为商品名
-                xl = td.xpath('./td[1]/span[1]//text()')
-                xl = ''.join(xl)
-                # print(xl)
-                jg = td.xpath('./td[2]/div[1]/p[1]//text()')
-                jg = ''.join(jg)
-                # print(jg)
-                zk = td.xpath('./td[4]/p[1]//text()')
-                zk = ''.join(zk)
 
-                if xl:
-                    zaiku_list.append([jg, zk])
-                if zk == zaikupanduan:
-                    zaiku_num +=1
-                if zaiku_num == shangjiquwei:
-                    return
+                price = row.find('p', class_='p-PTPrice_price').text.strip()
+
+                shop_name = row.find('p', class_='p-PTShopData_name').find('a').text.strip()
+                shop_location = row.find('p', class_='p-PTStock').text.strip()
 
 
-            except:
-                pass
+                result.append({
 
+                    'price': price,
 
+                    'shop_name': shop_name,
+                    'shop_location': shop_location,
 
-    def selenium_open_url(self,url):
+                })
+            except Exception as e:
+                print(e)
+        print(result)
+        
+
+    def selenium_open_url(self, url):
         driver = webdriver.Chrome()
         driver.get(url)
 
@@ -164,7 +149,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             print(data)
             self.comboBox_fenlei.clear()
             for item in data:
-                item = re.sub('\\s+','_',item)
+                item = re.sub('\\s+', '_', item)
 
                 print(item)
                 self.comboBox_fenlei.addItem(item)
@@ -219,6 +204,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # 获取QPlainTextEdit的内容并将其设置为QTextEdit的HTML内容
         plainText = self.plainTextEdit.toPlainText()
         self.textEdit.setHtml(plainText)
+
 
 class DataInputDialog(QDialog):
     def __init__(self):
