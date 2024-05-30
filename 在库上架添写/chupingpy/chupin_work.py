@@ -139,9 +139,27 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         for make, itmes in makedict.items():
             print(make, itmes)
-            for item in itmes:
-                print(self.make_GX[make][item])
+            print(self.make_GX[make])
 
+            # 获取网页源码
+            page_code = self.selenium_open_url(make_url[make])
+            for itme in itmes:
+                re_lists = self.make_GX[make][itme]
+                search_str = ''
+                for i, re_str in enumerate(re_lists):
+                    if i == 0:
+                        search_str = re.search(re_str, page_code, flags=re.IGNORECASE).group()
+                    else:
+                        search_str = re.search(re_str, search_str, flags=re.IGNORECASE).group()
+                    print(search_str)
+
+                if search_str != '':
+                    if itme == 'JAN':
+                        self.lineEdit_jan.setText(search_str)
+                    if itme == '型号':
+                        self.lineEdit_xingban.setText(search_str)
+                    if itme == '详情':
+                        self.plainTextEdit.setPlainText(search_str)
 
     def getxpath(self, htmlcode):
 
