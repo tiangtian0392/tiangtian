@@ -1,13 +1,13 @@
 import os, re, json
 from selenium import webdriver
-from chupin_window import Ui_MainWindow
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QShortcut, QMessageBox, QMainWindow, QVBoxLayout, QTextEdit, QDialog, \
-    QDialogButtonBox, QLabel, QPlainTextEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QShortcut, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, QDialog, \
+    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit,QPushButton,QCheckBox,QScrollArea,QGridLayout
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer
 import requests
 from lxml import etree
 from bs4 import BeautifulSoup
+from chupin_window import Ui_MainWindow
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -18,11 +18,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         with open("make_dict.json", "r", encoding='utf-8') as f:
-            make_dict = json.load(f)
+            self.make_dict = json.load(f)
         with open("make_GX.json", "r", encoding='utf-8') as f:
-            make_GX = json.load(f)
+            self.make_GX = json.load(f)
 
-        for key, item in make_GX.items():
+        for key, item in self.make_GX.items():
             # print(key)
             self.comboBox_zichengxu.addItem(key)
         # 将QPlainTextEdit的内容变化信号连接到updateHtml槽函数
@@ -42,12 +42,16 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_charuhuanhang.clicked.connect(self.charuhuanghang)
         self.pushButton_charutupian.clicked.connect(self.charutupian)
         self.pushButton_qingkongdaima.clicked.connect(self.qingkongdaima)
+        self.pushButton_chongzhi.clicked.connect(self.chongzhi)
 
         # 点击添加分类
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
 
         # 点击开始
         self.pushButton_kaishi.clicked.connect(self.kaishi)
+
+        self.sku = ''
+        self.to_dialog_dict = {}
 
     # 获取Qoo10biaoti字符数
     def Qoo10biaoti(self):
@@ -69,7 +73,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         for tab in tabs:
             if 'kakaku.com/item' in tab['url']:
                 url = tab['url']
-                print(tab['url'])
+                sku = re.search(r'k\d+', url, flags=re.IGNORECASE)
+                print(f'url={url},sku = {sku}')
+                if sku:
+                    self.sku = sku.group()
+                print(tab['url'], self.sku)
 
         return url
 
@@ -90,60 +98,162 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # print(f'Qoo10价格={htmlcode}')
         return htmlcode
 
+    # 点击重置
+    def chongzhi(self):
+        # 遍历窗体上的所有控件
+        for widget in self.findChildren(QWidget):
+            # 找到类型为 QLineEdit 的控件
+            if isinstance(widget, QLineEdit):
+                # 将文本内容重置为空字符串
+                widget.setText("")
+        self.plainTextEdit.setPlainText('')
+        self.lineEdit_fasongri.setText('3')
+        self.comboBox.setCurrentIndex(0)
+        self.spinBox_jiagequwei.setValue(5)
+        self.lineEdit_jiajia.setText('3500')
+        self.spinBox_zitidaxiao.setValue(12)
+
     # 点击开始
     def kaishi(self):
         # page_html = self.selenium_open_url('https://kakaku.com/item/K0001580674/')
+        self.sku = ''
+
         url = self.get_kakaku_url()
         if url != '':
             self.lineEdit_jiagewangURL.setText(url)
             htmlcode = self.get_htmlcode(url)
             # print(htmlcode)
-            price = self.getxpath(htmlcode)
+            # 返回商家公式字典make_GX,和商家URL的dict
+            to_tanchuan_dict, make_url = self.getxpath(htmlcode)
         else:
             self.on_error_occurred(f'获取url出错！获取内容={url}')
+        re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
+        print(f're_getmake_dict={re_getmake_dict}')
+        # 获取JAN，详情等
+        if re_getmake_dict is not None:
+            self.getjanxq(re_getmake_dict, make_url)
+
+
+    # 获取JAN 详情等
+    def getjanxq(self,makedict,make_url):
+
+        for make, itmes in makedict.items():
+            print(make, itmes)
+            for item in itmes:
+                print(self.make_GX[make][item])
+
 
     def getxpath(self, htmlcode):
 
         soup = BeautifulSoup(htmlcode, 'html.parser')
         rows = soup.find_all('tr')
+        zk = '○'
+        cmaker_text = ''
         try:
+            # 标题
             title = soup.find('h2', itemprop="name").text.strip()
             self.lineEdit_jiagewangbiaoti.setText(title)
-
+            # 厂家
             make = soup.find('li', class_='makerLabel').text.strip()
             self.lineEdit_changjia.setText(make)
-
+            # 分类
             breadcrumb_items = soup.find_all('span', itemprop='title')
-
             # Extract the text from the third breadcrumb item
-            cmaker_text = breadcrumb_items[2].get_text()
+            cmaker_text = breadcrumb_items[1].get_text()
             self.lineEdit_jiage_jiagewangfenlei.setText(cmaker_text)
-            print(title)
+            # 图片
+            urls = soup.find('div', id='imgBox').prettify()
+            re_urls = re.findall(f'{self.sku}.*?\.jpg', urls)
+            self.lineEdit_tupianshu.setText(str(len(re_urls)))
+
+
         except Exception as e:
-            pass
+            QMessageBox.warning(self, '提示', f'获取信息出错，e={e}')
+            return
 
         result = []
+        to_dialog_dict = {}
+        make_url = {}
+        if '携帯電話' in cmaker_text:
+            zk = "有"
 
-        for row in rows:
+        print(f'在库判断={zk}')
+        price_OK = 0
+        zk_num = 0
+
+        for i, row in enumerate(rows):
             try:
-
-                price = row.find('p', class_='p-PTPrice_price').text.strip()
-
-                shop_name = row.find('p', class_='p-PTShopData_name').find('a').text.strip()
-                shop_location = row.find('p', class_='p-PTStock').text.strip()
-
-
+                shop_location = ''
+                if zk == '○':
+                    # 价格
+                    price = row.find('p', class_='p-PTPrice_price').text.strip()
+                    print(price)
+                    # 商家名 p-PTShopData_name PTShopData_name
+                    shop_name = row.find('p', class_='p-PTShopData_name').find('a').text.strip()
+                    print(shop_name)
+                    # 在库状态
+                    shop_location = row.find('p', class_='p-PTStock').text.strip()
+                    print(shop_location)
+                else:
+                    # 价格
+                    price = row.find('p', class_='fontPrice').text.strip()
+                    # print(price)
+                    # 商家名
+                    shop_name = row.find('td', class_='shopname').find('a').text.strip()
+                    # print(shop_name)
+                    columns = row.find_all('td')
+                    if len(columns) > 3:  # 确保有足够的列来提取信息
+                        shop_location = columns[3].text.strip()
+                        # print(f'在库状态: {shop_location}')
+                # 判断商家是否在可出品字典中，添加给窗口选择
+                shop_url = ''
+                if shop_name in self.make_GX:
+                    shop_links = row.find_all('a', href=lambda href: href and 'ShopCD=' in href)
+                    shop_url = shop_links[0]['href']
+                    # print(shop_url)
+                    make_url[shop_name] = shop_url
+                    to_dialog_dict[shop_name] = self.make_GX[shop_name]
                 result.append({
 
                     'price': price,
-
                     'shop_name': shop_name,
-                    'shop_location': shop_location,
+                    'shop_location': shop_location
 
                 })
+                if zk == shop_location:
+                    zk_num += 1
+                # print(zk, shop_location, zk_num, self.spinBox_jiagequwei.value())
+                if zk_num == self.spinBox_jiagequwei.value():
+                    price_OK = price
+
             except Exception as e:
-                print(e)
-        print(result)
+                # print(e)
+                pass
+        # print(result)
+        if price_OK == 0:
+            price_OK = result[-1]['price']
+            self.lineEdit_shuliang.setText('0')
+        else:
+            self.lineEdit_shuliang.setText('1')
+        price_OK = int(price_OK.replace('¥', '').replace(',', ''))
+        print(price_OK)
+        if price_OK >= 60000:
+            price_OK = int((price_OK + int(self.lineEdit_jiajia.text())) / 0.983 / 0.92)
+        else:
+            price_OK = int((price_OK + int(self.lineEdit_jiajia.text())) / 0.92)
+        self.lineEdit_jiage.setText(str(price_OK))
+        print(price_OK)
+        print(to_dialog_dict)
+        return to_dialog_dict, make_url
+
+    def open_Tanchuang(self, data):
+        dialog = TanchuangDialog(data)
+        if dialog.exec_() == QDialog.Accepted:
+            data = dialog.get_selected_options()
+            # print(data)
+        else:
+            data = None
+        return data
 
 
     def selenium_open_url(self, url):
@@ -252,6 +362,122 @@ class DataInputDialog(QDialog):
         # 返回列表
         return lines
 
+# 复选框弹窗
+class TanchuangDialog(QDialog):
+    def __init__(self, data_dict, width=800, title="Data Input Dialog"):
+        super().__init__()
+
+        self.data_dict = data_dict
+        self.selected_options = {}
+        self.currently_selected = {"JAN": None, "型号": None, "详情": None, "图片": None}
+
+        self.init_ui()
+
+        # 设置窗口固定宽度和标题
+        self.setFixedWidth(400)
+        self.setFixedHeight(800)
+        self.setWindowTitle('出品商家选择')
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        # 创建一个 QScrollArea
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        # 创建一个容器 widget，内容放在这个 widget 上
+        container_widget = QWidget()
+        self.grid_layout = QGridLayout(container_widget)
+
+        # 初始化行索引
+        row = 0
+
+        for key, items in self.data_dict.items():
+            group_label = QCheckBox(key)
+            group_label.setTristate(False)
+            group_label.setChecked(False)
+            group_label.setStyleSheet("QCheckBox::indicator { width: 0px; }")
+            self.grid_layout.addWidget(group_label, row, 0, 1, 4)  # 占据一行的四列
+
+            col_positions = {"JAN": 0, "型号": 1, "详情": 2, "图片": 3}
+            col_occupied = [False] * 4
+
+            for sub_key, formulas in items.items():
+                if formulas and sub_key in col_positions:
+                    col = col_positions[sub_key]
+                    sub_key_checkbox = QCheckBox(sub_key)
+                    sub_key_checkbox.setObjectName(f"{key}_{sub_key}")
+                    sub_key_checkbox.stateChanged.connect(self.check_unique_selection)
+
+                    self.grid_layout.addWidget(sub_key_checkbox, row + 1, col)
+                    col_occupied[col] = True
+
+            # 用空标签占位
+            for col, occupied in enumerate(col_occupied):
+                if not occupied:
+                    placeholder_label = QLabel("")
+                    self.grid_layout.addWidget(placeholder_label, row + 1, col)
+
+            row += 2  # 每组占据两行
+
+        scroll_area.setWidget(container_widget)
+
+        cancel_button = QPushButton('取消')
+        cancel_button.clicked.connect(self.cancel_dialog)
+
+        close_button = QPushButton('确认')
+        close_button.clicked.connect(self.close_dialog)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(close_button)
+
+        layout.addWidget(scroll_area)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def check_unique_selection(self, state):
+        sender = self.sender()
+        if state == 2:  # 选中
+            item_type = sender.text()
+            current_selection = self.currently_selected.get(item_type)
+            if current_selection:
+                reply = QMessageBox.question(
+                    self, "替换确认",
+                    f"已经选择了一个 {item_type}，是否要替换？",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                )
+                if reply == QMessageBox.No:
+                    sender.setChecked(False)
+                    return
+                else:
+                    current_selection.setChecked(False)
+
+            self.currently_selected[item_type] = sender
+        elif state == 0:  # 取消选中
+            item_type = sender.text()
+            if self.currently_selected.get(item_type) == sender:
+                self.currently_selected[item_type] = None
+
+    def cancel_dialog(self):
+
+        self.reject()
+
+
+    def close_dialog(self):
+        for key, items in self.data_dict.items():
+            for sub_key, formulas in items.items():
+                checkbox = self.findChild(QCheckBox, f"{key}_{sub_key}")
+                if checkbox and checkbox.isChecked():
+                    if key not in self.selected_options:
+                        self.selected_options[key] = []
+                    self.selected_options[key].append(sub_key)
+
+        self.accept()
+
+    def get_selected_options(self):
+        return self.selected_options
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
