@@ -3,13 +3,14 @@ from selenium import webdriver
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
     QDialog, \
-    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout
-from PyQt5.QtGui import QMovie
+    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
+from PyQt5.QtGui import QMovie, QPixmap
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from chupin_window import Ui_MainWindow
+from threading import Thread
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -31,7 +32,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.comboBox_zichengxu.addItem(key)
 
         # 读取文件时显示等待图片
-        self.open_file_dialog()
+        # self.open_file_dialog()
 
         # 将QPlainTextEdit的内容变化信号连接到updateHtml槽函数
         self.plainTextEdit.textChanged.connect(self.updateHtml)
@@ -53,6 +54,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_charutupian.clicked.connect(self.charutupian)
         self.pushButton_qingkongdaima.clicked.connect(self.qingkongdaima)
         self.pushButton_chongzhi.clicked.connect(self.chongzhi)
+        self.pushButton_yunxingzichongxu.clicked.connect(self.run_zichengxu)
 
         # 点击添加分类
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
@@ -63,22 +65,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.sku = ''
         self.to_dialog_dict = {}
         self.Qoo10data = ''
-    # 以下三个用法用于显示等待GIF图
-    def init_waiting_gif(self):
-        self.waiting_gif_label = QLabel(self)
-        self.waiting_gif_label.setGeometry(0, 0, self.width(), self.height())
-        self.waiting_gif_label.setAlignment(Qt.AlignCenter)
-        self.waiting_gif = QMovie("warte.gif")
-        self.waiting_gif_label.setMovie(self.waiting_gif)
-        self.waiting_gif_label.hide()
 
-    def show_waiting_gif(self):
-        self.waiting_gif_label.show()
-        self.waiting_gif.start()
-
-    def hide_waiting_gif(self):
-        self.waiting_gif_label.hide()
-        self.waiting_gif.stop()
 
     # 打开窗体时读入Qoo10data
     def open_file_dialog(self):
@@ -88,19 +75,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                                                    "Excel Files (*.xlsx);;All Files (*)",
                                                    options=options)
         if file_name:
-            # 显示等待图片
-            self.init_waiting_gif()
-            self.show_waiting_gif()
 
             try:
 
                 self.Qoo10data = pd.read_excel(file_name, engine='openpyxl')
-                self.hide_waiting_gif()
 
-                QMessageBox.information(self, 'Success', 'File loaded successfully.')
+                # QMessageBox.information(self, '提示', '文件读入完成')
             except Exception as e:
-                self.hide_waiting_gif()
-                QMessageBox.critical(self, 'Error', f'Error loading file: {str(e)}')
+                QMessageBox.critical(self, '错误', f'文件读入错误: {str(e)}')
 
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
@@ -120,7 +102,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                             item_number = row.get('item_number', 'N/A')
                             seller_unique_item_id = row.get('seller_unique_item_id', 'N/A')
                             item_name = row.get('item_name', 'N/A')
-                            JAN_PD = QMessageBox.question(self, '查重', f'JAN:{jan_to_search} found.\n'
+                            JAN_PD = QMessageBox.question(self, '查重', f'JAN:{jan_to_search} 重复！\n'
                                                                         f'番号:{item_number}\n'
                                                                         f'型番:{seller_unique_item_id}\n'
                                                                         f'标题: {item_name}\n'
@@ -143,11 +125,26 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         xingban = self.lineEdit_xingban.text()
         numstr = len(xingban)
         self.label_zishu_2.setText(f'字数：{numstr}')
+    # 获取当前显示窗口的URL
+
+    def get_current_tab_url(self):
+        # 获取所有标签页的信息
+        response = requests.get('http://localhost:3556/json')
+        tabs = json.loads(response.text)
+
+        # 找到当前前台显示的标签页
+        for tab in tabs:
+            if tab.get('type') == 'page' and tab.get('url'):
+                # 这里假设第一个满足条件的页面是前台显示的标签页
+                return tab['url']
+
+        return None
 
     def get_kakaku_url(self):
         # 获取 DevTools 协议的 JSON
         response = requests.get('http://localhost:3556/json')
         tabs = json.loads(response.text)
+        print(tabs)
         url = ''
         for tab in tabs:
             if 'kakaku.com/item' in tab['url']:
@@ -192,6 +189,21 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.lineEdit_jiajia.setText('3500')
         self.spinBox_zitidaxiao.setValue(12)
 
+    # 点击子程序
+    def run_zichengxu(self):
+        zichengxu_name = self.comboBox_zichengxu.currentText()
+        zichengxu_dict = {}
+        zichengxu_url = {}
+        data = []
+        for key, item in self.make_GX[zichengxu_name].items():
+            data.append(key)
+        zichengxu_dict[zichengxu_name] = data
+        url = self.get_current_tab_url()
+        if url is not None:
+            zichengxu_url[zichengxu_name] = url
+            print(zichengxu_dict,zichengxu_url)
+            re_jan = self.getjanxq(zichengxu_dict, zichengxu_url)
+            self.updatajan(re_jan)
     # 点击开始
     def kaishi(self):
         # page_html = self.selenium_open_url('https://kakaku.com/item/K0001580674/')
@@ -199,25 +211,41 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         to_tanchuan_dict = None
         re_getmake_dict = None
         make_url_dict = None
+        re_jan = None
         url = self.get_kakaku_url()
-        if url != '':
-            self.lineEdit_jiagewangURL.setText(url)
-            htmlcode = self.get_htmlcode(url)
-            # print(htmlcode)
-            # 返回商家公式字典make_GX,和商家URL的dict
-            to_tanchuan_dict, make_url_dict = self.getxpath(htmlcode)
-        else:
-            self.on_error_occurred(f'获取url出错！获取内容={url}')
-        if to_tanchuan_dict:
-            re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
-            print(f're_getmake_dict={re_getmake_dict}')
-        # 获取JAN，详情等
-        if re_getmake_dict is not None and make_url_dict is not None:
-            self.getjanxq(re_getmake_dict, make_url_dict)
+        try:
+            if url != '':
+                self.lineEdit_jiagewangURL.setText(url)
+                htmlcode = self.get_htmlcode(url)
+                # print(htmlcode)
+                # 返回商家公式字典make_GX,和商家URL的dict
+                to_tanchuan_dict, make_url_dict = self.getxpath(htmlcode)
+            else:
+                self.on_error_occurred(f'获取url出错！获取内容={url}')
+            if to_tanchuan_dict:
+                re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
+                print(f're_getmake_dict={re_getmake_dict}')
+            # 获取JAN，详情等
+            if re_getmake_dict is not None and make_url_dict is not None:
+                re_jan = self.getjanxq(re_getmake_dict, make_url_dict)
+            if re_jan:
+                self.updatajan(re_jan)
+        except Exception as e:
+            QMessageBox.warning(self, '提示', f'程序发生错误，e={e}')
+    # 添写jAN等
+    def updatajan(self,jandict):
+        try:
 
+            self.lineEdit_xingban.setText(jandict['型号'])
+            self.plainTextEdit.setPlainText(jandict['详情'])
+            self.lineEdit_jan.setText(jandict['JAN'])
+
+        except Exception as e:
+            pass
     # 获取JAN 详情等
     def getjanxq(self, makedict, make_url_dict):
 
+        data_dict = {}
         for make, itmes in makedict.items():
             print(make, itmes)
             print(self.make_GX[make])
@@ -228,23 +256,32 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 re_lists = self.make_GX[make][itme]
                 search_str = ''
                 for i, re_str in enumerate(re_lists):
-                    if i == 0:
-                        search_str = re.search(re_str, page_code, flags=re.IGNORECASE)
-                        if search_str:
-                            search_str = search_str.group()
-                    else:
-                        search_str = re.search(re_str, search_str, flags=re.IGNORECASE)
-                        if search_str:
-                            search_str = search_str.group()
+                    try:
+                        if i == 0:
+                            search_str = re.search(re_str, page_code, flags=re.IGNORECASE)
+                            if search_str:
+                                search_str = search_str.group()
+                        else:
+                            search_str = re.search(re_str, search_str, flags=re.IGNORECASE)
+                            if search_str:
+                                search_str = search_str.group()
+                    except Exception as e:
+                        print(f'公式获取出错，商家={make},i={i},公式={re_str},search_str={search_str}')
                     print(search_str)
 
                 if search_str != '':
-                    if itme == 'JAN':
-                        self.lineEdit_jan.setText(search_str)
                     if itme == '型号':
-                        self.lineEdit_xingban.setText(search_str)
+                        data_dict['型号'] = search_str
+                        # self.lineEdit_xingban.setText(search_str)
                     if itme == '详情':
-                        self.plainTextEdit.setPlainText(search_str)
+                        data_dict['详情'] = search_str
+                        # self.plainTextEdit.setPlainText(search_str)
+                    if itme == 'JAN':
+                        data_dict['JAN'] = search_str
+                        # self.lineEdit_jan.setText(search_str)
+        # print(data_dict)
+        return data_dict
+
 
     def getxpath(self, htmlcode):
 
@@ -361,7 +398,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         return to_dialog_dict, make_url
 
     def open_Tanchuang(self, data):
-        dialog = TanchuangDialog(data)
+        dialog = TanchuangDialog(data,self.make_dict)
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_selected_options()
             # print(data)
@@ -444,7 +481,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         plainText = self.plainTextEdit.toPlainText()
         self.textEdit.setHtml(plainText)
 
-
+# 用于添加商品分类
 class DataInputDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -478,12 +515,13 @@ class DataInputDialog(QDialog):
 
 # 复选框弹窗
 class TanchuangDialog(QDialog):
-    def __init__(self, data_dict, width=800, title="Data Input Dialog"):
+    def __init__(self, data_dict, make_dict):
         super().__init__()
 
         self.data_dict = data_dict
         self.selected_options = {}
         self.currently_selected = {"JAN": None, "型号": None, "详情": None, "图片": None}
+        self.make_dict = make_dict
 
         self.init_ui()
 
@@ -542,6 +580,9 @@ class TanchuangDialog(QDialog):
         close_button = QPushButton('确认')
         close_button.clicked.connect(self.close_dialog)
 
+        # 将 "确认" 按钮设置为默认按钮
+        close_button.setDefault(True)
+
         button_layout = QHBoxLayout()
         button_layout.addWidget(cancel_button)
         button_layout.addWidget(close_button)
@@ -551,6 +592,10 @@ class TanchuangDialog(QDialog):
 
         self.setLayout(layout)
 
+        # 根据商家排名顺序自动勾选复选框
+        self.auto_select_checkboxes()
+
+    # 同一列只能选中一个，如JAN不能多选
     def check_unique_selection(self, state):
         sender = self.sender()
         if state == 2:  # 选中
@@ -575,7 +620,6 @@ class TanchuangDialog(QDialog):
                 self.currently_selected[item_type] = None
 
     def cancel_dialog(self):
-
         self.reject()
 
     def close_dialog(self):
@@ -592,10 +636,26 @@ class TanchuangDialog(QDialog):
     def get_selected_options(self):
         return self.selected_options
 
+    def auto_select_checkboxes(self):
+        for key, order in self.make_dict.items():
+            # 如果商家在数据中存在，则根据排名顺序勾选相应的复选框
+            if key in self.data_dict:
+                checkboxes = [self.findChild(QCheckBox, f"{key}_{sub_key}") for sub_key in order if sub_key != 0]
+                for checkbox in checkboxes:
+                    if checkbox:
+                        checkbox.setChecked(True)
 
-if __name__ == "__main__":
+
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    my_window = MyWindow()
-    my_window.show()
+    splash = QSplashScreen(QPixmap('images.jpg'))
+    splash.showMessage('程序加载中......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
+    splash.show()
+
+    main_window = MyWindow()
+    main_window.open_file_dialog()
+    main_window.show()
+    splash.finish(main_window)
     sys.exit(app.exec_())
