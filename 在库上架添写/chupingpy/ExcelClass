@@ -1,0 +1,148 @@
+import win32com.client
+import pandas as pd
+from datetime import datetime
+
+class ExcelOperator:
+    def __init__(self):
+        self.excel = win32com.client.Dispatch("Excel.Application")
+        self.workbook = None
+        self.sheet = None
+
+    def connect_to_opened_workbook(self, filename):
+        for wb in self.excel.Workbooks:
+            print(wb.FullName)
+            if filename in wb.FullName:
+                self.workbook = wb
+                break
+        if not self.workbook:
+            raise FileNotFoundError(f"No open workbook found with path: {filename}")
+
+    def activate_worksheet(self, sheet_name):
+        self.sheet = self.workbook.Sheets(sheet_name)
+        self.sheet.Activate()
+
+    def read_cell(self, cell):
+        return self.sheet.Range(cell).Value
+
+    def read_range(self, start_cell, end_cell):
+        return self.sheet.Range(f"{start_cell}:{end_cell}").Value
+
+    def read_row(self, row):
+        return self.sheet.Rows(row).Value
+
+    def read_column(self, col):
+        return self.sheet.Columns(col).Value
+
+    def get_row_count(self):
+        return self.sheet.UsedRange.Rows.Count
+
+    def get_column_count(self):
+        return self.sheet.UsedRange.Columns.Count
+
+    def write_cell(self, cell, value):
+        self.sheet.Range(cell).Value = value
+
+    def write_range(self, start_cell, data):
+        end_cell = self.sheet.Cells(start_cell[0] + len(data) - 1, start_cell[1] + len(data[0]) - 1).Address
+        self.sheet.Range(f"{self.sheet.Cells(start_cell[0], start_cell[1]).Address}:{end_cell}").Value = data
+
+    def delete_row(self, row):
+        self.sheet.Rows(row).Delete()
+
+    def delete_column(self, col):
+        self.sheet.Columns(col).Delete()
+
+    def switch_sheet(self, sheet_name):
+        self.sheet = self.workbook.Sheets(sheet_name)
+        self.sheet.Activate()
+
+    def save(self):
+        self.workbook.Save()
+
+    def close(self):
+        self.workbook.Close(False)
+        self.excel.Quit()
+
+    def read_entire_sheet(self):
+        """Read the entire content of the active sheet."""
+        return self.sheet.UsedRange.Value
+
+    # 把win32 读入的元组转为DF
+    def convert_to_dataframe(self, data):
+        """Convert data to a Pandas DataFrame and handle datetime conversion."""
+        rows = []
+        for row in data:
+            new_row = []
+            for item in row:
+                # print(item)
+                if isinstance(item, datetime):
+                    try:
+                        # print(item)
+                        item = pd.to_datetime(str(item).replace('+00:00', ''))
+
+                    except AttributeError:
+                        pass
+                elif isinstance(item, pd.Timestamp):
+                    item = item.to_pydatetime()
+                elif isinstance(item, float) and item.is_integer():
+                    item = str(int(item))
+                new_row.append(item)
+            # print(new_row)
+            rows.append(new_row)
+        df = pd.DataFrame(rows[1:], columns=rows[0])
+        return df
+
+
+# # Example usage
+# if __name__ == "__main__":
+#     filename = r"今日の仕事.xlsx"
+#
+#     excel_operator = ExcelOperator()
+#     excel_operator.connect_to_opened_workbook(filename)
+#
+#     # Activate the worksheet
+#     excel_operator.activate_worksheet("Sheet1")
+#
+#     # # Read a cell
+#     # print("Cell A1:", excel_operator.read_cell("A1"))
+#     #
+#     # # Read a range
+#     # print("Range A1:B2:", excel_operator.read_range("A1", "B2"))
+#     #
+#     # # Read a row
+#     # print("Row 1:", excel_operator.read_row(1))
+#     #
+#     # # Read a column
+#     # print("Column A:", excel_operator.read_column("A"))
+#     #
+#     # # Get row and column count
+#     # print("Row count:", excel_operator.get_row_count())
+#     # print("Column count:", excel_operator.get_column_count())
+#
+#     # # Write to a cell
+#     # excel_operator.write_cell("A1", "Hello")
+#     #
+#     # # Write to a range
+#     # excel_operator.write_range((1, 1), [[1, 2], [3, 4]])
+#     #
+#     # # Delete a row
+#     # excel_operator.delete_row(2)
+#     #
+#     # # Delete a column
+#     # excel_operator.delete_column("B")
+#     #
+#     # # Switch to another sheet
+#     # excel_operator.switch_sheet("Sheet2")
+#
+#     # Read entire sheet content
+#     entire_content = excel_operator.read_entire_sheet()
+#     # print("Entire Sheet Content:", entire_content)
+#
+#     df = excel_operator.convert_to_dataframe(entire_content)
+#     print(df)
+#     # for row in entire_content:
+#     #     print(row)
+#
+#     # Save and close the workbook
+#     # excel_operator.save()
+#     # excel_operator.close()
