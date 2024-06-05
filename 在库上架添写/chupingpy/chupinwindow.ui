@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>722</width>
+    <width>920</width>
     <height>873</height>
    </rect>
   </property>
@@ -66,6 +66,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_geshihuahtml">
+        <property name="text">
+         <string>格式化HTML</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_qingkongdaima">
         <property name="text">
          <string>清空代码</string>
@@ -75,7 +82,7 @@
       <item>
        <widget class="QSpinBox" name="spinBox_zitidaxiao">
         <property name="value">
-         <number>12</number>
+         <number>13</number>
         </property>
        </widget>
       </item>
@@ -83,6 +90,20 @@
        <widget class="QPushButton" name="pushButton_yulang">
         <property name="text">
          <string>预览</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_gaolianxianshi">
+        <property name="text">
+         <string>高亮代码</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_chongzhi">
+        <property name="text">
+         <string>重置</string>
         </property>
        </widget>
       </item>
@@ -98,6 +119,13 @@
          </size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_shengcheng">
+        <property name="text">
+         <string>生成文件</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButton_zhuijia">
@@ -213,9 +241,12 @@
        <widget class="QLineEdit" name="lineEdit_shuliang">
         <property name="maximumSize">
          <size>
-          <width>31</width>
+          <width>20</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="text">
+         <string>1</string>
         </property>
        </widget>
       </item>
@@ -236,7 +267,7 @@
        <widget class="QLineEdit" name="lineEdit_tupianshu">
         <property name="maximumSize">
          <size>
-          <width>31</width>
+          <width>20</width>
           <height>16777215</height>
          </size>
         </property>
@@ -246,7 +277,7 @@
        <widget class="QLabel" name="label_9">
         <property name="maximumSize">
          <size>
-          <width>25</width>
+          <width>35</width>
           <height>16777215</height>
          </size>
         </property>
@@ -259,9 +290,12 @@
        <widget class="QLineEdit" name="lineEdit_fasongri">
         <property name="maximumSize">
          <size>
-          <width>41</width>
+          <width>20</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="text">
+         <string>3</string>
         </property>
        </widget>
       </item>
@@ -426,6 +460,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QComboBox" name="comboBox_shouji_zhengchang">
+        <item>
+         <property name="text">
+          <string>普通</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>手机</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="lineEdit_jiage_jiagewangfenlei">
         <property name="minimumSize">
          <size>
@@ -538,7 +586,7 @@
       <item>
        <widget class="QSpinBox" name="spinBox_jiagequwei">
         <property name="value">
-         <number>3</number>
+         <number>5</number>
         </property>
        </widget>
       </item>
@@ -571,7 +619,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>722</width>
+     <width>920</width>
      <height>21</height>
     </rect>
    </property>
