@@ -479,6 +479,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 点击开始
     def kaishi(self):
+        self.statusbar.showMessage('')
         self.downImgUrl = ''
         self.sku = ''
         to_tanchuan_dict = None
@@ -552,7 +553,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         print(
             f'图片地址={self.downImgUrl}\n 图片数={self.lineEdit_tupianshu.text()}\n型番={self.lineEdit_xingban.text()}')
         if self.downImgUrl != '' and self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
-            self.getdownImgUrl(self.downImgUrl)
+            try:
+                self.getdownImgUrl(self.downImgUrl)
+            except Exception as e:
+                QMessageBox.information(self, '提示', f'下载图片失败，错误原因：{e}')
 
     def getdownImgUrl(self,url):
         print('开始下载图片')
