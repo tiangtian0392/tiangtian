@@ -573,11 +573,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 file.write(response.content)
             print(f"图片已保存到: {save_path}")
             # QMessageBox.information(self, '提示', f"{self.lineEdit_xingban} 图片已保存到: {save_path}")
-            self.statusbar.showMessage(f"{self.lineEdit_xingban} 图片已保存到: {save_path}")
+            self.statusbar.showMessage(f"{self.lineEdit_xingban.text()} 图片已保存到: {save_path}")
         else:
             print("无法下载图片。状态码:", response.status_code)
 
-            self.statusbar.showMessage(f"无法下载图片: {self.lineEdit_xingban} URL={self.downImgUrl}")
+            self.statusbar.showMessage(f"无法下载图片: {self.lineEdit_xingban.text()} URL={self.downImgUrl}")
 
     def getxpath(self, htmlcode):
 
