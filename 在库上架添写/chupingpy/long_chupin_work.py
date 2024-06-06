@@ -479,7 +479,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 点击开始
     def kaishi(self):
-
+        self.downImgUrl = ''
         self.sku = ''
         to_tanchuan_dict = None
         re_getmake_dict = None
@@ -502,11 +502,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # 获取JAN，详情等
             if re_getmake_dict is not None and make_url_dict is not None:
                 self.start_janxq(re_getmake_dict, make_url_dict, 'getjanxq')
-            if re_jan:
-                self.updatajan(re_jan)
-            print(f'图片地址={self.downImgUrl}\n 图片数={self.lineEdit_tupianshu.text()}\n型番={self.lineEdit_xingban.text()}')
-            if self.downImgUrl != '' and self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() !='':
-                self.getdownImgUrl(self.downImgUrl)
+
+
         except Exception as e:
             QMessageBox.warning(self, '提示', f'程序发生错误，e={e}')
     def start_janxq(self,re_getmake_dict, make_url_dict, selcet):
@@ -550,10 +547,15 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_gebuchuchu.setText(gebuchuchu)
         except Exception as e:
             pass
-
         self.downImgUrl = downimgurl
+        print(f'触发回写= {jandict, gebuchuchu, downimgurl,self.downImgUrl}')
+        print(
+            f'图片地址={self.downImgUrl}\n 图片数={self.lineEdit_tupianshu.text()}\n型番={self.lineEdit_xingban.text()}')
+        if self.downImgUrl != '' and self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
+            self.getdownImgUrl(self.downImgUrl)
 
     def getdownImgUrl(self,url):
+        print('开始下载图片')
         # 保存目录
         save_dir = "D:\\Users\\Pictures\\"
 
@@ -570,8 +572,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             with open(save_path, 'wb') as file:
                 file.write(response.content)
             print(f"图片已保存到: {save_path}")
+            # QMessageBox.information(self, '提示', f"{self.lineEdit_xingban} 图片已保存到: {save_path}")
+            self.statusbar.showMessage(f"{self.lineEdit_xingban} 图片已保存到: {save_path}")
         else:
             print("无法下载图片。状态码:", response.status_code)
+
+            self.statusbar.showMessage(f"无法下载图片: {self.lineEdit_xingban} URL={self.downImgUrl}")
 
     def getxpath(self, htmlcode):
 
