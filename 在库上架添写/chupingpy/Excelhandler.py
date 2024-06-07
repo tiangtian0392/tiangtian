@@ -193,11 +193,15 @@ class ExcelHandler:
         sheet = self.workbook.Sheets(sheet_name)
         sheet.Activate()
 
-    def run_macro(self, macro_name):
+    def run_macro(self, macro_name, workbook_name=None):
         """
-        执行指定的宏
+        执行指定的宏。如果提供了工作簿名称，则运行该工作簿中的宏。
         """
-        self.excel.Application.Run(macro_name)
+        if workbook_name:
+            full_macro_name = f"'{workbook_name}'!{macro_name}"
+        else:
+            full_macro_name = macro_name
+        self.excel.Application.Run(full_macro_name)
 
     def save(self):
         """
