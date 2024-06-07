@@ -154,25 +154,178 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # 格式化HTML
         formatted_html = soup.prettify()
         self.plainTextEdit.setPlainText(formatted_html)
-
-    # 生成出品文件
     def shengcheng(self):
+        # 生成出品文件
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        self.csv_filename = f'Z:\\YS登録\\q10\\Qoo10up_{current_date}.xlsx'
 
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        headers = [
+            "item_number",
+            "seller_unique_item_id",
+            "category_number",
+            "brand_number",
+            "item_name",
+            "item_promotion_name",
+            "item_status_Y/N/D",
+            "end_date",
+            "price_yen",
+            "retail_price_yen",
+            "taxrate",
+            "quantity",
+            "option_info",
+            "additional_option_info",
+            "additional_option_text",
+            "image_main_url",
+            "image_other_url",
+            "video_url",
+            "image_option_info",
+            "image_additional_option_info",
+            "header_html",
+            "footer_html",
+            "item_description",
+            "Shipping_number",
+            "option_number",
+            "available_shipping_date",
+            "desired_shipping_date",
+            "search_keyword",
+            "item_condition_type",
+            "origin_type",
+            "origin_region_id",
+            "origin_country_id",
+            "origin_others",
+            "medication_type",
+            "item_weight",
+            "item_material",
+            "model_name",
+            "external_product_type",
+            "external_product_id",
+            "manufacture_date",
+            "expiration_date_type",
+            "expiration_date_MFD",
+            "expiration_date_PAO",
+            "expiration_date_EXP",
+            "under18s_display_Y/N",
+            "A/S_info",
+            "buy_limit_type",
+            "buy_limit_date",
+            "buy_limit_qty"
+        ]
 
-        self.csv_filename = f'D:\\Q10\\出品\\在庫\\{current_date}.csv'
+        # 弹出选择文件对话框
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "选择CSV文件", "", "CSV Files (*.csv);;All Files (*)",
+                                                   options=options)
+        if file_name:
+            try:
+                # 读取CSV文件
+                df = pd.read_csv(file_name, encoding='ANSI')
 
-        headers = ["商品ID", "商品名", "商品説明", "タイトル", "予定価格", "商品個数", "IMAGE有無", "発送日", "送料",
-                   "商品状態", "補足", "追加４",
-                   "YSカテゴリ", "カテゴリコード", "単位", "シリーズ", "サイズ", "手数料", "jiajia", "列1", "login_date",
-                   "last scan date"]
+                # 创建新数据框架并添加三行空行
+                new_data = [headers] + [[''] * len(headers)] * 3
 
-        with open(self.csv_filename, 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            # Assuming you want to write headers, otherwise skip this part
-            csv_writer.writerow(headers)  # Replace with actual headers
+                for index, row in df.iterrows():
+                    item_number = ''
+                    seller_unique_item_id = row['商品名']
+                    category_number = row['Qカテゴリ']
+                    brand_number = ''
+                    item_name = row['タイトル']
+                    item_promotion_name = ''
+                    item_status_Y_N_D = 'Y' if row['商品個数'] > 0 else 'N'
+                    end_date = '2028-12-31'
+                    price_yen = row['予定価格']
+                    retail_price_yen = 0
+                    taxrate = ''
+                    quantity = row['商品個数']
+                    option_info = ''
+                    additional_option_info = ''
+                    additional_option_text = ''
+                    shopitme = row['商品説明']
 
-        QMessageBox.information(self, "以生成出品文档", f"路径 {self.csv_filename}")
+                    if row['IMAGE有無'] > 0:
+                        sRet = re.search(r'K\d+', row['補足'])
+                        if sRet:
+                            sRet = sRet.group(0)
+                            sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width="500" height="auto"><br><br>'
+                            shopitme = f'{sRet1}{row["商品説明"]}'
+                            imgURL = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg'
+                            if row['IMAGE有無'] > 1:
+                                more_images = [
+                                    f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}_000{w}.jpg' for w
+                                    in range(1, row['IMAGE有無'])]
+                                more_images = '$$'.join(more_images)
+                            else:
+                                more_images = ''
+                        else:
+                            shopitme = row['商品説明']
+                            imgURL = row['補足']
+                            more_images = ''
+                    else:
+                        shopitme = row['商品説明']
+                        imgURL = row['補足']
+                        more_images = ''
+
+                    image_main_url = imgURL if row['IMAGE有無'] > 0 else row['補足']
+                    image_other_url = more_images if row['IMAGE有無'] > 1 else ''
+                    video_url = ''
+                    image_option_info = ''
+                    image_additional_option_info = ''
+                    header_html = ''
+                    footer_html = ''
+                    item_description = shopitme
+                    Shipping_number = row['送料']
+                    option_number = '444697' if row['送料'] == 335370 else ''
+                    available_shipping_date = row['発送日']
+                    desired_shipping_date = ''
+                    search_keyword = ''
+                    item_condition_type = 1
+                    origin_type = 3
+                    origin_region_id = ''
+                    origin_country_id = ''
+                    origin_others = 'その他'
+                    medication_type = ''
+                    item_weight = ''
+                    item_material = ''
+                    model_name = row['商品名']
+                    external_product_type = 'JAN'
+                    external_product_id = row['商品ID']
+                    manufacture_date = ''
+                    expiration_date_type = ''
+                    expiration_date_MFD = ''
+                    expiration_date_PAO = ''
+                    expiration_date_EXP = ''
+                    under18s_display_Y_N = ''
+                    A_S_info = ''
+                    buy_limit_type = ''
+                    buy_limit_date = ''
+                    buy_limit_qty = ''
+
+                    new_row = [
+                        item_number, seller_unique_item_id, category_number, brand_number, item_name,
+                        item_promotion_name, item_status_Y_N_D, end_date, price_yen, retail_price_yen,
+                        taxrate, quantity, option_info, additional_option_info, additional_option_text,
+                        image_main_url, image_other_url, video_url, image_option_info, image_additional_option_info,
+                        header_html, footer_html, item_description, Shipping_number, option_number,
+                        available_shipping_date, desired_shipping_date, search_keyword, item_condition_type,
+                        origin_type, origin_region_id, origin_country_id, origin_others, medication_type,
+                        item_weight, item_material, model_name, external_product_type, external_product_id,
+                        manufacture_date, expiration_date_type, expiration_date_MFD, expiration_date_PAO,
+                        expiration_date_EXP, under18s_display_Y_N, A_S_info, buy_limit_type, buy_limit_date, buy_limit_qty
+                    ]
+
+                    new_data.append(new_row)
+
+                new_df = pd.DataFrame(new_data, columns=headers)
+
+                # 写入Excel文件
+                new_df.to_excel(self.csv_filename, index=False, header=False)
+
+                QMessageBox.information(self, "成功", f"文件已成功保存到: {self.csv_filename}")
+
+            except Exception as e:
+                print(f"处理文件时发生错误：{str(e)}")
+                QMessageBox.critical(self, "错误", f"处理文件时发生错误：{str(e)}")
+        else:
+            QMessageBox.warning(self, "警告", "未选择任何文件")
 
     # 点击追加，追加出品商品到csv文件内
     def zhuijia(self):
