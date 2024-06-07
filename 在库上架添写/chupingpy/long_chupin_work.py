@@ -20,6 +20,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle('kakaku出品 1.0')
 
         with open("make_dict.json", "r", encoding='utf-8') as f:
             self.make_dict = json.load(f)
@@ -359,15 +360,18 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             if pd_chuping == QMessageBox.No:
                 return
         row_data = self.collect_form_data()
-
+        excle_workbook = None
         # 写入excel
+
+        excel_name = '在庫出力.xlsx'
+        excle_workbook = ExcelHandler(excel_name)
         try:
-            excel_name = '在庫出力.xlsx'
-            excle_workbook = ExcelHandler(excel_name)
             excle_workbook.write_last_row('在庫写入', row_data)
-            print('写入成功')
         except Exception as e:
-            QMessageBox.warning(self, '提示', f'写入在库出力失败,e={e}')
+            QMessageBox.warning(self, '提示', f'绑定在库出力失败,检查文件是否打开或被占用中，错误={e}')
+            return
+
+        print('写入成功')
 
         # 写入csv
         # try:
