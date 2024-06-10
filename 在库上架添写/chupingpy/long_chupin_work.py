@@ -365,10 +365,16 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         excel_name = '在庫出力.xlsx'
         excle_workbook = ExcelHandler(excel_name)
+        print(excle_workbook.workbook)
+        if excle_workbook.workbook is not None:
+            print(f'绑定{excel_name}成功')
+        else:
+            QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
+            return
         try:
             excle_workbook.write_last_row('在庫写入', row_data)
         except Exception as e:
-            QMessageBox.warning(self, '提示', f'绑定在库出力失败,检查文件是否打开或被占用中，错误={e}')
+            QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
             return
 
         print('写入成功')
