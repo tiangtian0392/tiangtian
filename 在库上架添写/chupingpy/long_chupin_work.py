@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from chupin_window import Ui_MainWindow
 from Excelhandler import ExcelHandler
 import pyperclip  # 剪贴板
+from collections import OrderedDict
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -21,7 +22,6 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle('kakaku出品 1.0')
-
         with open("make_dict.json", "r", encoding='utf-8') as f:
             self.make_dict = json.load(f)
         with open("make_GX.json", "r", encoding='utf-8') as f:
@@ -67,6 +67,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # self.pushButton_charubiaoge.clicked.connect(self.chuarubiaoge)
         self.pushButton_gaolianxianshi.clicked.connect(self.highlight_text)
         self.pushButton_xingbanchuli.clicked.connect(self.xingbanchuli)
+        self.pushButton_huoqu.clicked.connect(self.huoqu)
 
         # 点击添加分类
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
@@ -81,6 +82,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # 初始化HTML源码
         self.html_source = ""
         self.downImgUrl = ''
+        self.urls_all = 0
 
         self.line_dict = {
             "lineEdit_Qoo10biaoti": "Qoo10标题",
@@ -99,9 +101,68 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "lineEdit_jiajia": "加价"
 
         }
+    # 获取价格表列表数据
+    def huoqu(self):
+        self.urls_all = 0
+        url = self.get_kakaku_url()
+        print(url)
+        if 'pdf_di' in url:
+            start_num = int(self.spinBox_kaishi.value())
+            end_num = int(self.spinBox_jiesu.value())
+            # 使用正则表达式匹配 pdf_pg= 之前的所有内容
+            pattern = re.compile(r'^.*pdf_pg=')
 
+            match = pattern.search(url)
+            if match:
+                itemurl = match.group(0)
+                # print(f"匹配成功: {itemurl}")
+            else:
+                print("匹配失败")
+                QMessageBox.information(self, '提示', f'网址{url}匹配失败，检查后重试！')
+            print(f'开始号={start_num},结束号={end_num},url = {itemurl}')
+            for start_num in range(end_num+1):
+                geturl = f'{itemurl}{start_num}'
+                print(f'开始获取{geturl}数据')
+                html_code = self.get_htmlcode(geturl)
+
+                # 使用正则表达式提取 var 变量的内容
+                pattern = re.compile(r'var variationPopupData = ({.*?});', re.DOTALL)
+                match = pattern.search(html_code)
+
+                if match:
+                    json_text = match.group(1)
+
+                    # 将 JavaScript 对象转换为 JSON 格式（将 False 替换为 false）
+                    json_text = json_text.replace('False', 'false')
+
+                    # 解析 JSON 文本为 Python 字典
+                    variation_popup_data = json.loads(json_text)
+
+                    # 打印结果
+                    print(variation_popup_data)
+                else:
+                    print("未找到匹配的 JavaScript 对象")
+
+                # 按排除获取行数据
+                soup = BeautifulSoup(html_code, 'html.parser')
+                td_elements = soup.find_all('td', {'class': 'sel alignC ckbtn'})
+                values = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
+                for td in td_elements:
+                    input_element = td.find('input', {'name': 'ChkProductID'})
+                    if input_element and 'value' in input_element.attrs:
+                        # print(input_element['value'],'\n')
+                        if 'J' in input_element['value']:
+                            for item in variation_popup_data[input_element['value']]['Items']:
+                                values[item['ChildProductID']] = None
+                        else:
+                            values[input_element['value']] = None  # 值作为键，去重并保持顺序
+                            # print(input_element['value'],'\n')
+                            # print(variation_popup_data[input_element['value']],'\n')
+                print(values, len(values))
+                self.urls_all = len(values)
+                self.label_url_num.setText(f'共{self.urls_all}/现')
     # 型番处理
-    def xingbanchuli(self,G_str=None):
+    def xingbanchuli(self, G_str=None):
         print(f'开始处理型号: {G_str}')
         """
                 处理型号字符串，从剪贴板获取数据，替换日语颜色为英文简写，并进行字符处理。
@@ -219,7 +280,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         if file_name:
             try:
                 # 读取CSV文件
-                df = pd.read_csv(file_name, encoding='ANSI')
+                df = pd.read_csv(file_name, encoding='utf-8')
 
                 # 创建新数据框架并添加三行空行
                 new_data = [headers] + [[''] * len(headers)] * 3
@@ -525,17 +586,19 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # 获取 DevTools 协议的 JSON
         response = requests.get('http://localhost:3556/json')
         tabs = json.loads(response.text)
-        print(tabs)
+        # print(tabs)
         url = ''
         for tab in tabs:
-            if 'kakaku.com/item' in tab['url']:
+            kakaku_url = re.match(r'^https://kakaku.com/', tab['url'])
+            print(kakaku_url)
+            if kakaku_url:
                 url = tab['url']
                 sku = re.search(r'k\d+', url, flags=re.IGNORECASE)
-                print(f'url={url},sku = {sku}')
+                # print(f'url={url},sku = {sku}')
                 if sku:
                     self.sku = sku.group()
-                print(tab['url'], self.sku)
-
+                # print(tab['url'], self.sku)
+                return url
         return url
 
     def on_error_occurred(self, error_message):
@@ -917,7 +980,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         return to_dialog_dict, make_url
 
     def open_Tanchuang(self, data):
-        dialog = TanchuangDialog(data)
+        # 传入图片数以判断是否勾选
+        tupiannum = 0
+        tupiannum = self.lineEdit_tupianshu.text()
+        try:
+            tupiannum = int(self.lineEdit_tupianshu.text())
+        except:
+            pass
+        dialog = TanchuangDialog(data,tupiannum)
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_selected_options()
             # print(data)
@@ -1182,9 +1252,10 @@ class DataInputDialog(QDialog):
 
 # 复选框弹窗
 class TanchuangDialog(QDialog):
-    def __init__(self, data_dict):
+    def __init__(self, data_dict,tupiannum):
         super().__init__()
 
+        self.tupiannum = tupiannum
         self.data_dict = data_dict
         self.selected_options = {}
         self.currently_selected = {"JAN": None, "型号": None, "详情": None, "图片": None}
@@ -1241,6 +1312,8 @@ class TanchuangDialog(QDialog):
                     sub_key_checkbox.stateChanged.connect(self.check_unique_selection)
                     if key == self.min_sort_key:
                         sub_key_checkbox.setChecked(True)
+                        if sub_key == "图片" and self.tupiannum != 0:
+                            sub_key_checkbox.setChecked(False)
 
                     self.grid_layout.addWidget(sub_key_checkbox, row + 1, col)
                     col_occupied[col] = True

@@ -194,9 +194,90 @@
        <widget class="QLineEdit" name="lineEdit_url">
         <property name="minimumSize">
          <size>
-          <width>450</width>
+          <width>350</width>
           <height>0</height>
          </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_url_num">
+        <property name="minimumSize">
+         <size>
+          <width>66</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>共/现</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_huoqu">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>获取</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="spinBox_to_num">
+        <property name="minimumSize">
+         <size>
+          <width>40</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximum">
+         <number>999</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_zhuangdao">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>转到</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_shangye">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>↑上页</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_xiaye">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>↓下页</string>
         </property>
        </widget>
       </item>
@@ -208,7 +289,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_kaishi"/>
+       <widget class="QSpinBox" name="spinBox_kaishi">
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_3">
@@ -218,7 +303,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="spinBox_jiesu"/>
+       <widget class="QSpinBox" name="spinBox_jiesu">
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
