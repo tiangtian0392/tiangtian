@@ -120,8 +120,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 print("匹配失败")
                 QMessageBox.information(self, '提示', f'网址{url}匹配失败，检查后重试！')
             print(f'开始号={start_num},结束号={end_num},url = {itemurl}')
-            for start_num in range(end_num+1):
-                geturl = f'{itemurl}{start_num}'
+            for current_num in range(start_num,end_num+1):
+                geturl = f'{itemurl}{current_num}'
+                self.lineEdit_url.setText(geturl)
                 print(f'开始获取{geturl}数据')
                 html_code = self.get_htmlcode(geturl)
 
