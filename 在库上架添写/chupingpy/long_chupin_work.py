@@ -14,6 +14,7 @@ from Excelhandler import ExcelHandler
 import pyperclip  # 剪贴板
 from collections import OrderedDict
 import jaconv   #英文转小写，片假转平假
+from functools import partial
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -76,7 +77,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
 
         # 点击开始
-        self.pushButton_kaishi.clicked.connect(self.kaishi)
+        self.pushButton_kaishi.clicked.connect(partial(self.kaishi, None))
 
         self.sku = ''
         self.to_dialog_dict = {}
@@ -758,6 +759,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def get_kakaku_url(self):
         # 获取 DevTools 协议的 JSON
+        print('开始获取kakaku_URL')
         response = requests.get('http://localhost:3556/json')
         tabs = json.loads(response.text)
         # print(tabs)
@@ -846,22 +848,25 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def chongzhi(self):
         print('开始重置窗口')
 
-
         # 遍历窗体上的所有控件
-        for widget in self.findChildren(QWidget):
-            # 找到类型为 QLineEdit 的控件
-            # print(widget.objectName())
-            if isinstance(widget, QLineEdit):
-                # 将文本内容重置为空字符串
+        try:
+            for widget in self.findChildren(QWidget):
+                # 找到类型为 QLineEdit 的控件
                 # print(widget.objectName())
-                if widget.objectName() in self.line_dict:
-                    widget.setText("")
-        self.plainTextEdit.setPlainText('')
-        self.lineEdit_fasongri.setText('3')
-        # self.comboBox.setCurrentIndex(0)
-        self.spinBox_jiagequwei.setValue(5)
-        self.lineEdit_jiajia.setText('3500')
-        self.spinBox_zitidaxiao.setValue(13)
+                if isinstance(widget, QLineEdit):
+                    # 将文本内容重置为空字符串
+                    # print(widget.objectName())
+                    if widget.objectName() in self.line_dict:
+                        widget.setText("")
+            self.plainTextEdit.setPlainText('')
+            self.lineEdit_fasongri.setText('3')
+            # self.comboBox.setCurrentIndex(0)
+            self.spinBox_jiagequwei.setValue(5)
+            self.lineEdit_jiajia.setText('3500')
+            self.spinBox_zitidaxiao.setValue(13)
+        except Exception as e:
+            print(f'重置窗口出错，e={e}')
+        print('重置窗口完成')
 
     # 点击子程序
     def run_zichengxu(self):
@@ -889,8 +894,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         make_url_dict = None
         re_jan = None
         self.chongzhi()  # 重置
+        print(f'url = {url}')
         if url is None:
             url = self.get_kakaku_url()
+            print(url)
         try:
             if url != '':
                 self.lineEdit_jiagewangURL.setText(url)
