@@ -537,7 +537,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     # 点击追加，追加出品商品到csv文件内
     def zhuijia(self):
         if self.huoquORxiuzheng == 'huoqu':
-            tishi_text = '以下控件为空：'
+            tishi_text = '以下控件为空，是否写入：'
             # 遍历窗体上的所有控件
             for widget in self.findChildren(QWidget):
                 # 找到类型为 QLineEdit 的控件
@@ -550,7 +550,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                             pass
 
             # 将文本内容重置为空字符串
-            if len(tishi_text) > 10:
+            if len(tishi_text) > 15:
                 pd_chuping = QMessageBox.question(self, '提示', tishi_text, QMessageBox.Yes | QMessageBox.No,
                                                   QMessageBox.Yes)
                 if pd_chuping == QMessageBox.No:
@@ -1100,7 +1100,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             try:
                 shop_location = ''
                 if zk == '○':
-                    print('获取非手机数据')
+                    # print('获取非手机数据')
                     # 价格
                     price = row.find('p', class_='p-PTPrice_price').text.strip()
                     # print(price)
@@ -1112,7 +1112,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     # print(shop_location)
                 else:
                     # 价格
-                    print('获取手机数据')
+                    # print('获取手机数据')
                     price_elem = row.find('p', class_='fontPrice')
                     price = price_elem.text.strip() if price_elem else "价格未知"
                     # print(price)
