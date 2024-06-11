@@ -13,6 +13,7 @@ from chupin_window import Ui_MainWindow
 from Excelhandler import ExcelHandler
 import pyperclip  # 剪贴板
 from collections import OrderedDict
+import jaconv   #英文转小写，片假转平假
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -38,8 +39,6 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         # 将QPlainTextEdit的内容变化信号连接到updateHtml槽函数
         self.plainTextEdit.textChanged.connect(self.updateHtml)
-        # self.textEdit.setTextInteractionFlags(Qt.TextEditorInteraction)
-        # self.textEdit.selectionChanged.connect(self.highlight_text)
 
         self.lineEdit_xingban.textChanged.connect(self.linexingban)
         self.lineEdit_Qoo10biaoti.textChanged.connect(self.Qoo10biaoti)
@@ -109,6 +108,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "lineEdit_jiajia": "加价"
 
         }
+
+    def normalize_key(self, key):
+        # 将英文转换为小写
+        normalized_key = key.lower()
+        # 将片假名转换为平假名
+        normalized_key = jaconv.kata2hira(normalized_key)
+        return normalized_key
+
     # 双击价格网URL事件
     def eventFilter(self, obj, event):
         # print('价格网URL双击事件')
@@ -120,32 +127,41 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     # 点击下一页
     def xiaye(self):
         if self.huoquORxiuzheng == 'huoqu':
-            sku = self.sku_list[self.sku_list_dingwei][0]
-            print(f'点击下页,开始获取{sku}的数据')
-            url = f'https://kakaku.com/item/{sku}'
-            re_str = self.kaishi(url=url)
-            if re_str == 'OK':
-                self.sku_list_dingwei +=1
-                self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+            try:
+                print(self.sku_list)
+                sku = self.sku_list[self.sku_list_dingwei][0]
+                print(f'点击下页,开始获取{sku}的数据')
+                url = f'https://kakaku.com/item/{sku}'
+                re_str = self.kaishi(url=url)
+                if re_str == 'OK':
+                    self.sku_list_dingwei +=1
+                    self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+            except Exception as e:
+                QMessageBox.information(self, '提示', 'sku获取出错，重试！')
+                return
         else:
-            num_str = self.label_url_num.text()
-            print(num_str)
-            match = re.search(r'现(\d+)', num_str)
-            if match:
-                row = int(match.group(1))
-                print(row)
-            else:
-                QMessageBox.information(self, '提示', '获取行号出错，请先用转到工作正常后，在次用此功能!')
+            try:
+                num_str = self.label_url_num.text()
+                print(num_str)
+                match = re.search(r'现(\d+)', num_str)
+                if match:
+                    row = int(match.group(1))
+                    print(row)
+                else:
+                    QMessageBox.information(self, '提示', '获取行号出错，请先用转到工作正常后，在次用此功能!')
+                    return
+                if row < 2:
+                    QMessageBox.information(self, '提示', '行号不能小于2！！！')
+                    self.lineEdit_zhuandao.setText('2')
+                    return
+                self.sku_list_dingwei = row - 1
+                self.label_url_num.setText(f'共{self.urls_all}/现{row+1}')
+                row_data = self.excel_DF.iloc[row - 1]
+                print(row_data)
+                self.xiuzhen_write_window(row_data)
+            except Exception as e:
+                QMessageBox.information(self, '提示', '下一次代码处理错误，重试')
                 return
-            if row < 2:
-                QMessageBox.information(self, '提示', '行号不能小于2！！！')
-                self.lineEdit_zhuandao.setText('2')
-                return
-            self.sku_list_dingwei = row - 1
-            self.label_url_num.setText(f'共{self.urls_all}/现{row+1}')
-            row_data = self.excel_DF.iloc[row - 1]
-            print(row_data)
-            self.xiuzhen_write_window(row_data)
     # 点击转到，获取文本框文本，判断列表中是否存在
     def zhuandao(self):
         print('开始处理转到按键')
@@ -153,17 +169,23 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             print('开始处理 获取 转到按键')
             if self.sku_list:
                 sku = self.lineEdit_zhuandao.text()
-                if sku != 'K000':
+                if 'K00' in sku:
                     # 遍历列表，找到目标 SKU 的索引
                     for i, (key, value) in enumerate(self.sku_list):
                         if key == sku:
                             # self.sku_list = self.sku_list[i::]
                             self.sku_list_dingwei = i
                             self.label_url_num.setText(f'共{self.urls_all}/现{i+1}')
-                            print(self.sku_list)
+
                 else:
-                    QMessageBox.information(self, '提示', '没有添入SKU，请重新添入！')
+                    try:
+                        sku = int(sku)
+                        self.sku_list_dingwei = sku-1
+                        self.label_url_num.setText(f'共{self.urls_all}/现{sku}')
+                    except:
+                        QMessageBox.information(self, '提示', '没有添入SKU，请重新添入！')
                     return
+                print(self.sku_list)
             else:
                 QMessageBox.information(self, '提示', '没有发现价格表SKU列表，退出！')
                 return
@@ -194,6 +216,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 获取价格表列表数据
     def huoqu(self):
+
+        self.sku_list_dingwei = 0
         url_str = self.lineEdit_url.text()
         if 'http' in url_str:
             print('开始处理获取数据')
@@ -548,8 +572,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
                 return
-
+            try:
+                global driver
+                driver.quit()
+            except:
+                pass
             print('写入成功')
+            self.statusbar.showMessage(f'{row_data[0]} 追加写入成功！')
         else:
             print('开始 修正 写入')
             biaoti = self.lineEdit_Qoo10biaoti.text()
@@ -571,9 +600,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             else:
                 QMessageBox.information(self, '提示', '获取行号出错，请先用转到工作正常后，在次用此功能!')
                 return
-            excle_workbook.write_cell('Sheet1', f'E{row}', biaoti)
-            excle_workbook.write_cell('Sheet1', f'V{row}', shuoming)
-
+            try:
+                excle_workbook.write_cell('Sheet1', f'E{row}', biaoti)
+                excle_workbook.write_cell('Sheet1', f'V{row}', shuoming)
+                self.statusbar.showMessage(f'{biaoti} 修正写入成功！')
+            except Exception as e :
+                QMessageBox.information(self, '提示', '修正写入失败，查看文件是否打开或被占用！')
     # 用于生成保存时的行数据
     def collect_form_data(self):
         no_image = ''
@@ -813,6 +845,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     # 点击重置
     def chongzhi(self):
         print('开始重置窗口')
+
+
         # 遍历窗体上的所有控件
         for widget in self.findChildren(QWidget):
             # 找到类型为 QLineEdit 的控件
@@ -869,6 +903,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             if to_tanchuan_dict:
                 re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
                 # print(f're_getmake_dict={re_getmake_dict}')
+            else:
+                # print(to_tanchuan_dict,len(to_tanchuan_dict))
+                QMessageBox.information(self, '提示', '没有可获取的商家，请添加或继续！')
+
             # 获取JAN，详情等
             if re_getmake_dict is not None and make_url_dict is not None:
                 self.start_janxq(re_getmake_dict, make_url_dict, 'getjanxq')
@@ -958,6 +996,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         soup = BeautifulSoup(htmlcode, 'html.parser')
         rows = soup.find_all('tr')
 
+
         cmaker_text = ''
         xingban = ''
 
@@ -1012,20 +1051,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         make_match = re.search(r"(?<=mkrname: ')[\s\S]+?(?=')", htmlcode)
         if make_match:
             make = make_match.group(0)
+            make = self.normalize_key(make)         # 大写转小写，片假转平假
         else:
             QMessageBox.warning(self, '提示', f'获取厂家信息出错，e={make_match}')
         self.lineEdit_changjia.setText(make)
-        if make in self.paichu:
-            if self.paichu[make] == 'paichu':
-                YN_PD = QMessageBox.question(self, '提示', '此厂家在排除范围，点击”Yes"不在出品！',
-                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                if YN_PD == QMessageBox.Yes:
-                    self.chongzhi()
-                    return None, None
-            else:
-                QMessageBox.warning(self, '提示', '此厂家注意图片侵权！')
 
-                self.lineEdit_tupianshu.setText("no_img")
 
         try:
             # 分类
@@ -1042,6 +1072,18 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_tupianshu.setText(str(len(re_urls)))
         except Exception as e:
             QMessageBox.warning(self, '提示', f'获取图片信息出错，e={e}')
+
+        if make in self.paichu:
+            if self.paichu[make] == 'paichu':
+                YN_PD = QMessageBox.question(self, '提示', '此厂家在排除范围，点击”Yes"不在出品！',
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if YN_PD == QMessageBox.Yes:
+                    self.chongzhi()
+                    return None, None
+            else:
+                QMessageBox.warning(self, '提示', '此厂家注意图片侵权！')
+
+                self.lineEdit_tupianshu.setText("no_img")
 
         result = []
         to_dialog_dict = {}
@@ -1107,8 +1149,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 # print(e)
                 pass
-        quan = len(result)
-        self.label_19_gong_quan.setText(f'共{quan}/圈{zk_num}')
+        all_make = len(result)
+
+        self.label_19_gong_quan.setText(f'共{all_make}/圈{zk_num}')
+        if all_make == 0:
+            return to_dialog_dict, make_url
         # print(result)
         if price_OK == 0:
             price_OK = result[-1]['price']
@@ -1144,13 +1189,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         return data
 
     def selenium_open_url(self, url):
-        driver = webdriver.Chrome()
-        driver.get(url)
+        self.driver = webdriver.Chrome()
+        self.driver.get(url)
 
-        page_source = driver.page_source
+        page_source = self.driver.page_source
         # print(page_source)
 
-        driver.quit()
+        # self.driver.quit()
 
         return page_source
 
@@ -1267,6 +1312,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             cursor.setPosition(index - 1)
         self.plainTextEdit.setTextCursor(cursor)
 
+
 # 获取数据用
 class WorkerThread(QThread):
     re_JAN_XQ_dict = pyqtSignal(dict, str, str)
@@ -1283,10 +1329,11 @@ class WorkerThread(QThread):
         self.method = method
 
     def selenium_open_url(self, url):
+        global driver
         driver = webdriver.Chrome()
         driver.get(url)
         page_source = driver.page_source
-        driver.quit()
+        # driver.quit()
         return page_source
 
     def yichu_html_biaoqian(self, goods_html):
@@ -1543,6 +1590,8 @@ class TanchuangDialog(QDialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    driver = ''
 
     splash = QSplashScreen(QPixmap('images.jpg'))
     splash.showMessage('程序加载中(Qoo10data,paichu,title和番号)......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
