@@ -89,6 +89,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.urls_all = 0
         self.sku_list = OrderedDict()
         self.sku_list_dingwei = 0
+        #设置是获取URL还是修正xlsx
+        self.huoquORxiuzheng = 'huoqu'
 
         self.line_dict = {
             "lineEdit_Qoo10biaoti": "Qoo10标题",
@@ -117,104 +119,170 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         return super().eventFilter(obj, event)
     # 点击下一页
     def xiaye(self):
-        sku = self.sku_list[self.sku_list_dingwei][0]
-        print(f'点击下页,开始获取{sku}的数据')
-        url = f'https://kakaku.com/item/{sku}'
-        re_str = self.kaishi(url=url)
-        if re_str == 'OK':
-            self.sku_list_dingwei +=1
-            self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+        if self.huoquORxiuzheng == 'huoqu':
+            sku = self.sku_list[self.sku_list_dingwei][0]
+            print(f'点击下页,开始获取{sku}的数据')
+            url = f'https://kakaku.com/item/{sku}'
+            re_str = self.kaishi(url=url)
+            if re_str == 'OK':
+                self.sku_list_dingwei +=1
+                self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+        else:
+            num_str = self.label_url_num.text()
+            print(num_str)
+            match = re.search(r'现(\d+)', num_str)
+            if match:
+                row = int(match.group(1))
+                print(row)
+            else:
+                QMessageBox.information(self, '提示', '获取行号出错，请先用转到工作正常后，在次用此功能!')
+                return
+            if row < 2:
+                QMessageBox.information(self, '提示', '行号不能小于2！！！')
+                self.lineEdit_zhuandao.setText('2')
+                return
+            self.sku_list_dingwei = row - 1
+            self.label_url_num.setText(f'共{self.urls_all}/现{row+1}')
+            row_data = self.excel_DF.iloc[row - 1]
+            print(row_data)
+            self.xiuzhen_write_window(row_data)
     # 点击转到，获取文本框文本，判断列表中是否存在
     def zhuandao(self):
         print('开始处理转到按键')
-        if self.sku_list:
-            sku = self.lineEdit_zhuandao.text()
-            if sku != 'K000':
-                # 遍历列表，找到目标 SKU 的索引
-                for i, (key, value) in enumerate(self.sku_list):
-                    if key == sku:
-                        # self.sku_list = self.sku_list[i::]
-                        self.sku_list_dingwei = i
-                        self.label_url_num.setText(f'共{self.urls_all}/现{i+1}')
-                        print(self.sku_list)
+        if self.huoquORxiuzheng == 'huoqu':
+            print('开始处理 获取 转到按键')
+            if self.sku_list:
+                sku = self.lineEdit_zhuandao.text()
+                if sku != 'K000':
+                    # 遍历列表，找到目标 SKU 的索引
+                    for i, (key, value) in enumerate(self.sku_list):
+                        if key == sku:
+                            # self.sku_list = self.sku_list[i::]
+                            self.sku_list_dingwei = i
+                            self.label_url_num.setText(f'共{self.urls_all}/现{i+1}')
+                            print(self.sku_list)
+                else:
+                    QMessageBox.information(self, '提示', '没有添入SKU，请重新添入！')
+                    return
             else:
-                QMessageBox.information(self, '提示', '没有添入SKU，请重新添入！')
+                QMessageBox.information(self, '提示', '没有发现价格表SKU列表，退出！')
                 return
         else:
-            QMessageBox.information(self, '提示', '没有发现价格表SKU列表，退出！')
-            return
+            print('开始处理 修正 转到按键')
+            if not self.excel_DF.empty:
+                print(self.excel_DF)
+                row = int(self.lineEdit_zhuandao.text())
+                if row < 2:
+                    QMessageBox.information(self, '提示', '行号不能小于2！！！')
+                    self.lineEdit_zhuandao.setText('2')
+                    return
+                self.sku_list_dingwei = row-2
+                self.label_url_num.setText(f'共{self.urls_all}/现{row}')
+                row_data = self.excel_DF.iloc[row-2]
+                print(row_data)
+                self.xiuzhen_write_window(row_data)
+
+    # 修正是添入窗体数据
+    def xiuzhen_write_window(self,df_row):
+        print('修正添入窗体数据')
+        self.lineEdit_jan.setText(df_row['external_product_id'])
+        self.lineEdit_xingban.setText(df_row['seller_unique_item_id'])
+        self.lineEdit_jiage.setText(str(int(df_row['price_yen'])))
+        self.lineEdit_Qoo10biaoti.setText(df_row['item_name'])
+        self.plainTextEdit.setPlainText(df_row['item_description'])
+
+
     # 获取价格表列表数据
     def huoqu(self):
-        self.urls_all = 0
-        url = self.get_kakaku_url()
-        print(url)
+        url_str = self.lineEdit_url.text()
+        if 'http' in url_str:
+            print('开始处理获取数据')
+            self.huoquORxiuzheng = 'huoqu'
 
-        if 'pdf_pg' in url:
-            start_num = int(self.spinBox_kaishi.value())
-            end_num = int(self.spinBox_jiesu.value())
-            # 使用正则表达式匹配 pdf_pg= 之前的所有内容
-            pattern = re.compile(r'^.*pdf_pg=')
-            match = pattern.search(url)
-            if match:
-                itemurl = match.group(0)
-                # print(f"匹配成功: {itemurl}")
-            else:
-                print("匹配失败")
-                QMessageBox.information(self, '提示', f'网址{url}匹配失败，检查后重试！')
-            print(f'开始号={start_num},结束号={end_num},url = {itemurl}')
-            for current_num in range(start_num,end_num+1):
-                geturl = f'{itemurl}{current_num}'
-                self.lineEdit_url.setText(geturl)
-                print(f'开始获取{geturl}数据')
-                html_code = self.get_htmlcode(geturl)
+            self.urls_all = 0
+            url = self.get_kakaku_url()
+            print(url)
 
-                # 使用正则表达式提取 var 变量的内容
-                pattern = re.compile(r'var variationPopupData = ({.*?});', re.DOTALL)
-                match = pattern.search(html_code)
-                variation_popup_data = None
+            if 'pdf_pg' in url:
+                start_num = int(self.spinBox_kaishi.value())
+                end_num = int(self.spinBox_jiesu.value())
+                # 使用正则表达式匹配 pdf_pg= 之前的所有内容
+                pattern = re.compile(r'^.*pdf_pg=')
+                match = pattern.search(url)
                 if match:
-                    json_text = match.group(1)
-
-                    # 将 JavaScript 对象转换为 JSON 格式（将 False 替换为 false）
-                    json_text = json_text.replace('False', 'false')
-
-                    # 解析 JSON 文本为 Python 字典
-                    variation_popup_data = json.loads(json_text)
-
-                    # 打印结果
-                    print(variation_popup_data)
+                    itemurl = match.group(0)
+                    # print(f"匹配成功: {itemurl}")
                 else:
-                    pd_variation = QMessageBox.question(self, '提示', '没有打到匹配的JavaScript对象，退出还是继续？', QMessageBox.Yes | QMessageBox.No)
-                    if pd_variation == QMessageBox.No:
-                        return
-                    print("未找到匹配的 JavaScript 对象")
+                    print("匹配失败")
+                    QMessageBox.information(self, '提示', f'网址{url}匹配失败，检查后重试！')
+                print(f'开始号={start_num},结束号={end_num},url = {itemurl}')
+                for current_num in range(start_num,end_num+1):
+                    geturl = f'{itemurl}{current_num}'
+                    self.lineEdit_url.setText(geturl)
+                    print(f'开始获取{geturl}数据')
+                    html_code = self.get_htmlcode(geturl)
 
-                # 按排除获取行数据
-                soup = BeautifulSoup(html_code, 'html.parser')
-                td_elements = soup.find_all('td', {'class': 'sel alignC ckbtn'})
-                self.sku_list = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
-                for td in td_elements:
-                    input_element = td.find('input', {'name': 'ChkProductID'})
-                    if input_element and 'value' in input_element.attrs:
-                        # print(input_element['value'],'\n')
-                        if 'J' in input_element['value'] and variation_popup_data is not None:
-                            for item in variation_popup_data[input_element['value']]['Items']:
-                                sku = item['ChildProductID']
-                                if sku not in self.title_banhao_sku_dict:
-                                    self.sku_list[item['ChildProductID']] = None
-                        else:
-                            sku = input_element['value']
-                            if sku not in self.title_banhao_sku_dict:
-                                self.sku_list[input_element['value']] = None  # 值作为键，去重并保持顺序
+                    # 使用正则表达式提取 var 变量的内容
+                    pattern = re.compile(r'var variationPopupData = ({.*?});', re.DOTALL)
+                    match = pattern.search(html_code)
+                    variation_popup_data = None
+                    if match:
+                        json_text = match.group(1)
+
+                        # 将 JavaScript 对象转换为 JSON 格式（将 False 替换为 false）
+                        json_text = json_text.replace('False', 'false')
+
+                        # 解析 JSON 文本为 Python 字典
+                        variation_popup_data = json.loads(json_text)
+
+                        # 打印结果
+                        print(variation_popup_data)
+                    else:
+                        pd_variation = QMessageBox.question(self, '提示', '没有打到匹配的JavaScript对象，退出还是继续？', QMessageBox.Yes | QMessageBox.No)
+                        if pd_variation == QMessageBox.No:
+                            return
+                        print("未找到匹配的 JavaScript 对象")
+
+                    # 按排除获取行数据
+                    soup = BeautifulSoup(html_code, 'html.parser')
+                    td_elements = soup.find_all('td', {'class': 'sel alignC ckbtn'})
+                    self.sku_list = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
+                    for td in td_elements:
+                        input_element = td.find('input', {'name': 'ChkProductID'})
+                        if input_element and 'value' in input_element.attrs:
                             # print(input_element['value'],'\n')
-                            # print(variation_popup_data[input_element['value']],'\n')
-                self.sku_list = list(self.sku_list.items())
-                print(self.sku_list, len(self.sku_list))
-                self.urls_all = len(self.sku_list)
-                self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+                            if 'J' in input_element['value'] and variation_popup_data is not None:
+                                for item in variation_popup_data[input_element['value']]['Items']:
+                                    sku = item['ChildProductID']
+                                    if sku not in self.title_banhao_sku_dict:
+                                        self.sku_list[item['ChildProductID']] = None
+                            else:
+                                sku = input_element['value']
+                                if sku not in self.title_banhao_sku_dict:
+                                    self.sku_list[input_element['value']] = None  # 值作为键，去重并保持顺序
+                                # print(input_element['value'],'\n')
+                                # print(variation_popup_data[input_element['value']],'\n')
+                    self.sku_list = list(self.sku_list.items())
+                    print(self.sku_list, len(self.sku_list))
+                    self.urls_all = len(self.sku_list)
+                    self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+            else:
+                QMessageBox.information(self, '提示', f'网址 {url} 获取失败，查检网址内是否包含关键词“pdf_di”，或网址出错！')    # 型番处理
         else:
-            QMessageBox.information(self, '提示', f'网址 {url} 获取失败，查检网址内是否包含关键词“pdf_di”，或网址出错！')
-    # 型番处理
+            print('开始处理修正数据')
+            self.huoquORxiuzheng = 'xiuzheng'
+            excel_work = ExcelHandler(url_str)
+            if excel_work.workbook is None:
+                QMessageBox.information(self, '提示', f'{url_str} 绑定失败，检查文件是否打开或正在被占用！')
+                return
+            self.sku_list = excel_work.read_ranges('Sheet1', 'A1')
+            self.urls_all = len(self.sku_list)
+            self.label_url_num.setText(f'共{self.urls_all}/现{1}')
+            # print(excel_work_list,len(excel_work_list))
+            self.excel_DF = pd.DataFrame(self.sku_list[1:], columns=self.sku_list[0])
+            print(self.excel_DF)
+
+
     def xingbanchuli(self, G_str=None):
         print(f'开始处理型号: {G_str}')
         """
@@ -444,67 +512,67 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 点击追加，追加出品商品到csv文件内
     def zhuijia(self):
-        # if self.csv_filename is None:
-        #     open_ques = QMessageBox.question(self, '提示', '没有出品文档，点击"Yes"选择文档，否则退出重新生成！',
-        #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        #     if open_ques == QMessageBox.Yes:
-        #         options = QFileDialog.Options()
-        #         options |= QFileDialog.DontUseNativeDialog
-        #         default_path = os.getcwd()
-        #         self.csv_filename, _ = QFileDialog.getSaveFileName(self, "选择文件", default_path,
-        #                                                            "CSV Files (*.csv);;All Files (*)", options=options)
-        #     else:
-        #         return
-        tishi_text = '以下控件为空：'
-        # 遍历窗体上的所有控件
-        for widget in self.findChildren(QWidget):
-            # 找到类型为 QLineEdit 的控件
-            # print(widget.objectName())
-            if isinstance(widget, QLineEdit):
-                if widget.text() == '':
-                    try:
-                        tishi_text = tishi_text + f'\n{self.line_dict[widget.objectName()]} = 空，确认！！！'
-                    except:
-                        pass
+        if self.huoquORxiuzheng == 'huoqu':
+            tishi_text = '以下控件为空：'
+            # 遍历窗体上的所有控件
+            for widget in self.findChildren(QWidget):
+                # 找到类型为 QLineEdit 的控件
+                # print(widget.objectName())
+                if isinstance(widget, QLineEdit):
+                    if widget.text() == '':
+                        try:
+                            tishi_text = tishi_text + f'\n{self.line_dict[widget.objectName()]} = 空，确认！！！'
+                        except:
+                            pass
 
-        # 将文本内容重置为空字符串
-        if len(tishi_text) > 10:
-            pd_chuping = QMessageBox.question(self, '提示', tishi_text, QMessageBox.Yes | QMessageBox.No,
-                                              QMessageBox.Yes)
-            if pd_chuping == QMessageBox.No:
+            # 将文本内容重置为空字符串
+            if len(tishi_text) > 10:
+                pd_chuping = QMessageBox.question(self, '提示', tishi_text, QMessageBox.Yes | QMessageBox.No,
+                                                  QMessageBox.Yes)
+                if pd_chuping == QMessageBox.No:
+                    return
+            row_data = self.collect_form_data()
+            excle_workbook = None
+            # 写入excel
+
+            excel_name = '在庫出力.xlsx'
+            excle_workbook = ExcelHandler(excel_name)
+            print(excle_workbook.workbook)
+            if excle_workbook.workbook is not None:
+                print(f'绑定{excel_name}成功')
+            else:
+                QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
                 return
-        row_data = self.collect_form_data()
-        excle_workbook = None
-        # 写入excel
+            try:
+                excle_workbook.write_last_row('在庫写入', row_data)
+            except Exception as e:
+                QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
+                return
 
-        excel_name = '在庫出力.xlsx'
-        excle_workbook = ExcelHandler(excel_name)
-        print(excle_workbook.workbook)
-        if excle_workbook.workbook is not None:
-            print(f'绑定{excel_name}成功')
+            print('写入成功')
         else:
-            QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
-            return
-        try:
-            excle_workbook.write_last_row('在庫写入', row_data)
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
-            return
+            print('开始 修正 写入')
+            biaoti = self.lineEdit_Qoo10biaoti.text()
+            shuoming = self.bianmaozhuanhuan(self.plainTextEdit.toPlainText())
 
-        print('写入成功')
+            excel_name = self.lineEdit_url.text()
+            excle_workbook = ExcelHandler(excel_name)
+            if excle_workbook.workbook is not None:
+                print(f'绑定{excel_name}成功')
+            else:
+                QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
+                return
 
-        # 写入csv
-        # try:
-        #     with open(self.csv_filename, 'a', newline='', encoding='ANSI') as csvfile:
-        #         csv_writer = csv.writer(csvfile)
-        #         csv_writer.writerow(row_data)
-        #     save_ques = QMessageBox.question(self, "保存成功", f"内容已保存到 {self.csv_filename}",
-        #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        #     if save_ques == QMessageBox.Yes:
-        #         self.chongzhi()
-        # except Exception as e:
-        #     QMessageBox.information(self, '保存出错', f'追加商品出错，e={e}')
-        #     print(e)
+            num_str = self.label_url_num.text()
+            match = re.search(r'现(\d+)', num_str)
+            if match:
+                row = int(match.group(1))
+                print(row)
+            else:
+                QMessageBox.information(self, '提示', '获取行号出错，请先用转到工作正常后，在次用此功能!')
+                return
+            excle_workbook.write_cell('Sheet1', f'E{row}', biaoti)
+            excle_workbook.write_cell('Sheet1', f'V{row}', shuoming)
 
     # 用于生成保存时的行数据
     def collect_form_data(self):
@@ -563,6 +631,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 打开窗体时读入Qoo10data
     def open_file_dialog(self):
+        read_Qoo10data = 'Qoo10data 读入出错'
+        read_title = 'title和番号 读入出错'
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
         file_name, _ = QFileDialog.getOpenFileName(self, "打开Qoo10下载文件", r"D:\downloads",
@@ -573,7 +643,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             try:
 
                 self.Qoo10data = pd.read_excel(file_name, engine='openpyxl')
-
+                read_Qoo10data = 'Qoo10data 读入成功'
                 # QMessageBox.information(self, '提示', '文件读入完成')
             except Exception as e:
                 QMessageBox.critical(self, '错误', f'Qoo10data文件读入错误: {str(e)}')
@@ -592,15 +662,15 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         self.title_banhao_sku_dict.add(sku)
                 except:
                     pass
-            # print(self.title_banhao_sku_dict)
+            read_title = 'title和番号 读入成功'
         except Exception as e :
             QMessageBox.information(self, '提示', '读取 title和番号.xlsm 文件错误，跳过！')
-
+        self.statusbar.showMessage(f'{read_Qoo10data},{read_title}')
 
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
         print(jan_to_search)
-        if not jan_to_search.strip():  # 空输入时不进行查找
+        if not jan_to_search.strip() or self.huoquORxiuzheng == 'xiuzheng':  # 空输入时不进行查找
             return
 
         try:

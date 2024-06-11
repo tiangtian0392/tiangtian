@@ -130,7 +130,7 @@
       <item>
        <widget class="QPushButton" name="pushButton_zhuijia">
         <property name="text">
-         <string>追加</string>
+         <string>追加/修正</string>
         </property>
        </widget>
       </item>
@@ -198,13 +198,16 @@
           <height>0</height>
          </size>
         </property>
+        <property name="placeholderText">
+         <string>url则获取，Qoo10data文件名则读入后修改</string>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_url_num">
         <property name="minimumSize">
          <size>
-          <width>66</width>
+          <width>90</width>
           <height>0</height>
          </size>
         </property>
