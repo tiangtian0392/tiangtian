@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMa
     QDialog, \
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread,QEvent
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -44,6 +44,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.lineEdit_xingban.textChanged.connect(self.linexingban)
         self.lineEdit_Qoo10biaoti.textChanged.connect(self.Qoo10biaoti)
 
+        self.lineEdit_jiagewangURL.installEventFilter(self)
+
         # JAN变化时查找是否出品过
         self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
 
@@ -68,6 +70,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_gaolianxianshi.clicked.connect(self.highlight_text)
         self.pushButton_xingbanchuli.clicked.connect(self.xingbanchuli)
         self.pushButton_huoqu.clicked.connect(self.huoqu)
+        self.pushButton_zhuangdao.clicked.connect(self.zhuandao)
+        self.pushButton_xiaye.clicked.connect(self.xiaye)
 
         # 点击添加分类
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
@@ -83,6 +87,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.html_source = ""
         self.downImgUrl = ''
         self.urls_all = 0
+        self.sku_list = OrderedDict()
+        self.sku_list_dingwei = 0
 
         self.line_dict = {
             "lineEdit_Qoo10biaoti": "Qoo10标题",
@@ -101,17 +107,53 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "lineEdit_jiajia": "加价"
 
         }
+    # 双击价格网URL事件
+    def eventFilter(self, obj, event):
+        # print('价格网URL双击事件')
+        if obj == self.lineEdit_jiagewangURL and event.type() == QEvent.MouseButtonDblClick:
+            url = self.lineEdit_jiagewangURL.text()
+            os.system(f'start {url}')
+            print(f'{url} 以打开')
+        return super().eventFilter(obj, event)
+    # 点击下一页
+    def xiaye(self):
+        sku = self.sku_list[self.sku_list_dingwei][0]
+        print(f'点击下页,开始获取{sku}的数据')
+        url = f'https://kakaku.com/item/{sku}'
+        re_str = self.kaishi(url=url)
+        if re_str == 'OK':
+            self.sku_list_dingwei +=1
+            self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+    # 点击转到，获取文本框文本，判断列表中是否存在
+    def zhuandao(self):
+        print('开始处理转到按键')
+        if self.sku_list:
+            sku = self.lineEdit_zhuandao.text()
+            if sku != 'K000':
+                # 遍历列表，找到目标 SKU 的索引
+                for i, (key, value) in enumerate(self.sku_list):
+                    if key == sku:
+                        # self.sku_list = self.sku_list[i::]
+                        self.sku_list_dingwei = i
+                        self.label_url_num.setText(f'共{self.urls_all}/现{i+1}')
+                        print(self.sku_list)
+            else:
+                QMessageBox.information(self, '提示', '没有添入SKU，请重新添入！')
+                return
+        else:
+            QMessageBox.information(self, '提示', '没有发现价格表SKU列表，退出！')
+            return
     # 获取价格表列表数据
     def huoqu(self):
         self.urls_all = 0
         url = self.get_kakaku_url()
         print(url)
-        if 'pdf_di' in url:
+
+        if 'pdf_pg' in url:
             start_num = int(self.spinBox_kaishi.value())
             end_num = int(self.spinBox_jiesu.value())
             # 使用正则表达式匹配 pdf_pg= 之前的所有内容
             pattern = re.compile(r'^.*pdf_pg=')
-
             match = pattern.search(url)
             if match:
                 itemurl = match.group(0)
@@ -129,7 +171,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 # 使用正则表达式提取 var 变量的内容
                 pattern = re.compile(r'var variationPopupData = ({.*?});', re.DOTALL)
                 match = pattern.search(html_code)
-
+                variation_popup_data = None
                 if match:
                     json_text = match.group(1)
 
@@ -142,26 +184,36 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     # 打印结果
                     print(variation_popup_data)
                 else:
+                    pd_variation = QMessageBox.question(self, '提示', '没有打到匹配的JavaScript对象，退出还是继续？', QMessageBox.Yes | QMessageBox.No)
+                    if pd_variation == QMessageBox.No:
+                        return
                     print("未找到匹配的 JavaScript 对象")
 
                 # 按排除获取行数据
                 soup = BeautifulSoup(html_code, 'html.parser')
                 td_elements = soup.find_all('td', {'class': 'sel alignC ckbtn'})
-                values = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
+                self.sku_list = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
                 for td in td_elements:
                     input_element = td.find('input', {'name': 'ChkProductID'})
                     if input_element and 'value' in input_element.attrs:
                         # print(input_element['value'],'\n')
-                        if 'J' in input_element['value']:
+                        if 'J' in input_element['value'] and variation_popup_data is not None:
                             for item in variation_popup_data[input_element['value']]['Items']:
-                                values[item['ChildProductID']] = None
+                                sku = item['ChildProductID']
+                                if sku not in self.title_banhao_sku_dict:
+                                    self.sku_list[item['ChildProductID']] = None
                         else:
-                            values[input_element['value']] = None  # 值作为键，去重并保持顺序
+                            sku = input_element['value']
+                            if sku not in self.title_banhao_sku_dict:
+                                self.sku_list[input_element['value']] = None  # 值作为键，去重并保持顺序
                             # print(input_element['value'],'\n')
                             # print(variation_popup_data[input_element['value']],'\n')
-                print(values, len(values))
-                self.urls_all = len(values)
-                self.label_url_num.setText(f'共{self.urls_all}/现')
+                self.sku_list = list(self.sku_list.items())
+                print(self.sku_list, len(self.sku_list))
+                self.urls_all = len(self.sku_list)
+                self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei+1}')
+        else:
+            QMessageBox.information(self, '提示', f'网址 {url} 获取失败，查检网址内是否包含关键词“pdf_di”，或网址出错！')
     # 型番处理
     def xingbanchuli(self, G_str=None):
         print(f'开始处理型号: {G_str}')
@@ -524,7 +576,26 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
                 # QMessageBox.information(self, '提示', '文件读入完成')
             except Exception as e:
-                QMessageBox.critical(self, '错误', f'文件读入错误: {str(e)}')
+                QMessageBox.critical(self, '错误', f'Qoo10data文件读入错误: {str(e)}')
+        try:
+            title_banhao = ExcelHandler('title和番号.xlsm')
+            title_banhao_list = title_banhao.read_column('采集 (4)','W')
+            # print(title_banhao_list[3791::],len(title_banhao_list))
+            self.title_banhao_sku_dict = set()
+            for item in title_banhao_list:
+                # print(item)
+                try:
+                    sku = re.search(r'k\d+', item, flags=re.IGNORECASE)
+                    # print(f'url={url},sku = {sku}')
+                    if sku:
+                        sku = sku.group()
+                        self.title_banhao_sku_dict.add(sku)
+                except:
+                    pass
+            # print(self.title_banhao_sku_dict)
+        except Exception as e :
+            QMessageBox.information(self, '提示', '读取 title和番号.xlsm 文件错误，跳过！')
+
 
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
@@ -705,7 +776,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.start_janxq(zichengxu_dict, zichengxu_url, 'getjanxq')
 
     # 点击开始
-    def kaishi(self):
+    def kaishi(self, url=None):
         self.statusbar.showMessage('')
         self.downImgUrl = ''
         self.sku = ''
@@ -714,7 +785,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         make_url_dict = None
         re_jan = None
         self.chongzhi()  # 重置
-        url = self.get_kakaku_url()
+        if url is None:
+            url = self.get_kakaku_url()
         try:
             if url != '':
                 self.lineEdit_jiagewangURL.setText(url)
@@ -731,7 +803,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             if re_getmake_dict is not None and make_url_dict is not None:
                 self.start_janxq(re_getmake_dict, make_url_dict, 'getjanxq')
 
-
+            return 'OK'
         except Exception as e:
             QMessageBox.warning(self, '提示', f'程序发生错误，e={e}')
     def start_janxq(self,re_getmake_dict, make_url_dict, selcet):
@@ -746,6 +818,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.loading_label.setMovie(self.loading_movie)
         self.loading_label.setAlignment(Qt.AlignCenter)
         self.loading_label.setGeometry(self.rect())
+        # self.loading_label.setText('正在获取……')
         self.loading_label.show()
         self.loading_movie.start()
 
@@ -817,6 +890,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         cmaker_text = ''
         xingban = ''
+
+        gong = ''
+
         try:
             # 标题
             title = soup.find('h2', itemprop="name").text.strip()
@@ -961,7 +1037,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 # print(e)
                 pass
-
+        quan = len(result)
+        self.label_19_gong_quan.setText(f'共{quan}/圈{zk_num}')
         # print(result)
         if price_OK == 0:
             price_OK = result[-1]['price']
@@ -1398,7 +1475,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     splash = QSplashScreen(QPixmap('images.jpg'))
-    splash.showMessage('程序加载中......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
+    splash.showMessage('程序加载中(Qoo10data,paichu,title和番号)......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
     splash.show()
 
     main_window = MyWindow()
