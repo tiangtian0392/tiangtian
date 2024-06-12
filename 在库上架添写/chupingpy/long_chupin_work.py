@@ -2,10 +2,10 @@ import os, re, json, time, datetime, csv
 from selenium import webdriver
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, QSpacerItem, QSizePolicy,\
+    QDialog, QSpacerItem, QSizePolicy, \
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent,QRect
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent, QRect
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -138,7 +138,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def xiaye(self):
         if self.huoquORxiuzheng == 'huoqu':
             try:
-                print(self.sku_list,self.sku_list_dingwei)
+                print(self.sku_list, self.sku_list_dingwei)
                 # 迭代获取指定索引的元素
                 sku = None
                 for i, (key, value) in enumerate(self.sku_list.items()):
@@ -313,7 +313,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                                 # print(variation_popup_data[input_element['value']],'\n')
                 # self.sku_list = list(self.sku_list.items())
                 print(self.sku_list, len(self.sku_list))
-                self.urls_all = len(self.sku_list)
+                self.urls_all = len(self.sku_list) + 1
+
                 self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + 1}')
             else:
                 QMessageBox.information(self, '提示',
@@ -326,7 +327,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, '提示', f'{url_str} 绑定失败，检查文件是否打开或正在被占用！')
                 return
             self.sku_list = excel_work.read_ranges('Sheet1', 'A1')
-            self.urls_all = len(self.sku_list)
+            self.urls_all = len(self.sku_list) + 1
             self.label_url_num.setText(f'共{self.urls_all}/现{1}')
             # print(excel_work_list,len(excel_work_list))
             self.excel_DF = pd.DataFrame(self.sku_list[1:], columns=self.sku_list[0])
@@ -352,7 +353,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "ホワイト": "WH", "ブラック": "BK", "ブルー": "BL", "レッド": "RD", "グリーン": "GR",
             "ゴールド": "GD", "シルバー": "SL", "ピンク": "PK", "スペースグレイ": "GY", "イエロー": "YL",
             "アッシュグリーン": "GN", "オレンジ": "OG", "グレイ": "GY", "ボディ": "body", "レンズキット": "LsKit",
-            "ベージュ": "BG","パープル": "PU"
+            "ベージュ": "BG", "パープル": "PU"
         }
 
         # 替换颜色名
@@ -444,7 +445,23 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "buy_limit_qty"
         ]
 
-        # 弹出选择文件对话框
+        # 读取 BrandInfo.csv文件
+        BrandInfo_dict = {}
+        BrandInfo_path = r"Z:\\bazhuayu\\BrandInfo.csv"
+        with open(BrandInfo_path, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            next(reader)  # 跳过标题行
+            for row in reader:
+                # 将英文转换为小写，将片假名转换为平假名
+                brand_name = row[1].strip().lower()
+                brand_name_en = row[2].strip().lower()
+                brand_name_jp = jaconv.kata2hira(row[3].strip())
+                value = row[0]
+                BrandInfo_dict[brand_name] = value
+                BrandInfo_dict[brand_name_en] = value
+                BrandInfo_dict[brand_name_jp] = value
+        # print(BrandInfo_dict)
+
         options = QFileDialog.Options()
         file_name, _ = QFileDialog.getOpenFileName(self, "选择CSV文件", "", "CSV Files (*.csv);;All Files (*)",
                                                    options=options)
@@ -460,7 +477,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     item_number = ''
                     seller_unique_item_id = row['商品名']
                     category_number = row['Qカテゴリ']
-                    brand_number = ''
+
+                    brand_id = ''
+                    if row['単位'] in BrandInfo_dict:
+                        brand_id = BrandInfo_dict[row['単位']]
+                    brand_number = brand_id
                     item_name = row['タイトル']
                     item_promotion_name = ''
                     item_status_Y_N_D = 'Y' if row['商品個数'] > 0 else 'N'
@@ -494,11 +515,15 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                             imgURL = row['補足']
                             more_images = ''
                     else:
+                        print(row['last scan date'])
                         shopitme = row['商品説明']
-                        imgURL = row['補足']
                         more_images = ''
+                        if row['last scan date'] is not None:
+                            imgURL = row['last scan date']
+                        else:
+                            imgURL = row['補足']
 
-                    image_main_url = imgURL if row['IMAGE有無'] > 0 else row['補足']
+                    image_main_url = imgURL
                     image_other_url = more_images if row['IMAGE有無'] > 1 else ''
                     video_url = ''
                     image_option_info = ''
@@ -635,7 +660,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 QMessageBox.information(self, '提示', '修正写入失败，查看文件是否打开或被占用！')
                 return
-        write_ok = QMessageBox.question(self, '提示', '写入完成是否重置窗口？', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        write_ok = QMessageBox.question(self, '提示', '写入完成是否重置窗口？', QMessageBox.Yes | QMessageBox.No,
+                                        QMessageBox.Yes)
         if write_ok == QMessageBox.Yes:
             self.chongzhi()
 
@@ -1037,7 +1063,6 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def getxpath(self, htmlcode):
 
-
         with open("paichu.json", "r", encoding='utf-8') as f:
             self.paichu = json.load(f)
         soup = BeautifulSoup(htmlcode, 'html.parser')
@@ -1301,7 +1326,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         y = main_window_geometry.y()  # 保持与主窗体的Y坐标一致
 
-        return QRect(x+10, y, dialog_width, dialog_height)
+        return QRect(x + 10, y, dialog_width, dialog_height)
 
     # 获取分类
     def huoqufenlei(self):
