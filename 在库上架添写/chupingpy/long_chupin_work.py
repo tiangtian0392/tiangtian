@@ -2,7 +2,7 @@ import os, re, json, time, datetime, csv
 from selenium import webdriver
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, \
+    QDialog, QSpacerItem, QSizePolicy,\
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent,QRect
@@ -317,7 +317,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + 1}')
             else:
                 QMessageBox.information(self, '提示',
-                                        f'网址 {url} 获取失败，查检网址内是否包含关键词“pdf_di”，或网址出错！')  # 型番处理
+                                        f'网址 {url} 获取失败，查检网址内是否包含关键词“pdf_pg”，或网址出错！')  # 型番处理
         else:
             print('开始处理修正数据')
             self.huoquORxiuzheng = 'xiuzheng'
@@ -352,7 +352,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "ホワイト": "WH", "ブラック": "BK", "ブルー": "BL", "レッド": "RD", "グリーン": "GR",
             "ゴールド": "GD", "シルバー": "SL", "ピンク": "PK", "スペースグレイ": "GY", "イエロー": "YL",
             "アッシュグリーン": "GN", "オレンジ": "OG", "グレイ": "GY", "ボディ": "body", "レンズキット": "LsKit",
-            "ベージュ": "BG"
+            "ベージュ": "BG","パープル": "PU"
         }
 
         # 替换颜色名
@@ -1037,6 +1037,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def getxpath(self, htmlcode):
 
+
+        with open("paichu.json", "r", encoding='utf-8') as f:
+            self.paichu = json.load(f)
         soup = BeautifulSoup(htmlcode, 'html.parser')
         rows = soup.find_all('tr')
 
@@ -1081,7 +1084,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
 
-            xingban_match = re.search(r'\b[A-Za-z0-9()（）/-]{3,}\b', title)
+            xingban_match = re.search(
+                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
             if xingban_match:
                 xingban = xingban_match.group(0)
                 xingban = self.xingbanchuli(xingban)
@@ -1094,6 +1098,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         make_match = re.search(r"(?<=mkrname: ')[\s\S]+?(?=')", htmlcode)
         if make_match:
             make = make_match.group(0)
+            print(make)
+            make = make.replace('\\u0026', '&')
             make = self.normalize_key(make)  # 大写转小写，片假转平假
         else:
             QMessageBox.warning(self, '提示', f'获取厂家信息出错，e={make_match}')
@@ -1619,6 +1625,10 @@ class TanchuangDialog(QDialog):
             row += 2  # 每组占据两行
 
         scroll_area.setWidget(container_widget)
+
+        # 添加垂直弹簧
+        vertical_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.grid_layout.addItem(vertical_spacer, row, 0, 1, 4)
 
         cancel_button = QPushButton('取消')
         cancel_button.clicked.connect(self.cancel_dialog)
