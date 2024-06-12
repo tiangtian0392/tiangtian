@@ -1301,7 +1301,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         y = main_window_geometry.y()  # 保持与主窗体的Y坐标一致
 
-        return QRect(x, y, dialog_width, dialog_height)
+        return QRect(x+10, y, dialog_width, dialog_height)
 
     # 获取分类
     def huoqufenlei(self):
