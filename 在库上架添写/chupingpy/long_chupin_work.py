@@ -634,6 +634,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.statusbar.showMessage(f'{biaoti} 修正写入成功！')
             except Exception as e:
                 QMessageBox.information(self, '提示', '修正写入失败，查看文件是否打开或被占用！')
+                return
+        write_ok = QMessageBox.question(self, '提示', '写入完成是否重置窗口？', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if write_ok == QMessageBox.Yes:
+            self.chongzhi()
 
     # 用于生成保存时的行数据
     def collect_form_data(self):
@@ -935,7 +939,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 to_tanchuan_dict, make_url_dict = self.getxpath(htmlcode)
             else:
                 self.on_error_occurred(f'获取url出错！获取内容={url}')
-                
+
             # 打开商家选择窗口
             if to_tanchuan_dict:
                 re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
