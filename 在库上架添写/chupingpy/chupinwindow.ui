@@ -217,6 +217,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="checkBox_huoqu_zhuijia">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_huoqu">
         <property name="maximumSize">
          <size>
