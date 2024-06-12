@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMa
     QDialog, \
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent
+from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent,QRect
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -935,8 +935,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 to_tanchuan_dict, make_url_dict = self.getxpath(htmlcode)
             else:
                 self.on_error_occurred(f'获取url出错！获取内容={url}')
+                
+            # 打开商家选择窗口
             if to_tanchuan_dict:
                 re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
+
                 # print(f're_getmake_dict={re_getmake_dict}')
             else:
                 # print(to_tanchuan_dict,len(to_tanchuan_dict))
@@ -1120,6 +1123,44 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
                 self.lineEdit_tupianshu.setText("no_img")
 
+        # 排位
+        rank_num = ''
+        try:
+            # 处理第一个结构
+            rcBoxBtm = soup.find('div', class_='rcBoxBtm')
+            if rcBoxBtm:
+                lis = rcBoxBtm.find_all('li')
+                for li in lis:
+                    category = li.find('a').text
+                    rank_num = li.find('span', class_='rankNum').text.strip()
+            else:
+                # 处理第二个结构
+                ovBtnBox = soup.find('div', id='ovBtnBox')
+                if ovBtnBox:
+                    ranking_li = ovBtnBox.find('li', class_='ranking')
+                    if ranking_li:
+                        rank_category = ranking_li.find('span', class_='btnTtl').text
+                        rank_num = ranking_li.find('span', class_='num').text.strip()
+        except:
+            print('获取排位失败！')
+        # 提取发布日期
+        formatted_date = ''
+        try:
+            release_date_span = soup.find('span', class_='releaseDate')
+            release_date_text = release_date_span.text.strip()
+
+            # 使用正则表达式提取日期并格式化
+            date_match = re.search(r'(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日', release_date_text)
+            if date_match:
+                year, month, day = date_match.groups()
+                formatted_date = f"{year}/{int(month):02}/{int(day):02}"
+                print(formatted_date)  # 输出格式化的日期
+            else:
+                print("发布日期未找到")
+        except:
+            print('提取发布日期失败')
+        self.label_paiming_riqi.setText(f'排名：{rank_num}/日期：{formatted_date}')
+
         result = []
         to_dialog_dict = {}
         make_url = {}
@@ -1210,12 +1251,15 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def open_Tanchuang(self, data):
         # 传入图片数以判断是否勾选
         tupiannum = 0
-        tupiannum = self.lineEdit_tupianshu.text()
+
         try:
             tupiannum = int(self.lineEdit_tupianshu.text())
         except:
             pass
-        dialog = TanchuangDialog(data, tupiannum)
+        dialog = TanchuangDialog(data, tupiannum, self)
+        dialog_position = self.get_dialog_position(dialog)
+        dialog.setGeometry(dialog_position)
+
         if dialog.exec_() == QDialog.Accepted:
             data = dialog.get_selected_options()
             # print(data)
@@ -1223,16 +1267,31 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             data = None
         return data
 
-    # def selenium_open_url(self, url):
-    #     self.driver = webdriver.Chrome()
-    #     self.driver.get(url)
-    #
-    #     page_source = self.driver.page_source
-    #     # print(page_source)
-    #
-    #     # self.driver.quit()
-    #
-    #     return page_source
+    def get_dialog_position(self, dialog):
+        # 获取主窗体的位置和尺寸
+        main_window_geometry = self.geometry()
+        dialog_width = 400
+        dialog_height = 800
+
+        # 计算右侧和左侧的空间是否足够
+        screen_width = QApplication.desktop().availableGeometry(self).width()
+
+        right_space = screen_width - (main_window_geometry.x() + main_window_geometry.width())
+        left_space = main_window_geometry.x()
+
+        if right_space >= dialog_width:
+            # 如果右侧空间足够，放在右侧
+            x = main_window_geometry.x() + main_window_geometry.width()
+        elif left_space >= dialog_width:
+            # 如果左侧空间足够，放在左侧
+            x = main_window_geometry.x() - dialog_width
+        else:
+            # 如果左右都没有足够空间，放在主窗体上方
+            x = main_window_geometry.x()
+
+        y = main_window_geometry.y()  # 保持与主窗体的Y坐标一致
+
+        return QRect(x, y, dialog_width, dialog_height)
 
     # 获取分类
     def huoqufenlei(self):
@@ -1481,8 +1540,8 @@ class DataInputDialog(QDialog):
 
 # 复选框弹窗
 class TanchuangDialog(QDialog):
-    def __init__(self, data_dict, tupiannum):
-        super().__init__()
+    def __init__(self, data_dict, tupiannum, parent=None):
+        super().__init__(parent)
 
         self.tupiannum = tupiannum
         self.data_dict = data_dict

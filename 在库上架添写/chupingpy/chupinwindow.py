@@ -1,1052 +1,372 @@
-import os, re, json, time, datetime, csv
-from selenium import webdriver
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, \
-    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
-from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtCore import QObject, pyqtSignal, Qt
-import requests
-import pandas as pd
-from bs4 import BeautifulSoup
-from chupin_window import Ui_MainWindow
-from Excelhandler import ExcelHandler
-import pyperclip  # 剪贴板
-
-
-class MyWindow(QMainWindow, Ui_MainWindow):
-    re_path = pyqtSignal(str, str)
-
-    def __init__(self):
-        super().__init__()
-        self.setupUi(self)
-
-        with open("make_dict.json", "r", encoding='utf-8') as f:
-            self.make_dict = json.load(f)
-        with open("make_GX.json", "r", encoding='utf-8') as f:
-            self.make_GX = json.load(f)
-        with open("paichu.json", "r", encoding='utf-8') as f:
-            self.paichu = json.load(f)
-
-        for key, item in self.make_GX.items():
-            # print(key)
-            self.comboBox_zichengxu.addItem(key)
-
-        # 读取文件时显示等待图片
-        # self.open_file_dialog()
-
-        # 将QPlainTextEdit的内容变化信号连接到updateHtml槽函数
-        self.plainTextEdit.textChanged.connect(self.updateHtml)
-        # self.textEdit.setTextInteractionFlags(Qt.TextEditorInteraction)
-        # self.textEdit.selectionChanged.connect(self.highlight_text)
-
-        self.lineEdit_xingban.textChanged.connect(self.linexingban)
-        self.lineEdit_Qoo10biaoti.textChanged.connect(self.Qoo10biaoti)
-
-        # JAN变化时查找是否出品过
-        self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
-
-        # 改变字体大小
-        self.spinBox_zitidaxiao.valueChanged.connect(self.setFontSize)
-
-        # 设置下面窗口只读
-        # self.textEdit.setReadOnly(True)
-
-        # 点击预览
-        self.pushButton_yulang.clicked.connect(self.yulang)
-        self.pushButton_qingchurn.clicked.connect(self.qingchurn)
-        self.pushButton_charuhuanhang.clicked.connect(self.charuhuanghang)
-        self.pushButton_charutupian.clicked.connect(self.charutupian)
-        self.pushButton_qingkongdaima.clicked.connect(self.qingkongdaima)
-        self.pushButton_chongzhi.clicked.connect(self.chongzhi)
-        self.pushButton_yunxingzichongxu.clicked.connect(self.run_zichengxu)
-        self.pushButton_shengcheng.clicked.connect(self.shengcheng)
-        self.pushButton_zhuijia.clicked.connect(self.zhuijia)
-        self.pushButton_geshihuahtml.clicked.connect(self.geshihuahtml)
-        # self.pushButton_charubiaoge.clicked.connect(self.chuarubiaoge)
-        self.pushButton_gaolianxianshi.clicked.connect(self.highlight_text)
-        self.pushButton_xingbanchuli.clicked.connect(self.xingbanchuli)
-
-        # 点击添加分类
-        self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
-
-        # 点击开始
-        self.pushButton_kaishi.clicked.connect(self.kaishi)
-
-        self.sku = ''
-        self.to_dialog_dict = {}
-        self.Qoo10data = ''
-        self.csv_filename = None
-        # 初始化HTML源码
-        self.html_source = ""
-
-        self.line_dict = {
-            "lineEdit_Qoo10biaoti": "Qoo10标题",
-            "lineEdit_jiagewangURL": "价格网URL",
-            "lineEdit_shuliang": "数量",
-            "lineEdit_tupianshu": "图片数",
-            "lineEdit_fasongri": "发送日",
-            "lineEdit_changjia": "厂家",
-            "lineEdit_gebuchuchu": "各部出处",
-            # "lineEdit": "标题关键词",
-            "lineEdit_jiagewangbiaoti": "价格网标题",
-            "lineEdit_jiage_jiagewangfenlei": "价格网分类",
-            "lineEdit_jan": "JAN",
-            "lineEdit_xingban": "型番",
-            "lineEdit_jiage": "价格",
-            "lineEdit_jiajia": "加价"
-
-        }
-
-    # 型番处理
-    def xingbanchuli(self,G_str=None):
-        print(f'开始处理型号: {G_str}')
-        """
-                处理型号字符串，从剪贴板获取数据，替换日语颜色为英文简写，并进行字符处理。
-                """
-        # xb = pyperclip.paste()
-        if G_str:
-            xb = G_str
-            print(f'开始处理传入的数据转为型号: {xb}')
-
-        else:
-            # 从剪贴板获取数据
-            xb = pyperclip.paste()  # 应该是 paste() 而不是 copy()
-            print(f'从剪贴板获取的数据转为型号: {xb}')
-
-        # 定义颜色字典
-        color_dict = {
-            "ホワイト": "WH", "ブラック": "BK", "ブルー": "BL", "レッド": "RD", "グリーン": "GR",
-            "ゴールド": "GD", "シルバー": "SL", "ピンク": "PK", "スペースグレイ": "GY", "イエロー": "YL",
-            "アッシュグリーン": "GN", "オレンジ": "OG", "グレイ": "GY", "ボディ": "body", "レンズキット": "LsKit",
-            "ベージュ": "BG"
-        }
-
-        # 替换颜色名
-        for key, value in color_dict.items():
-            xb = xb.replace(key, value)
-
-        # 使用正则表达式替换除字母数字外的所有字符为破折号
-        xb = re.sub(r'[^A-Za-z0-9]+', '-', xb)
-
-        # 移除连续的破折号
-        xb = re.sub(r'-+', '-', xb).strip('-')
-
-        # 如果长度超过20个字符，移除破折号
-        if len(xb) > 20:
-            xb = xb.replace("-", "")
-
-        print(f'处理后的型号: {xb}')
-
-        # 将结果放入剪贴板
-        # pyperclip.copy(xb)
-        self.lineEdit_xingban.setText(xb)
-
-        return xb
-
-    # 格式化html
-    def geshihuahtml(self):
-        html_text = self.plainTextEdit.toPlainText()
-        # 使用BeautifulSoup解析HTML
-        soup = BeautifulSoup(html_text, 'html.parser')
-
-        # 格式化HTML
-        formatted_html = soup.prettify()
-        self.plainTextEdit.setPlainText(formatted_html)
-
-    # 生成出品文件
-    def shengcheng(self):
-
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-
-        self.csv_filename = f'D:\\Q10\\出品\\在庫\\{current_date}.csv'
-
-        headers = ["商品ID", "商品名", "商品説明", "タイトル", "予定価格", "商品個数", "IMAGE有無", "発送日", "送料",
-                   "商品状態", "補足", "追加４",
-                   "YSカテゴリ", "カテゴリコード", "単位", "シリーズ", "サイズ", "手数料", "jiajia", "列1", "login_date",
-                   "last scan date"]
-
-        with open(self.csv_filename, 'w', newline='') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            # Assuming you want to write headers, otherwise skip this part
-            csv_writer.writerow(headers)  # Replace with actual headers
-
-        QMessageBox.information(self, "以生成出品文档", f"路径 {self.csv_filename}")
-
-    # 点击追加，追加出品商品到csv文件内
-    def zhuijia(self):
-        # if self.csv_filename is None:
-        #     open_ques = QMessageBox.question(self, '提示', '没有出品文档，点击"Yes"选择文档，否则退出重新生成！',
-        #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        #     if open_ques == QMessageBox.Yes:
-        #         options = QFileDialog.Options()
-        #         options |= QFileDialog.DontUseNativeDialog
-        #         default_path = os.getcwd()
-        #         self.csv_filename, _ = QFileDialog.getSaveFileName(self, "选择文件", default_path,
-        #                                                            "CSV Files (*.csv);;All Files (*)", options=options)
-        #     else:
-        #         return
-        tishi_text = '以下控件为空：'
-        # 遍历窗体上的所有控件
-        for widget in self.findChildren(QWidget):
-            # 找到类型为 QLineEdit 的控件
-            # print(widget.objectName())
-            if isinstance(widget, QLineEdit):
-                if widget.text() == '':
-                    try:
-                        tishi_text = tishi_text + f'\n{self.line_dict[widget.objectName()]} = 空，确认！！！'
-                    except:
-                        pass
-
-        # 将文本内容重置为空字符串
-        if len(tishi_text) > 10:
-            pd_chuping = QMessageBox.question(self, '提示', tishi_text, QMessageBox.Yes | QMessageBox.No,
-                                              QMessageBox.Yes)
-            if pd_chuping == QMessageBox.No:
-                return
-        row_data = self.collect_form_data()
-
-        # 写入excel
-        try:
-            excel_name = '在庫出力.xlsx'
-            excle_workbook = ExcelHandler(excel_name)
-            excle_workbook.write_last_row('在庫写入', row_data)
-            print('写入成功')
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'写入在库出力失败,e={e}')
-
-        # 写入csv
-        # try:
-        #     with open(self.csv_filename, 'a', newline='', encoding='ANSI') as csvfile:
-        #         csv_writer = csv.writer(csvfile)
-        #         csv_writer.writerow(row_data)
-        #     save_ques = QMessageBox.question(self, "保存成功", f"内容已保存到 {self.csv_filename}",
-        #                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-        #     if save_ques == QMessageBox.Yes:
-        #         self.chongzhi()
-        # except Exception as e:
-        #     QMessageBox.information(self, '保存出错', f'追加商品出错，e={e}')
-        #     print(e)
-
-    # 用于生成保存时的行数据
-    def collect_form_data(self):
-        no_image = ''
-        if self.lineEdit_tupianshu.text() == 'no_img':
-            no_image = 'https://gd.image-qoo10.jp/li/905/567/5162567905.jpg'
-        shuoming_str = self.bianmaozhuanhuan(self.plainTextEdit.toPlainText())
-        data = [
-            self.lineEdit_jan.text(),
-            self.lineEdit_xingban.text(),
-            shuoming_str,
-            self.lineEdit_Qoo10biaoti.text(),
-            self.lineEdit_jiage.text(),
-            self.lineEdit_shuliang.text(),
-            self.lineEdit_tupianshu.text(),
-            self.lineEdit_fasongri.text(),
-            self.comboBox.currentText(),
-            self.lineEdit_jiagewangbiaoti.text(),
-            self.lineEdit_jiagewangURL.text(),
-            self.lineEdit_gebuchuchu.text(),
-            self.lineEdit_jiage_jiagewangfenlei.text(),
-            '',
-            self.lineEdit_changjia.text(),
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            no_image
-        ]
-        return data
-
-    # 去除商品说明内空行及\r\n等
-    def bianmaozhuanhuan(self, data):
-        item = [str(item).encode('ANSI', errors='ignore').decode('ANSI') for item in data]
-        text = ''.join(item)
-        return self.qukonghang(text)
-
-    def qukonghang(self, text):
-        # 移除前后空格
-        text = text.strip()
-        # 拆分成行
-        lines = text.split('\n')
-        # 移除空行和只包含空格的行
-        cleaned_lines = [line.strip() for line in lines if line.strip()]
-        # 将清理后的行合并回一个字符串
-        cleaned_text = ''.join(cleaned_lines)
-        return cleaned_text
-
-    # 打开窗体时读入Qoo10data
-    def open_file_dialog(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.ReadOnly
-        file_name, _ = QFileDialog.getOpenFileName(self, "打开Qoo10下载文件", r"D:\downloads",
-                                                   "Excel Files (*.xlsx);;All Files (*)",
-                                                   options=options)
-        if file_name:
-
-            try:
-
-                self.Qoo10data = pd.read_excel(file_name, engine='openpyxl')
-
-                # QMessageBox.information(self, '提示', '文件读入完成')
-            except Exception as e:
-                QMessageBox.critical(self, '错误', f'文件读入错误: {str(e)}')
-
-    # JAN变化时触发查重
-    def lineeditJAN(self, jan_to_search):
-        print(jan_to_search)
-        if not jan_to_search.strip():  # 空输入时不进行查找
-            return
-
-        try:
-            if self.Qoo10data is not None:
-                if 'external_product_id' in self.Qoo10data.columns:
-                    # 查找包含指定JAN的行
-                    matching_rows = self.Qoo10data[
-                        self.Qoo10data['external_product_id'].astype(str).str.contains(jan_to_search)]
-
-                    if not matching_rows.empty:
-                        for _, row in matching_rows.iterrows():
-                            item_number = row.get('item_number', 'N/A')
-                            seller_unique_item_id = row.get('seller_unique_item_id', 'N/A')
-                            item_name = row.get('item_name', 'N/A')
-                            JAN_PD = QMessageBox.question(self, '查重', f'JAN:{jan_to_search} 重复！\n'
-                                                                        f'番号:{item_number}\n'
-                                                                        f'型番:{seller_unique_item_id}\n'
-                                                                        f'标题: {item_name}\n'
-                                                                        f'以出品！,是否重新出品？',
-                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                            if JAN_PD == QMessageBox.No:
-                                self.chongzhi()
-
-        except Exception as e:
-            QMessageBox.critical(self, '错误', f'JAN 查重错误: {str(e)}')
-
-    # 获取Qoo10biaoti字符数
-    def Qoo10biaoti(self):
-        Qoo10biaoti = self.lineEdit_Qoo10biaoti.text()
-        numstr = len(Qoo10biaoti)
-        self.label_zishu.setText(f'字数：{numstr}')
-
-    # 获取型番字符数
-    def linexingban(self):
-        xingban = self.lineEdit_xingban.text()
-        numstr = len(xingban)
-        self.label_zishu_2.setText(f'字数：{numstr}')
-
-    # 获取当前显示窗口的URL
-
-    def get_current_tab_url(self):
-        # 获取所有标签页的信息
-        response = requests.get('http://localhost:3556/json')
-        tabs = json.loads(response.text)
-
-        # 找到当前前台显示的标签页
-        for tab in tabs:
-            if tab.get('type') == 'page' and tab.get('url'):
-                # 这里假设第一个满足条件的页面是前台显示的标签页
-                return tab['url']
-
-        return None
-
-    def get_kakaku_url(self):
-        # 获取 DevTools 协议的 JSON
-        response = requests.get('http://localhost:3556/json')
-        tabs = json.loads(response.text)
-        print(tabs)
-        url = ''
-        for tab in tabs:
-            if 'kakaku.com/item' in tab['url']:
-                url = tab['url']
-                sku = re.search(r'k\d+', url, flags=re.IGNORECASE)
-                print(f'url={url},sku = {sku}')
-                if sku:
-                    self.sku = sku.group()
-                print(tab['url'], self.sku)
-
-        return url
-
-    def on_error_occurred(self, error_message):
-        QMessageBox.warning(self, '提醒', f'出错: {error_message}')
-
-    def get_htmlcode(self, url):
-        hd = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "Accept-Language": "ja,zh-CN;q=0.9,zh;q=0.8",
-
-        }
-        htmlcode = requests.get(url, headers=hd)
-        code = htmlcode.apparent_encoding
-        htmlcode.encoding = code
-        htmlcode = htmlcode.text
-        # print(f'Qoo10价格={htmlcode}')
-        return htmlcode
-
-    # 正则获取tab表
-    def get_tab(self, sku):
-        print('正则开始获取价格网tab')
-
-        url = f'https://kakaku.com/item/{sku}/spec/#tab'
-
-        max_retries = 3  # 设置最大重试次数
-        tab_html = ''
-        for attempt in range(1, max_retries + 1):
-            try:
-                html = self.get_htmlcode(url)
-                tab_html = re.findall(r'<div id="mainLeft">[\s\S]+?</table>', html)[0]
-                break
-            except:
-                if attempt < max_retries:
-                    pass
-                else:
-                    return ''
-
-        try:
-            li_html = re.findall(r'<li>[\s\S]+</li>', tab_html)[0]
-        except:
-            li_html = ''
-        try:
-            tab_all_html = re.findall(r'<table[\s\S]+', tab_html)[0]
-        except:
-            tab_all_html = ''
-        goods_html = li_html + '\n' + tab_all_html
-        # 移除所有<a>标签
-        goods_html = self.yichu_html_biaoqian(goods_html)
-
-        # 表格宽度设为1
-        goods_html = re.sub(r'border="0"', ' border="1"', goods_html)
-
-        # print(goods_html)
-        return goods_html
-
-    def yichu_html_biaoqian(self, goods_html):
-        # 移除所有<a>标签
-        goods_html = re.sub(r'<a[\s\S]+?>', '', goods_html)
-        goods_html = re.sub(r'</a>', '', goods_html)
-
-        # 移除所有<img>标签
-        goods_html = re.sub(r'<img[\s\S]+?>', '', goods_html)
-
-        # 移除所有URL
-        goods_html = re.sub(r'https?://\S+', '', goods_html)
-
-        return goods_html
-
-    # 点击重置
-    def chongzhi(self):
-        # 遍历窗体上的所有控件
-        for widget in self.findChildren(QWidget):
-            # 找到类型为 QLineEdit 的控件
-            # print(widget.objectName())
-            if isinstance(widget, QLineEdit):
-                # 将文本内容重置为空字符串
-                # print(widget.objectName())
-                if widget.objectName() in self.line_dict:
-                    widget.setText("")
-        self.plainTextEdit.setPlainText('')
-        self.lineEdit_fasongri.setText('3')
-        self.comboBox.setCurrentIndex(0)
-        self.spinBox_jiagequwei.setValue(5)
-        self.lineEdit_jiajia.setText('3500')
-        self.spinBox_zitidaxiao.setValue(13)
-
-    # 点击子程序
-    def run_zichengxu(self):
-        zichengxu_name = self.comboBox_zichengxu.currentText()
-        zichengxu_dict = {}
-        zichengxu_url = {}
-        data = []
-        for key, item in self.make_GX[zichengxu_name].items():
-            data.append(key)
-        zichengxu_dict[zichengxu_name] = data
-        url = self.get_current_tab_url()
-        if url is not None:
-            zichengxu_url[zichengxu_name] = url
-            print(zichengxu_dict, zichengxu_url)
-            re_jan = self.getjanxq(zichengxu_dict, zichengxu_url)
-            self.updatajan(re_jan)
-
-    # 点击开始
-    def kaishi(self):
-        # page_html = self.selenium_open_url('https://kakaku.com/item/K0001580674/')
-        # self.chongzhi()  # 重置
-        self.sku = ''
-        to_tanchuan_dict = None
-        re_getmake_dict = None
-        make_url_dict = None
-        re_jan = None
-        url = self.get_kakaku_url()
-
-        try:
-            if url != '':
-                self.lineEdit_jiagewangURL.setText(url)
-                htmlcode = self.get_htmlcode(url)
-                # print(htmlcode)
-                # 返回商家公式字典make_GX,和商家URL的dict
-                to_tanchuan_dict, make_url_dict = self.getxpath(htmlcode)
-            else:
-                self.on_error_occurred(f'获取url出错！获取内容={url}')
-            if to_tanchuan_dict:
-                re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
-                # print(f're_getmake_dict={re_getmake_dict}')
-            # 获取JAN，详情等
-            if re_getmake_dict is not None and make_url_dict is not None:
-                re_jan = self.getjanxq(re_getmake_dict, make_url_dict)
-            if re_jan:
-                self.updatajan(re_jan)
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'程序发生错误，e={e}')
-
-    # 添写jAN等
-    def updatajan(self, jandict):
-        try:
-            self.lineEdit_xingban.setText(jandict['型号'])
-        except Exception as e:
-            pass
-        try:
-            self.plainTextEdit.setPlainText(jandict['详情'])
-        except Exception as e:
-            pass
-
-        try:
-            self.lineEdit_jan.setText(jandict['JAN'])
-        except Exception as e:
-            pass
-
-    # 获取JAN 详情等
-    def getjanxq(self, makedict, make_url_dict):
-        get_jan_make = ''
-        get_shuoming_make = ''
-        data_dict = {}
-        for make, itmes in makedict.items():
-            # print(make, itmes)
-            # print(self.make_GX[make])
-
-            # 获取网页源码
-
-            page_code = self.selenium_open_url(make_url_dict[make])
-            for itme in itmes:
-                try:
-                    re_lists = self.make_GX[make][itme]
-                    search_str = ''
-                    for i, re_str in enumerate(re_lists):
-                        try:
-                            if i == 0:
-                                search_str = re.search(re_str, page_code, flags=re.IGNORECASE)
-                                if search_str:
-                                    search_str = search_str.group()
-                            else:
-                                search_str = re.search(re_str, search_str, flags=re.IGNORECASE)
-                                if search_str:
-                                    search_str = search_str.group()
-                        except Exception as e:
-                            print(f'公式获取出错，商家={make},i={i},公式={re_str},search_str={search_str}')
-                        # print(search_str)
-
-                    if search_str != '':
-                        if itme == '型号':
-                            data_dict['型号'] = search_str
-                            # self.lineEdit_xingban.setText(search_str)
-                        if itme == '详情':
-                            search_str = self.yichu_html_biaoqian(search_str)
-                            data_dict['详情'] = search_str
-                            get_shuoming_make = make
-                            # self.plainTextEdit.setPlainText(search_str)
-                        if itme == 'JAN':
-                            data_dict['JAN'] = search_str
-                            get_jan_make = make
-                            # self.lineEdit_jan.setText(search_str)
-                except Exception as e:
-                    QMessageBox.warning(self, '提示', f'{make}获取{itme}信息出错！')
-                    continue
-        # 写入获取出处
-        try:
-            self.lineEdit_gebuchuchu.setText(f'JAN={get_jan_make},商品说明={get_shuoming_make}')
-        except:
-            self.lineEdit_gebuchuchu.setText('')
-        return data_dict
-
-    def getxpath(self, htmlcode):
-
-        soup = BeautifulSoup(htmlcode, 'html.parser')
-        rows = soup.find_all('tr')
-
-        cmaker_text = ''
-        xingban = ''
-        try:
-            # 标题
-            title = soup.find('h2', itemprop="name").text.strip()
-            self.lineEdit_jiagewangbiaoti.setText(title)
-            title_houzhui = self.lineEdit.text()
-            print(f'title_houzhui= {title_houzhui}')
-
-            if self.checkBox_biaotiguanjianzi.isChecked():
-                print(self.checkBox_biaotiguanjianzi.isChecked())
-                search_match = f'(?<=<p>){title_houzhui}[\\s\\S]+?(?=<span)'
-                fenlei_str = re.search(search_match, htmlcode)
-
-                if fenlei_str:
-                    # 获取匹配到的描述信息数组
-                    arr = fenlei_str.group(0).split()
-
-                    # 遍历描述信息数组，拼接到标题后面
-                    for item in arr:
-                        # 替换掉标题和描述信息中的冒号和中文冒号
-                        item = item.replace(':', ' ').replace('：', ' ')
-                        item = item.replace('○', 'あり')
-                        # 拼接标题和描述信息
-                        new_title = f'{title} {item}'.strip()
-
-                        # 判断拼接后的标题长度是否超过 100 个字符
-                        if len(new_title) <= 100:
-                            # 更新标题为拼接后的标题
-                            title = new_title
-                        else:
-                            # 如果超过，则跳出循环
-                            break
-
-                self.lineEdit_Qoo10biaoti.setText(title)
-            else:
-                self.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
-
-            xingban_match = re.search(r'\b[A-Za-z0-9()（）/-]{3,}\b', title)
-            if xingban_match:
-                xingban = xingban_match.group(0)
-                xingban = self.xingbanchuli(xingban)
-                self.lineEdit_xingban.setText(xingban)
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'获取标题信息出错，e={e}')
-
-        # 厂家
-        make = ''
-        make_match = re.search(r"(?<=mkrname: ')[\s\S]+?(?=')", htmlcode)
-        if make_match:
-            make = make_match.group(0)
-        else:
-            QMessageBox.warning(self, '提示', f'获取厂家信息出错，e={make_match}')
-        self.lineEdit_changjia.setText(make)
-        if make in self.paichu:
-            if self.paichu[make] == 'paichu':
-                YN_PD = QMessageBox.question(self, '提示', '此厂家在排除范围，点击”Yes"不在出品！',
-                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                if YN_PD == QMessageBox.Yes:
-                    self.chongzhi()
-                    return None, None
-            else:
-                QMessageBox.warning(self, '提示', '此厂家注意图片侵权！')
-
-                self.lineEdit_tupianshu.setText("no_img")
-
-        try:
-            # 分类
-            breadcrumb_items = soup.find_all('span', itemprop='title')
-            # Extract the text from the third breadcrumb item
-            cmaker_text = breadcrumb_items[2].get_text()
-            self.lineEdit_jiage_jiagewangfenlei.setText(cmaker_text)
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'获取分类信息出错，e={e}')
-        try:
-            # 图片
-            urls = soup.find('div', id='imgBox').prettify()
-            re_urls = re.findall(f'{self.sku}.*?\.jpg', urls)
-            self.lineEdit_tupianshu.setText(str(len(re_urls)))
-        except Exception as e:
-            QMessageBox.warning(self, '提示', f'获取图片信息出错，e={e}')
-
-        result = []
-        to_dialog_dict = {}
-        make_url = {}
-        if self.comboBox_shouji_zhengchang.currentText() == '手机':
-            zk = "有"
-        else:
-            zk = '○'
-        print(f'在库判断={zk}')
-        price_OK = 0
-        zk_num = 0
-
-        for i, row in enumerate(rows):
-            try:
-                shop_location = ''
-                if zk == '○':
-                    print('获取非手机数据')
-                    # 价格
-                    price = row.find('p', class_='p-PTPrice_price').text.strip()
-                    # print(price)
-                    # 商家名 p-PTShopData_name PTShopData_name
-                    shop_name = row.find('p', class_='p-PTShopData_name').find('a').text.strip()
-                    # print(shop_name)
-                    # 在库状态
-                    shop_location = row.find('p', class_='p-PTStock').text.strip()
-                    # print(shop_location)
-                else:
-                    # 价格
-                    print('获取手机数据')
-                    price_elem = row.find('p', class_='fontPrice')
-                    price = price_elem.text.strip() if price_elem else "价格未知"
-                    # print(price)
-                    # 商家名
-                    shop_name_elem = row.find('td', class_='shopname').find('a')
-                    shop_name = shop_name_elem.text.strip() if shop_name_elem else "商家名未知"
-                    # print(shop_name)
-                    columns = row.find_all('td')
-                    # print(len(columns))
-                    if len(columns) > 3:  # 确保有足够的列来提取信息
-                        shop_location = columns[3].text.strip()
-                        # print(f'在库状态: {shop_location}')
-                # 判断商家是否在可出品字典中，添加给窗口选择
-                shop_url = ''
-                if shop_name in self.make_GX:
-                    shop_links = row.find_all('a', href=lambda href: href and 'ShopCD=' in href)
-                    shop_url = shop_links[0]['href']
-                    # print(shop_url)
-                    make_url[shop_name] = shop_url
-                    to_dialog_dict[shop_name] = self.make_GX[shop_name]
-                result.append({
-
-                    'price': price,
-                    'shop_name': shop_name,
-                    'shop_location': shop_location
-
-                })
-                if zk == shop_location:
-                    zk_num += 1
-                # print(zk, shop_location, zk_num, self.spinBox_jiagequwei.value())
-                if zk_num == self.spinBox_jiagequwei.value():
-                    price_OK = price
-
-            except Exception as e:
-                print(e)
-                pass
-
-        # print(result)
-        if price_OK == 0:
-            price_OK = result[-1]['price']
-            self.lineEdit_shuliang.setText('0')
-        else:
-            self.lineEdit_shuliang.setText('1')
-        price_OK = int(price_OK.replace('¥', '').replace(',', ''))
-        print(price_OK)
-        if price_OK >= 60000:
-            price_OK = int((price_OK + int(self.lineEdit_jiajia.text())) / 0.983 / 0.92)
-        else:
-            price_OK = int((price_OK + int(self.lineEdit_jiajia.text())) / 0.92)
-        self.lineEdit_jiage.setText(str(price_OK))
-        print(self.spinBox_jiagequwei.value(), type(self.spinBox_jiagequwei.value()))
-        print(price_OK)
-        print(to_dialog_dict)
-        return to_dialog_dict, make_url
-
-    def open_Tanchuang(self, data):
-        dialog = TanchuangDialog(data, self.make_dict)
-        if dialog.exec_() == QDialog.Accepted:
-            data = dialog.get_selected_options()
-            # print(data)
-        else:
-            data = None
-        return data
-
-    def selenium_open_url(self, url):
-        driver = webdriver.Chrome()
-        driver.get(url)
-
-        page_source = driver.page_source
-        # print(page_source)
-
-        driver.quit()
-
-        return page_source
-
-    # 获取分类
-    def huoqufenlei(self):
-        dialog = DataInputDialog()
-        if dialog.exec_() == QDialog.Accepted:
-            data = dialog.getData()
-            print(data)
-            self.comboBox_fenlei.clear()
-            for item in data:
-                item = re.sub('\\s+', '_', item)
-
-                print(item)
-                self.comboBox_fenlei.addItem(item)
-
-    # 点击预览
-    def qingchurn(self):
-        # 获取QPlainTextEdit的内容并清除\r\n
-        plainText = self.plainTextEdit.toPlainText()
-        cleanedText = plainText.replace('\r', '').replace('\n', '')
-        cleanedText = re.sub(r'\s+', ' ', cleanedText)
-        self.plainTextEdit.setPlainText(cleanedText)
-
-    def charuhuanghang(self):
-        # 在当前光标位置插入换行
-        cursor = self.plainTextEdit.textCursor()
-        cursor.insertText('<br>')
-        self.plainTextEdit.setTextCursor(cursor)
-
-    # def chuarubiaoge(self):
-    #     # 插入kakaku表格
-    #     kakakuurl = self.lineEdit_jiagewangURL.text()
-    #     sku = re.search(r'k\d+', kakakuurl, flags=re.IGNORECASE)
-    #
-    #     if not sku:
-    #         QMessageBox.warning(self, '提醒', '价格网URL数据为空，无法获取表格！')
-    #         return
-    #     sku = sku.group()
-    #     print(sku)
-    #     cursor = self.plainTextEdit.textCursor()
-    #     tab_html = self.get_tab(sku)
-    #     cursor.insertText('<br>')
-    #     cursor.insertText(tab_html)
-    #     self.plainTextEdit.setTextCursor(cursor)
-
-    def charutupian(self):
-        # 在当前光标位置插入图片标签
-        cursor = self.plainTextEdit.textCursor()
-        cursor.insertText('<img src="image" width="300" Height="auto">')
-        self.plainTextEdit.setTextCursor(cursor)
-
-    def qingkongdaima(self):
-        # 清空代码
-        clear_as = QMessageBox.question(self, '提示', '是否清空代码，不可恢复！', QMessageBox.Yes | QMessageBox.No,
-                                        QMessageBox.Yes)
-        if clear_as == QMessageBox.Yes:
-            self.plainTextEdit.setPlainText('')
-
-    def yulang(self):
-        # 获取QPlainTextEdit的内容
-        plainText = self.plainTextEdit.toPlainText()
-
-        try:
-            # 写入txt文件
-            with open('D:/outhtml.html', 'w', encoding='utf-8') as file:
-                file.write(plainText)
-            os.startfile("D:/outhtml.html")
-            # QMessageBox.information(self, 'Success', 'Content exported to D:/outhtml.txt')
-        except Exception as e:
-            QMessageBox.warning(self, 'Error', f'Failed to export content: {e}')
-
-    def setFontSize(self, size):
-        font = self.plainTextEdit.font()
-        font.setPointSize(size)
-        self.plainTextEdit.setFont(font)
-        self.textEdit.setFont(font)
-
-    def updateHtml(self):
-        # 获取QPlainTextEdit的内容并将其设置为QTextEdit的HTML内容
-        html_source = self.plainTextEdit.toPlainText()
-        # 禁用信号，以避免递归调用
-        self.textEdit.blockSignals(True)
-        # 更新QTextEdit内容
-        self.textEdit.setHtml(html_source)
-        # 重新启用信号
-        self.textEdit.blockSignals(False)
-
-    # 高亮文字
-    def highlight_text(self):
-        print('开始处理选中文本事件')
-        selected_text = self.textEdit.textCursor().selectedText()
-        plain_text = self.plainTextEdit.toPlainText()
-        cursor = self.plainTextEdit.textCursor()
-        # print(cursor)
-
-        # 清除之前的高亮
-        cursor.setPosition(0)  # 将光标位置置于文本的开头
-        cursor.movePosition(cursor.End, cursor.KeepAnchor)  # 选择整个文本
-        format = cursor.charFormat()
-        format.setBackground(Qt.white)
-        cursor.mergeCharFormat(format)
-        cursor.setPosition(0)
-
-        if selected_text:
-            print(f'选中文本={selected_text}')
-            index = plain_text.find(selected_text)
-            print(index)
-            if index != -1:
-                cursor.setPosition(index)
-                cursor.movePosition(cursor.Right, cursor.KeepAnchor, len(selected_text))
-                format.setBackground(Qt.yellow)
-                cursor.mergeCharFormat(format)
-            cursor.setPosition(index - 1)
-        self.plainTextEdit.setTextCursor(cursor)
-
-
-# 用于添加商品分类
-class DataInputDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-
-        self.setWindowTitle('获取分类代码')
-        self.setGeometry(100, 100, 400, 300)
-
-        self.layout = QVBoxLayout()
-
-        self.label = QLabel('添入分类代码')
-        self.layout.addWidget(self.label)
-
-        self.inputField = QPlainTextEdit(self)
-        self.layout.addWidget(self.inputField)
-
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        self.layout.addWidget(self.buttonBox)
-
-        self.setLayout(self.layout)
-
-    def getData(self):
-        # 获取输入的文本
-        text = self.inputField.toPlainText()
-        # 将文本按行分割成列表
-        lines = text.split('\n')
-        # 返回列表
-        return lines
-
-
-# 复选框弹窗
-class TanchuangDialog(QDialog):
-    def __init__(self, data_dict, make_dict):
-        super().__init__()
-
-        self.data_dict = data_dict
-        self.selected_options = {}
-        self.currently_selected = {"JAN": None, "型号": None, "详情": None, "图片": None}
-        self.make_dict = make_dict
-
-        self.init_ui()
-
-        # 设置窗口固定宽度和标题
-        self.setFixedWidth(400)
-        self.setFixedHeight(800)
-        self.setWindowTitle('出品商家选择')
-
-    def init_ui(self):
-        layout = QVBoxLayout()
-
-        # 创建一个 QScrollArea
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-
-        # 创建一个容器 widget，内容放在这个 widget 上
-        container_widget = QWidget()
-        self.grid_layout = QGridLayout(container_widget)
-
-        # 初始化行索引
-        row = 0
-
-        for key, items in self.data_dict.items():
-            group_label = QCheckBox(key)
-            group_label.setTristate(False)
-            group_label.setChecked(False)
-            group_label.setStyleSheet("QCheckBox::indicator { width: 0px; }")
-            self.grid_layout.addWidget(group_label, row, 0, 1, 4)  # 占据一行的四列
-
-            col_positions = {"JAN": 0, "型号": 1, "详情": 2, "图片": 3}
-            col_occupied = [False] * 4
-
-            for sub_key, formulas in items.items():
-                if formulas and sub_key in col_positions:
-                    col = col_positions[sub_key]
-                    sub_key_checkbox = QCheckBox(sub_key)
-                    sub_key_checkbox.setObjectName(f"{key}_{sub_key}")
-                    sub_key_checkbox.stateChanged.connect(self.check_unique_selection)
-
-                    self.grid_layout.addWidget(sub_key_checkbox, row + 1, col)
-                    col_occupied[col] = True
-
-            # 用空标签占位
-            for col, occupied in enumerate(col_occupied):
-                if not occupied:
-                    placeholder_label = QLabel("")
-                    self.grid_layout.addWidget(placeholder_label, row + 1, col)
-
-            row += 2  # 每组占据两行
-
-        scroll_area.setWidget(container_widget)
-
-        cancel_button = QPushButton('取消')
-        cancel_button.clicked.connect(self.cancel_dialog)
-
-        close_button = QPushButton('确认')
-        close_button.clicked.connect(self.close_dialog)
-
-        # 将 "确认" 按钮设置为默认按钮
-        close_button.setDefault(True)
-
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(cancel_button)
-        button_layout.addWidget(close_button)
-
-        layout.addWidget(scroll_area)
-        layout.addLayout(button_layout)
-
-        self.setLayout(layout)
-
-        # 根据商家排名顺序自动勾选复选框
-        self.auto_select_checkboxes()
-
-    # 同一列只能选中一个，如JAN不能多选
-    def check_unique_selection(self, state):
-        sender = self.sender()
-        if state == 2:  # 选中
-            item_type = sender.text()
-            current_selection = self.currently_selected.get(item_type)
-            if current_selection:
-                reply = QMessageBox.question(
-                    self, "替换确认",
-                    f"已经选择了一个 {item_type}，是否要替换？",
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
-                )
-                if reply == QMessageBox.No:
-                    sender.setChecked(False)
-                    return
-                else:
-                    current_selection.setChecked(False)
-
-            self.currently_selected[item_type] = sender
-        elif state == 0:  # 取消选中
-            item_type = sender.text()
-            if self.currently_selected.get(item_type) == sender:
-                self.currently_selected[item_type] = None
-
-    def cancel_dialog(self):
-        self.reject()
-
-    def close_dialog(self):
-        for key, items in self.data_dict.items():
-            for sub_key, formulas in items.items():
-                checkbox = self.findChild(QCheckBox, f"{key}_{sub_key}")
-                if checkbox and checkbox.isChecked():
-                    if key not in self.selected_options:
-                        self.selected_options[key] = []
-                    self.selected_options[key].append(sub_key)
-
-        self.accept()
-
-    def get_selected_options(self):
-        return self.selected_options
-
-    def auto_select_checkboxes(self):
-        for key, order in self.make_dict.items():
-            # 如果商家在数据中存在，则根据排名顺序勾选相应的复选框
-            if key in self.data_dict:
-                checkboxes = [self.findChild(QCheckBox, f"{key}_{sub_key}") for sub_key in order if sub_key != 0]
-                for checkbox in checkboxes:
-                    if checkbox:
-                        checkbox.setChecked(True)
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    splash = QSplashScreen(QPixmap('images.jpg'))
-    splash.showMessage('程序加载中......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
-    splash.show()
-
-    main_window = MyWindow()
-    main_window.open_file_dialog()
-    main_window.show()
-    splash.finish(main_window)
-    sys.exit(app.exec_())
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'chupinwindow.ui'
+#
+# Created by: PyQt5 UI code generator 5.15.4
+#
+# WARNING: Any manual changes made to this file will be lost when pyuic5 is
+# run again.  Do not edit this file unless you know what you are doing.
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(926, 873)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
+        self.gridLayout.setObjectName("gridLayout")
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.label_11 = QtWidgets.QLabel(self.centralwidget)
+        self.label_11.setObjectName("label_11")
+        self.horizontalLayout_6.addWidget(self.label_11)
+        self.lineEdit_Qoo10biaoti = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_Qoo10biaoti.setObjectName("lineEdit_Qoo10biaoti")
+        self.horizontalLayout_6.addWidget(self.lineEdit_Qoo10biaoti)
+        self.label_zishu = QtWidgets.QLabel(self.centralwidget)
+        self.label_zishu.setMinimumSize(QtCore.QSize(61, 0))
+        self.label_zishu.setObjectName("label_zishu")
+        self.horizontalLayout_6.addWidget(self.label_zishu)
+        self.gridLayout.addLayout(self.horizontalLayout_6, 5, 0, 1, 1)
+        self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
+        self.pushButton_qingchurn = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_qingchurn.setObjectName("pushButton_qingchurn")
+        self.horizontalLayout_8.addWidget(self.pushButton_qingchurn)
+        self.pushButton_charuhuanhang = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_charuhuanhang.setObjectName("pushButton_charuhuanhang")
+        self.horizontalLayout_8.addWidget(self.pushButton_charuhuanhang)
+        self.pushButton_charutupian = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_charutupian.setObjectName("pushButton_charutupian")
+        self.horizontalLayout_8.addWidget(self.pushButton_charutupian)
+        self.pushButton_geshihuahtml = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_geshihuahtml.setObjectName("pushButton_geshihuahtml")
+        self.horizontalLayout_8.addWidget(self.pushButton_geshihuahtml)
+        self.pushButton_qingkongdaima = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_qingkongdaima.setObjectName("pushButton_qingkongdaima")
+        self.horizontalLayout_8.addWidget(self.pushButton_qingkongdaima)
+        self.spinBox_zitidaxiao = QtWidgets.QSpinBox(self.centralwidget)
+        self.spinBox_zitidaxiao.setProperty("value", 13)
+        self.spinBox_zitidaxiao.setObjectName("spinBox_zitidaxiao")
+        self.horizontalLayout_8.addWidget(self.spinBox_zitidaxiao)
+        self.pushButton_yulang = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_yulang.setObjectName("pushButton_yulang")
+        self.horizontalLayout_8.addWidget(self.pushButton_yulang)
+        self.pushButton_gaolianxianshi = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_gaolianxianshi.setObjectName("pushButton_gaolianxianshi")
+        self.horizontalLayout_8.addWidget(self.pushButton_gaolianxianshi)
+        self.pushButton_chongzhi = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_chongzhi.setObjectName("pushButton_chongzhi")
+        self.horizontalLayout_8.addWidget(self.pushButton_chongzhi)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem)
+        self.pushButton_shengcheng = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_shengcheng.setObjectName("pushButton_shengcheng")
+        self.horizontalLayout_8.addWidget(self.pushButton_shengcheng)
+        self.pushButton_zhuijia = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_zhuijia.setObjectName("pushButton_zhuijia")
+        self.horizontalLayout_8.addWidget(self.pushButton_zhuijia)
+        self.gridLayout.addLayout(self.horizontalLayout_8, 8, 0, 1, 1)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.label_13 = QtWidgets.QLabel(self.centralwidget)
+        self.label_13.setObjectName("label_13")
+        self.horizontalLayout_4.addWidget(self.label_13)
+        self.lineEdit_jiagewangURL = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jiagewangURL.setText("")
+        self.lineEdit_jiagewangURL.setPlaceholderText("")
+        self.lineEdit_jiagewangURL.setObjectName("lineEdit_jiagewangURL")
+        self.horizontalLayout_4.addWidget(self.lineEdit_jiagewangURL)
+        self.comboBox_zichengxu = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox_zichengxu.setMinimumSize(QtCore.QSize(181, 0))
+        self.comboBox_zichengxu.setObjectName("comboBox_zichengxu")
+        self.horizontalLayout_4.addWidget(self.comboBox_zichengxu)
+        self.pushButton_yunxingzichongxu = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_yunxingzichongxu.setObjectName("pushButton_yunxingzichongxu")
+        self.horizontalLayout_4.addWidget(self.pushButton_yunxingzichongxu)
+        self.gridLayout.addLayout(self.horizontalLayout_4, 3, 0, 1, 1)
+        self.textEdit = QtWidgets.QTextEdit(self.centralwidget)
+        self.textEdit.setEnabled(True)
+        self.textEdit.setObjectName("textEdit")
+        self.gridLayout.addWidget(self.textEdit, 11, 0, 1, 1)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setObjectName("label")
+        self.horizontalLayout.addWidget(self.label)
+        self.lineEdit_url = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_url.setMinimumSize(QtCore.QSize(350, 0))
+        self.lineEdit_url.setObjectName("lineEdit_url")
+        self.horizontalLayout.addWidget(self.lineEdit_url)
+        self.label_url_num = QtWidgets.QLabel(self.centralwidget)
+        self.label_url_num.setMinimumSize(QtCore.QSize(90, 0))
+        self.label_url_num.setObjectName("label_url_num")
+        self.horizontalLayout.addWidget(self.label_url_num)
+        self.checkBox_huoqu_zhuijia = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox_huoqu_zhuijia.setText("")
+        self.checkBox_huoqu_zhuijia.setObjectName("checkBox_huoqu_zhuijia")
+        self.horizontalLayout.addWidget(self.checkBox_huoqu_zhuijia)
+        self.pushButton_huoqu = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_huoqu.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.pushButton_huoqu.setObjectName("pushButton_huoqu")
+        self.horizontalLayout.addWidget(self.pushButton_huoqu)
+        self.lineEdit_zhuandao = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_zhuandao.setObjectName("lineEdit_zhuandao")
+        self.horizontalLayout.addWidget(self.lineEdit_zhuandao)
+        self.pushButton_zhuangdao = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_zhuangdao.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.pushButton_zhuangdao.setObjectName("pushButton_zhuangdao")
+        self.horizontalLayout.addWidget(self.pushButton_zhuangdao)
+        self.pushButton_shangye = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_shangye.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.pushButton_shangye.setObjectName("pushButton_shangye")
+        self.horizontalLayout.addWidget(self.pushButton_shangye)
+        self.pushButton_xiaye = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_xiaye.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.pushButton_xiaye.setObjectName("pushButton_xiaye")
+        self.horizontalLayout.addWidget(self.pushButton_xiaye)
+        self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_2.setObjectName("label_2")
+        self.horizontalLayout.addWidget(self.label_2)
+        self.spinBox_kaishi = QtWidgets.QSpinBox(self.centralwidget)
+        self.spinBox_kaishi.setProperty("value", 1)
+        self.spinBox_kaishi.setObjectName("spinBox_kaishi")
+        self.horizontalLayout.addWidget(self.spinBox_kaishi)
+        self.label_3 = QtWidgets.QLabel(self.centralwidget)
+        self.label_3.setObjectName("label_3")
+        self.horizontalLayout.addWidget(self.label_3)
+        self.spinBox_jiesu = QtWidgets.QSpinBox(self.centralwidget)
+        self.spinBox_jiesu.setProperty("value", 1)
+        self.spinBox_jiesu.setObjectName("spinBox_jiesu")
+        self.horizontalLayout.addWidget(self.spinBox_jiesu)
+        self.gridLayout.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.label_7 = QtWidgets.QLabel(self.centralwidget)
+        self.label_7.setMaximumSize(QtCore.QSize(25, 16777215))
+        self.label_7.setObjectName("label_7")
+        self.horizontalLayout_3.addWidget(self.label_7)
+        self.lineEdit_shuliang = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_shuliang.setMaximumSize(QtCore.QSize(20, 16777215))
+        self.lineEdit_shuliang.setObjectName("lineEdit_shuliang")
+        self.horizontalLayout_3.addWidget(self.lineEdit_shuliang)
+        self.label_8 = QtWidgets.QLabel(self.centralwidget)
+        self.label_8.setMaximumSize(QtCore.QSize(35, 16777215))
+        self.label_8.setObjectName("label_8")
+        self.horizontalLayout_3.addWidget(self.label_8)
+        self.lineEdit_tupianshu = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_tupianshu.setMaximumSize(QtCore.QSize(20, 16777215))
+        self.lineEdit_tupianshu.setObjectName("lineEdit_tupianshu")
+        self.horizontalLayout_3.addWidget(self.lineEdit_tupianshu)
+        self.label_9 = QtWidgets.QLabel(self.centralwidget)
+        self.label_9.setMaximumSize(QtCore.QSize(35, 16777215))
+        self.label_9.setObjectName("label_9")
+        self.horizontalLayout_3.addWidget(self.label_9)
+        self.lineEdit_fasongri = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_fasongri.setMaximumSize(QtCore.QSize(20, 16777215))
+        self.lineEdit_fasongri.setObjectName("lineEdit_fasongri")
+        self.horizontalLayout_3.addWidget(self.lineEdit_fasongri)
+        self.label_10 = QtWidgets.QLabel(self.centralwidget)
+        self.label_10.setMaximumSize(QtCore.QSize(25, 16777215))
+        self.label_10.setObjectName("label_10")
+        self.horizontalLayout_3.addWidget(self.label_10)
+        self.comboBox = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox.setMaximumSize(QtCore.QSize(69, 16777215))
+        self.comboBox.setEditable(True)
+        self.comboBox.setObjectName("comboBox")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.comboBox.addItem("")
+        self.horizontalLayout_3.addWidget(self.comboBox)
+        self.label_17 = QtWidgets.QLabel(self.centralwidget)
+        self.label_17.setMaximumSize(QtCore.QSize(25, 16777215))
+        self.label_17.setObjectName("label_17")
+        self.horizontalLayout_3.addWidget(self.label_17)
+        self.lineEdit_changjia = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_changjia.setMaximumSize(QtCore.QSize(101, 16777215))
+        self.lineEdit_changjia.setText("")
+        self.lineEdit_changjia.setObjectName("lineEdit_changjia")
+        self.horizontalLayout_3.addWidget(self.lineEdit_changjia)
+        self.label_14 = QtWidgets.QLabel(self.centralwidget)
+        self.label_14.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.label_14.setObjectName("label_14")
+        self.horizontalLayout_3.addWidget(self.label_14)
+        self.comboBox_fenlei = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox_fenlei.setMinimumSize(QtCore.QSize(205, 0))
+        self.comboBox_fenlei.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.comboBox_fenlei.setEditable(True)
+        self.comboBox_fenlei.setObjectName("comboBox_fenlei")
+        self.horizontalLayout_3.addWidget(self.comboBox_fenlei)
+        self.gridLayout.addLayout(self.horizontalLayout_3, 2, 0, 1, 1)
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.label_16 = QtWidgets.QLabel(self.centralwidget)
+        self.label_16.setObjectName("label_16")
+        self.horizontalLayout_7.addWidget(self.label_16)
+        self.lineEdit_gebuchuchu = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_gebuchuchu.setObjectName("lineEdit_gebuchuchu")
+        self.horizontalLayout_7.addWidget(self.lineEdit_gebuchuchu)
+        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit.setObjectName("lineEdit")
+        self.horizontalLayout_7.addWidget(self.lineEdit)
+        self.checkBox_biaotiguanjianzi = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox_biaotiguanjianzi.setText("")
+        self.checkBox_biaotiguanjianzi.setObjectName("checkBox_biaotiguanjianzi")
+        self.horizontalLayout_7.addWidget(self.checkBox_biaotiguanjianzi)
+        self.pushButton_xingbanchuli = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_xingbanchuli.setObjectName("pushButton_xingbanchuli")
+        self.horizontalLayout_7.addWidget(self.pushButton_xingbanchuli)
+        self.pushButton_kaishi = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_kaishi.setObjectName("pushButton_kaishi")
+        self.horizontalLayout_7.addWidget(self.pushButton_kaishi)
+        self.gridLayout.addLayout(self.horizontalLayout_7, 6, 0, 1, 1)
+        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+        self.label_12 = QtWidgets.QLabel(self.centralwidget)
+        self.label_12.setObjectName("label_12")
+        self.horizontalLayout_5.addWidget(self.label_12)
+        self.lineEdit_jiagewangbiaoti = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jiagewangbiaoti.setText("")
+        self.lineEdit_jiagewangbiaoti.setObjectName("lineEdit_jiagewangbiaoti")
+        self.horizontalLayout_5.addWidget(self.lineEdit_jiagewangbiaoti)
+        self.comboBox_shouji_zhengchang = QtWidgets.QComboBox(self.centralwidget)
+        self.comboBox_shouji_zhengchang.setObjectName("comboBox_shouji_zhengchang")
+        self.comboBox_shouji_zhengchang.addItem("")
+        self.comboBox_shouji_zhengchang.addItem("")
+        self.horizontalLayout_5.addWidget(self.comboBox_shouji_zhengchang)
+        self.lineEdit_jiage_jiagewangfenlei = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jiage_jiagewangfenlei.setMinimumSize(QtCore.QSize(50, 0))
+        self.lineEdit_jiage_jiagewangfenlei.setMaximumSize(QtCore.QSize(120, 16777215))
+        self.lineEdit_jiage_jiagewangfenlei.setObjectName("lineEdit_jiage_jiagewangfenlei")
+        self.horizontalLayout_5.addWidget(self.lineEdit_jiage_jiagewangfenlei)
+        self.pushButton_huoqufenlei = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_huoqufenlei.setObjectName("pushButton_huoqufenlei")
+        self.horizontalLayout_5.addWidget(self.pushButton_huoqufenlei)
+        self.gridLayout.addLayout(self.horizontalLayout_5, 4, 0, 1, 1)
+        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.centralwidget)
+        self.plainTextEdit.setObjectName("plainTextEdit")
+        self.gridLayout.addWidget(self.plainTextEdit, 10, 0, 1, 1)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.label_4 = QtWidgets.QLabel(self.centralwidget)
+        self.label_4.setObjectName("label_4")
+        self.horizontalLayout_2.addWidget(self.label_4)
+        self.lineEdit_jan = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jan.setMinimumSize(QtCore.QSize(113, 0))
+        self.lineEdit_jan.setObjectName("lineEdit_jan")
+        self.horizontalLayout_2.addWidget(self.lineEdit_jan)
+        self.label_5 = QtWidgets.QLabel(self.centralwidget)
+        self.label_5.setObjectName("label_5")
+        self.horizontalLayout_2.addWidget(self.label_5)
+        self.lineEdit_xingban = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_xingban.setMinimumSize(QtCore.QSize(161, 0))
+        self.lineEdit_xingban.setObjectName("lineEdit_xingban")
+        self.horizontalLayout_2.addWidget(self.lineEdit_xingban)
+        self.label_zishu_2 = QtWidgets.QLabel(self.centralwidget)
+        self.label_zishu_2.setMinimumSize(QtCore.QSize(61, 0))
+        self.label_zishu_2.setObjectName("label_zishu_2")
+        self.horizontalLayout_2.addWidget(self.label_zishu_2)
+        self.label_paiming_riqi = QtWidgets.QLabel(self.centralwidget)
+        self.label_paiming_riqi.setMinimumSize(QtCore.QSize(130, 0))
+        self.label_paiming_riqi.setObjectName("label_paiming_riqi")
+        self.horizontalLayout_2.addWidget(self.label_paiming_riqi)
+        self.label_6 = QtWidgets.QLabel(self.centralwidget)
+        self.label_6.setObjectName("label_6")
+        self.horizontalLayout_2.addWidget(self.label_6)
+        self.lineEdit_jiage = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jiage.setMinimumSize(QtCore.QSize(80, 0))
+        self.lineEdit_jiage.setMaximumSize(QtCore.QSize(80, 16777215))
+        self.lineEdit_jiage.setObjectName("lineEdit_jiage")
+        self.horizontalLayout_2.addWidget(self.lineEdit_jiage)
+        self.label_18 = QtWidgets.QLabel(self.centralwidget)
+        self.label_18.setObjectName("label_18")
+        self.horizontalLayout_2.addWidget(self.label_18)
+        self.spinBox_jiagequwei = QtWidgets.QSpinBox(self.centralwidget)
+        self.spinBox_jiagequwei.setProperty("value", 5)
+        self.spinBox_jiagequwei.setObjectName("spinBox_jiagequwei")
+        self.horizontalLayout_2.addWidget(self.spinBox_jiagequwei)
+        self.label_19_gong_quan = QtWidgets.QLabel(self.centralwidget)
+        self.label_19_gong_quan.setMinimumSize(QtCore.QSize(54, 0))
+        self.label_19_gong_quan.setObjectName("label_19_gong_quan")
+        self.horizontalLayout_2.addWidget(self.label_19_gong_quan)
+        self.label_15 = QtWidgets.QLabel(self.centralwidget)
+        self.label_15.setObjectName("label_15")
+        self.horizontalLayout_2.addWidget(self.label_15)
+        self.lineEdit_jiajia = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_jiajia.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.lineEdit_jiajia.setObjectName("lineEdit_jiajia")
+        self.horizontalLayout_2.addWidget(self.lineEdit_jiajia)
+        self.gridLayout.addLayout(self.horizontalLayout_2, 1, 0, 1, 1)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 926, 21))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.label_11.setText(_translate("MainWindow", "Qoo10标题"))
+        self.label_zishu.setText(_translate("MainWindow", "字数："))
+        self.pushButton_qingchurn.setText(_translate("MainWindow", "清除rn"))
+        self.pushButton_charuhuanhang.setText(_translate("MainWindow", "插入换行"))
+        self.pushButton_charutupian.setText(_translate("MainWindow", "插入图片"))
+        self.pushButton_geshihuahtml.setText(_translate("MainWindow", "格式化HTML"))
+        self.pushButton_qingkongdaima.setText(_translate("MainWindow", "清空代码"))
+        self.pushButton_yulang.setText(_translate("MainWindow", "预览"))
+        self.pushButton_gaolianxianshi.setText(_translate("MainWindow", "高亮代码"))
+        self.pushButton_chongzhi.setText(_translate("MainWindow", "重置"))
+        self.pushButton_shengcheng.setText(_translate("MainWindow", "生成文件"))
+        self.pushButton_zhuijia.setText(_translate("MainWindow", "追加/修正"))
+        self.label_13.setText(_translate("MainWindow", "价格网URL"))
+        self.pushButton_yunxingzichongxu.setText(_translate("MainWindow", "运行子程序"))
+        self.label.setText(_translate("MainWindow", "URL"))
+        self.lineEdit_url.setPlaceholderText(_translate("MainWindow", "url则获取，Qoo10data文件名则读入后修改"))
+        self.label_url_num.setText(_translate("MainWindow", "共/现"))
+        self.pushButton_huoqu.setText(_translate("MainWindow", "获取"))
+        self.lineEdit_zhuandao.setText(_translate("MainWindow", "K000"))
+        self.pushButton_zhuangdao.setText(_translate("MainWindow", "转到"))
+        self.pushButton_shangye.setText(_translate("MainWindow", "↑上页"))
+        self.pushButton_xiaye.setText(_translate("MainWindow", "↓下页"))
+        self.label_2.setText(_translate("MainWindow", "页数"))
+        self.label_3.setText(_translate("MainWindow", "--"))
+        self.label_7.setText(_translate("MainWindow", "数量"))
+        self.lineEdit_shuliang.setText(_translate("MainWindow", "1"))
+        self.label_8.setText(_translate("MainWindow", "图片数"))
+        self.label_9.setText(_translate("MainWindow", "发送日"))
+        self.lineEdit_fasongri.setText(_translate("MainWindow", "3"))
+        self.label_10.setText(_translate("MainWindow", "送料"))
+        self.comboBox.setItemText(0, _translate("MainWindow", "119079"))
+        self.comboBox.setItemText(1, _translate("MainWindow", "335370"))
+        self.comboBox.setItemText(2, _translate("MainWindow", "646874"))
+        self.label_17.setText(_translate("MainWindow", "厂家"))
+        self.label_14.setText(_translate("MainWindow", "分类番号"))
+        self.label_16.setText(_translate("MainWindow", "各部出处"))
+        self.lineEdit_gebuchuchu.setPlaceholderText(_translate("MainWindow", "JAN=出处，商品说明=出处"))
+        self.lineEdit.setPlaceholderText(_translate("MainWindow", "后面勾选为自动，否则为标题关键字"))
+        self.pushButton_xingbanchuli.setText(_translate("MainWindow", "型番处理"))
+        self.pushButton_kaishi.setText(_translate("MainWindow", "开始"))
+        self.label_12.setText(_translate("MainWindow", "价格网标题"))
+        self.comboBox_shouji_zhengchang.setItemText(0, _translate("MainWindow", "普通"))
+        self.comboBox_shouji_zhengchang.setItemText(1, _translate("MainWindow", "手机"))
+        self.lineEdit_jiage_jiagewangfenlei.setPlaceholderText(_translate("MainWindow", "价格网分类"))
+        self.pushButton_huoqufenlei.setText(_translate("MainWindow", "获取分类"))
+        self.label_4.setText(_translate("MainWindow", "JAN"))
+        self.label_5.setText(_translate("MainWindow", "型番"))
+        self.label_zishu_2.setText(_translate("MainWindow", "字数："))
+        self.label_paiming_riqi.setText(_translate("MainWindow", "排名：/日期："))
+        self.label_6.setText(_translate("MainWindow", "价格"))
+        self.label_18.setText(_translate("MainWindow", "价格取位"))
+        self.label_19_gong_quan.setText(_translate("MainWindow", "共0/圈0"))
+        self.label_15.setText(_translate("MainWindow", "加价"))
+        self.lineEdit_jiajia.setText(_translate("MainWindow", "3500"))
