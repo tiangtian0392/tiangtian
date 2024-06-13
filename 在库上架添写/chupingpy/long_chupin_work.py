@@ -597,7 +597,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # 遍历窗体上的所有控件
             for widget in self.findChildren(QWidget):
                 # 找到类型为 QLineEdit 的控件
-                print(widget.objectName())
+                # print(widget.objectName())
                 get_text = 'ok'
                 if 'comboBox' in widget.objectName():
                     get_text = widget.currentText()

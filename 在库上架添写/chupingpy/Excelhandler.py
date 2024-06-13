@@ -2,14 +2,18 @@ import win32com.client
 import datetime
 
 class ExcelHandler:
+
     def __init__(self, filename_keyword=None):
         self.excel = win32com.client.Dispatch("Excel.Application")
         self.excel.Visible = True
         self.workbook = None
+        self.connected = False
         if filename_keyword:
             self.workbook = self.bind_open_workbook(filename_keyword)
             if self.workbook is None:
                 print(f"未找到包含关键词 '{filename_keyword}' 的工作簿")
+            else:
+                self.connected = True
 
 
     def bind_open_workbook(self, filename_keyword):
@@ -19,6 +23,7 @@ class ExcelHandler:
         for workbook in self.excel.Workbooks:
             if filename_keyword in workbook.Name:
                 return workbook
+        return None
 
 
     def activate_workbook(self):
@@ -94,7 +99,11 @@ class ExcelHandler:
         读取整列的值，返回一个数组
         """
         sheet = self.workbook.Sheets(sheet_name)
-        values = sheet.Columns(col).Value
+        # 获取已使用范围的行数
+        used_range = sheet.UsedRange
+        last_row = used_range.Rows.Count
+        # 获取列的值
+        values = sheet.Range(f"{col}1:{col}{last_row}").Value
         if isinstance(values, tuple):
             return [self._convert_to_str(row[0]) for row in values]
         else:
@@ -136,9 +145,10 @@ class ExcelHandler:
         写入整行的值，values 为数组
         """
         sheet = self.workbook.Sheets(sheet_name)
-        for col, value in enumerate(values, start=1):
-            sheet.Cells(row, col).Value = value
-
+        # for col, value in enumerate(values, start=1):
+        #     sheet.Cells(row, col).Value = value
+        array = [values]
+        sheet.Range(sheet.Cells(row, 1), sheet.Cells(row, len(values))).Value = array
     def write_column(self, sheet_name, col, values):
         """
         写入整列的值，values 为数组
