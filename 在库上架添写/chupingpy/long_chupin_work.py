@@ -108,8 +108,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             "lineEdit_jan": "JAN",
             "lineEdit_xingban": "型番",
             "lineEdit_jiage": "价格",
-            "lineEdit_jiajia": "加价"
-
+            "comboBox_fenlei": "分类番号",
+            "comboBox": "送料",
+            # "lineEdit_jiajia": "加价",
+            "plainTextEdit": "商品说明"
         }
 
     def huoqu_zhuijia(self):
@@ -479,8 +481,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     category_number = row['Qカテゴリ']
 
                     brand_id = ''
-                    if row['単位'] in BrandInfo_dict:
-                        brand_id = BrandInfo_dict[row['単位']]
+                    new_brand = self.normalize_key(row['単位'])  # 大写转小写，片假转平假
+                    if new_brand in BrandInfo_dict:
+                        brand_id = BrandInfo_dict[new_brand]
                     brand_number = brand_id
                     item_name = row['タイトル']
                     item_promotion_name = ''
@@ -594,13 +597,20 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # 遍历窗体上的所有控件
             for widget in self.findChildren(QWidget):
                 # 找到类型为 QLineEdit 的控件
-                # print(widget.objectName())
-                if isinstance(widget, QLineEdit):
-                    if widget.text() == '':
-                        try:
-                            tishi_text = tishi_text + f'\n{self.line_dict[widget.objectName()]} = 空，确认！！！'
-                        except:
-                            pass
+                print(widget.objectName())
+                get_text = 'ok'
+                if 'comboBox' in widget.objectName():
+                    get_text = widget.currentText()
+                elif 'lineEdit' in widget.objectName():
+                    get_text = widget.text()
+                elif 'plainTextEdit' in widget.objectName():
+                    get_text = widget.toPlainText()
+
+                if get_text == '' and widget.objectName() in self.line_dict:
+                    try:
+                        tishi_text = tishi_text + f'\n{self.line_dict[widget.objectName()]:<7} = 空，确认！！！'
+                    except:
+                        pass
 
             # 将文本内容重置为空字符串
             if len(tishi_text) > 15:
@@ -611,9 +621,33 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             row_data = self.collect_form_data()
             excle_workbook = None
             # 写入excel
-
+            # from Excelhandler import ExcelHandler
             excel_name = '在庫出力.xlsx'
             excle_workbook = ExcelHandler(excel_name)
+            # 把在库写入数据生成字典，判断是否以写入过
+            for i in range(3):
+                try:
+                    A_list = excle_workbook.read_ranges('在庫写入', 'A2')
+
+                    for item in A_list:
+
+                        if item[0] is not None:
+                            if int(item[0]) == row_data[0] or item[1] == row_data[1] or item[10] == row_data[10]:
+
+                                write_Er = QMessageBox.information(self, '提示',
+                                                                   f'{row_data[0]} 在库出力文件以存在，是否在次写入！',
+                                                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                if write_Er == QMessageBox.No:
+                                    return
+                    break
+                except Exception as e:
+                    print('读取 在库写入失败，没有生成字典！')
+                    pd_A_list = QMessageBox.information(self, '提示',
+                                                       f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
+                                                       QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    if pd_A_list == QMessageBox.No:
+                        return
+
             print(excle_workbook.workbook)
             if excle_workbook.workbook is not None:
                 print(f'绑定{excel_name}成功')
@@ -627,6 +661,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 return
             try:
                 global driver
+                print(driver)
                 driver.quit()
             except:
                 pass
@@ -914,13 +949,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 if isinstance(widget, QLineEdit):
                     # 将文本内容重置为空字符串
                     # print(widget.objectName())
-                    if widget.objectName() in self.line_dict:
+                    if widget.objectName() in self.line_dict and 'jiajia' not in widget.objectName():
                         widget.setText("")
             self.plainTextEdit.setPlainText('')
             self.lineEdit_fasongri.setText('3')
             # self.comboBox.setCurrentIndex(0)
             self.spinBox_jiagequwei.setValue(5)
-            self.lineEdit_jiajia.setText('3500')
             self.spinBox_zitidaxiao.setValue(13)
         except Exception as e:
             print(f'重置窗口出错，e={e}')
@@ -967,10 +1001,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.on_error_occurred(f'获取url出错！获取内容={url}')
 
             # 打开商家选择窗口
+            print('打开商家选择窗口')
             if to_tanchuan_dict:
                 re_getmake_dict = self.open_Tanchuang(to_tanchuan_dict)
 
-                # print(f're_getmake_dict={re_getmake_dict}')
+                print(f're_getmake_dict={re_getmake_dict}')
             else:
                 # print(to_tanchuan_dict,len(to_tanchuan_dict))
                 QMessageBox.information(self, '提示', '没有可获取的商家，请添加或继续！')
@@ -1120,12 +1155,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         # 厂家
         make = ''
+        make_to_xiaoxie = ''
         make_match = re.search(r"(?<=mkrname: ')[\s\S]+?(?=')", htmlcode)
         if make_match:
             make = make_match.group(0)
             print(make)
             make = make.replace('\\u0026', '&')
-            make = self.normalize_key(make)  # 大写转小写，片假转平假
+            make_to_xiaoxie = self.normalize_key(make)  # 大写转小写，片假转平假
         else:
             QMessageBox.warning(self, '提示', f'获取厂家信息出错，e={make_match}')
         self.lineEdit_changjia.setText(make)
@@ -1138,23 +1174,30 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_jiage_jiagewangfenlei.setText(cmaker_text)
         except Exception as e:
             QMessageBox.warning(self, '提示', f'获取分类信息出错，e={e}')
+
+        re_urls = 0
         try:
             # 图片
-            urls = soup.find('div', id='imgBox').prettify()
-            re_urls = re.findall(f'{self.sku}.*?\.jpg', urls)
-            self.lineEdit_tupianshu.setText(str(len(re_urls)))
+            img_offer = soup.find('p', id='imgOffer')
+            if img_offer and img_offer.a:
+                print(f'画像提供：{img_offer.a.text}')
+                self.lineEdit_tupianshu.setText('0')
+            else:
+                urls = soup.find('div', id='imgBox').prettify()
+                re_urls = re.findall(f'{self.sku}.*?\.jpg', urls)
+                self.lineEdit_tupianshu.setText(str(len(re_urls)))
         except Exception as e:
             QMessageBox.warning(self, '提示', f'获取图片信息出错，e={e}')
 
-        if make in self.paichu:
-            if self.paichu[make] == 'paichu':
-                YN_PD = QMessageBox.question(self, '提示', '此厂家在排除范围，点击”Yes"不在出品！',
-                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if make_to_xiaoxie in self.paichu:
+            if self.paichu[make_to_xiaoxie] == 'paichu':
+                YN_PD = QMessageBox.question(self, '提示', f'此 {make} 厂家在排除范围，点击”Yes"不在出品！',
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if YN_PD == QMessageBox.Yes:
                     self.chongzhi()
                     return None, None
             else:
-                QMessageBox.warning(self, '提示', '此厂家注意图片侵权！')
+                QMessageBox.warning(self, '提示', f'此 {make} 厂家注意图片侵权！')
 
                 self.lineEdit_tupianshu.setText("no_img")
 
@@ -1278,7 +1321,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         else:
             price_OK = int((price_OK + int(self.lineEdit_jiajia.text())) / 0.92)
         self.lineEdit_jiage.setText(str(price_OK))
-        print(self.spinBox_jiagequwei.value(), type(self.spinBox_jiagequwei.value()))
+        # print(self.spinBox_jiagequwei.value(), type(self.spinBox_jiagequwei.value()))
         print(price_OK)
         print(to_dialog_dict)
         return to_dialog_dict, make_url
