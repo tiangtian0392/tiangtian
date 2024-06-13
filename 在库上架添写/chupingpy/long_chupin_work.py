@@ -548,6 +548,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     item_weight = ''
                     item_material = ''
                     model_name = row['商品名']
+                    # model_name = row['商品名'].replace("/", "")
                     external_product_type = 'JAN'
                     external_product_id = row['商品ID']
                     manufacture_date = ''
