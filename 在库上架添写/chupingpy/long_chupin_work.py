@@ -472,10 +472,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 # 读取CSV文件
                 df = pd.read_csv(file_name, encoding='utf-8')
 
+
                 # 创建新数据框架并添加三行空行
                 new_data = [headers] + [[''] * len(headers)] * 3
 
                 for index, row in df.iterrows():
+                    print(index,row['商品説明'])
                     item_number = ''
                     seller_unique_item_id = row['商品名']
                     category_number = row['Qカテゴリ']
@@ -503,7 +505,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         if sRet:
                             sRet = sRet.group(0)
                             sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width="500" height="auto"><br><br>'
-                            shopitme = f'{sRet1}{row["商品説明"]}'
+                            shopitme = f'{sRet1}<br><br>{row["商品説明"]}'
                             imgURL = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg'
                             if row['IMAGE有無'] > 1:
                                 more_images = [
@@ -514,12 +516,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                             else:
                                 more_images = ''
                         else:
-                            shopitme = row['商品説明']
+                            # shopitme = row['商品説明']
                             imgURL = row['補足']
                             more_images = ''
                     else:
                         print(row['last scan date'])
-                        shopitme = row['商品説明']
+                        # shopitme = row['商品説明']
                         more_images = ''
                         if row['last scan date'] is not None:
                             imgURL = row['last scan date']
@@ -534,6 +536,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     header_html = ''
                     footer_html = ''
                     item_description = shopitme
+                    print(item_description)
                     Shipping_number = row['送料']
                     option_number = '444697' if row['送料'] == 335370 else ''
                     available_shipping_date = row['発送日']
@@ -580,8 +583,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
                 new_df = pd.DataFrame(new_data, columns=headers)
 
-                # 写入Excel文件
-                new_df.to_excel(self.csv_filename, index=False, header=False)
+                # # 写入Excel文件
+                # new_df.to_excel(self.csv_filename, index=False, header=False)
+                # 写入Excel文件，使用xlsxwriter处理较大的数据
+                with pd.ExcelWriter(self.csv_filename, engine='xlsxwriter') as writer:
+                    new_df.to_excel(writer, index=False, header=False)
+                    writer.save()
 
                 QMessageBox.information(self, "成功", f"文件已成功保存到: {self.csv_filename}")
 
