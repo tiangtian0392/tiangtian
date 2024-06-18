@@ -2,7 +2,7 @@ import os, re, json, time, datetime, csv
 from selenium import webdriver
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, QSpacerItem, QSizePolicy, \
+    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem,\
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent, QRect
@@ -81,6 +81,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # 点击开始
         self.pushButton_kaishi.clicked.connect(partial(self.kaishi, None))
 
+        # 以下按键为右下表格用
+        self.pushButton_zairu.clicked.connect(self.pBzairu)
+        self.pushButton_qingkong.clicked.connect(self.pBqingkong)
+        self.pushButton_chongxinhuoqu.clicked.connect(self.pBchongxinhuoqu)
+        self.pushButton_biaogexiuzheng.clicked.connect(self.pBbiaogexiuzheng)
+        self.pushButton_baocun.clicked.connect(self.pBbaocun)
+        self.tableWidget_chuping.itemDoubleClicked.connect(self.table_Double)
+
         self.sku = ''
         self.to_dialog_dict = {}
         self.Qoo10data = ''
@@ -93,6 +101,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.sku_list_dingwei = 0
         # 设置是获取URL还是修正xlsx
         self.huoquORxiuzheng = 'huoqu'
+
+        # 双击表格时禁用其它触发
+        self.table_Double_F = False
 
         self.line_dict = {
             "lineEdit_Qoo10biaoti": "Qoo10标题",
@@ -113,6 +124,136 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # "lineEdit_jiajia": "加价",
             "plainTextEdit": "商品说明"
         }
+
+    # 双击表格
+    def table_Double(self,item):
+        print(f'双击表格：第{item.row()}行')
+        row = item.row()
+        self.table_Double_F = True
+        for col in range(self.tableWidget_chuping.colorCount()):
+            cell_value_item = self.tableWidget_chuping.item(row, col)
+            if cell_value_item is not None:
+                cell_value = self.tableWidget_chuping.item(row, col).text()
+                if col == 0:
+                    self.lineEdit_jan.setText(cell_value)
+                elif col == 1:
+                    self.lineEdit_xingban.setText(cell_value)
+                elif col == 2:
+                    self.plainTextEdit.setPlainText(cell_value)
+                elif col == 3:
+                    self.lineEdit_Qoo10biaoti.setText(cell_value)
+                elif col == 4:
+                    self.lineEdit_jiage.setText(cell_value)
+                elif col == 5:
+                    self.lineEdit_shuliang.setText(cell_value)
+                elif col == 6:
+                    self.lineEdit_tupianshu.setText(cell_value)
+                elif col == 7:
+                    self.lineEdit_fasongri.setText(cell_value)
+                elif col == 8:
+                    self.comboBox.setCurrentText(cell_value)
+                elif col == 9:
+                    self.lineEdit_jiagewangbiaoti.setText(cell_value)
+                elif col == 10:
+                    self.lineEdit_jiagewangURL.setText(cell_value)
+                elif col == 11:
+                    self.comboBox_fenlei.setCurrentText(cell_value)
+                elif col == 12:
+                    self.lineEdit_jiage_jiagewangfenlei.setText(cell_value)
+                elif col == 13:
+                    self.lineEdit_gebuchuchu.setText(cell_value)
+                elif col == 14:
+                    self.lineEdit_changjia.setText(cell_value)
+        self.table_Double_F = False
+
+    # 表格保存
+    def pBbaocun(self):
+        print('点击表格保存')
+        try:
+            # Get table header labels as sheet name
+            sheet_name = self.tableWidget_chuping.horizontalHeaderItem(0).text()  # Using first column header as sheet name
+
+            # Extract data from QTableWidget to pandas DataFrame
+            data = []
+            for row in range(self.tableWidget_chuping.rowCount()):
+                row_data = []
+                for col in range(self.tableWidget_chuping.columnCount()):
+                    item = self.tableWidget_chuping.item(row, col)
+                    if item is not None:
+                        row_data.append(item.text())
+                    else:
+                        row_data.append('')
+                data.append(row_data)
+
+            df = pd.DataFrame(data, columns=[self.tableWidget_chuping.horizontalHeaderItem(col).text() for col in
+                                             range(self.tableWidget_chuping.columnCount())])
+            print(df)
+            # Save DataFrame to Excel with sheet name
+            # file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Excel Files (*.xlsx)")
+            # if file_path:
+            #     with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
+            #         df.to_excel(writer, sheet_name=sheet_name, index=False)
+            #     print(f"Data saved to {file_path}")
+        except Exception as e:
+            print(f"Error saving to Excel: {e}")
+
+    # 表格修正
+    def pBbiaogexiuzheng(self):
+        print('点击表格修正')
+        row_data = self.collect_form_data()
+        print(row_data)
+        try:
+            selected_items = self.tableWidget_chuping.selectedItems()
+            if selected_items:
+                selected_row = selected_items[0].row()
+                for i, item in enumerate(row_data):
+                    tab_item = QTableWidgetItem(item)
+                    print(f'修正表格数据：{selected_row},{i},{item}')
+                    self.tableWidget_chuping.setItem(selected_row, i, tab_item)
+
+        except Exception as e:
+            print(f'修正表格出错：{e}')
+    # 表格点击重新获取
+    def pBchongxinhuoqu(self):
+        print(f'表格点击重新获取')
+        try:
+            selected_items = self.tableWidget_chuping.selectedItems()
+            if selected_items:
+                selected_row = selected_items[0].row()
+                url = self.tableWidget_chuping.item(selected_row,10)
+                if url:
+                    print(f"Selected Row: {selected_row},url:{url.text()}")
+                    re_str = self.kaishi(url=url.text())
+        except:
+            pass
+    # 清空表格
+    def pBqingkong(self):
+        self.tableWidget_chuping.setRowCount(0)
+    # 表格载入文档
+    def pBzairu(self):
+
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "选择出品文档", "",
+                                                   "CSV Files (*.csv);;Excel Files (*.xlsx);;All Files (*)",
+                                                   options=options)
+        if file_name:
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(file_name)
+            elif file_name.endswith('.xlsx'):
+                df = pd.read_excel(file_name)
+            else:
+                return
+
+            # 处理NaN值，将其替换为空字符串
+            df = df.fillna('')
+            # 设置表格行数
+            self.tableWidget_chuping.setRowCount(len(df.index))
+
+            # 填充表格数据
+            for row_idx in range(len(df.index)):
+                for col_idx in range(len(df.columns)):
+                    item = QTableWidgetItem(str(df.iat[row_idx, col_idx]))
+                    self.tableWidget_chuping.setItem(row_idx, col_idx, item)
 
     def huoqu_zhuijia(self):
         if self.checkBox_huoqu_zhuijia.isChecked():
@@ -472,12 +613,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 # 读取CSV文件
                 df = pd.read_csv(file_name, encoding='utf-8')
 
-
                 # 创建新数据框架并添加三行空行
                 new_data = [headers] + [[''] * len(headers)] * 3
 
                 for index, row in df.iterrows():
-                    print(index,row['商品説明'])
+                    print(index, row['商品説明'])
                     item_number = ''
                     seller_unique_item_id = row['商品名']
                     category_number = row['Qカテゴリ']
@@ -520,11 +660,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                             imgURL = row['補足']
                             more_images = ''
                     else:
-                        print(row['last scan date'])
+                        print(row['IMG'])
                         # shopitme = row['商品説明']
                         more_images = ''
-                        if row['last scan date'] is not None:
-                            imgURL = row['last scan date']
+                        if row['IMG'] is not None:
+                            imgURL = row['IMG']
                         else:
                             imgURL = row['補足']
 
@@ -627,14 +767,29 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 if pd_chuping == QMessageBox.No:
                     return
             row_data = self.collect_form_data()
+
+            # 写入表格
+            try:
+                # Insert a new row at the end
+                row_position = self.tableWidget_chuping.rowCount()
+                self.tableWidget_chuping.insertRow(row_position)
+
+                # Populate the new row with data
+                for col, data in enumerate(row_data):
+                    item = QTableWidgetItem(str(data))
+                    self.tableWidget_chuping.setItem(row_position, col, item)
+            except Exception as e:
+                print(f'追加写入表格失败：{e}')
+
             excle_workbook = None
             # 写入excel
             # from Excelhandler import ExcelHandler
             excel_name = '在庫出力.xlsx'
-            excle_workbook = ExcelHandler(excel_name)
+
             # 把在库写入数据生成字典，判断是否以写入过
             for i in range(3):
                 try:
+                    excle_workbook = ExcelHandler(excel_name)
                     A_list = excle_workbook.read_ranges('在庫写入', 'A2')
 
                     for item in A_list:
@@ -651,8 +806,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 except Exception as e:
                     print('读取 在库写入失败，没有生成字典！')
                     pd_A_list = QMessageBox.information(self, '提示',
-                                                       f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
-                                                       QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                                        f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
+                                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                     if pd_A_list == QMessageBox.No:
                         return
 
@@ -740,9 +895,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             '',
             '',
             '',
+            no_image,
             '',
-            '',
-            no_image
+            ''
         ]
         return data
 
@@ -800,11 +955,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 read_title = 'title和番号 读入成功'
 
             except Exception as e:
-                QMessageBox.information(self, '提示', f'读取 title和番号.xlsm 文件错误，共重试3次，此为第{i+1}次')
+                QMessageBox.information(self, '提示', f'读取 title和番号.xlsm 文件错误，共重试3次，此为第{i + 1}次')
         self.statusbar.showMessage(f'{read_Qoo10data},{read_title}')
 
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
+        if self.table_Double_F == True:
+            return
         print(jan_to_search)
         if not jan_to_search.strip() or self.huoquORxiuzheng == 'xiuzheng':  # 空输入时不进行查找
             return
@@ -990,7 +1147,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 点击开始
     def kaishi(self, url=None):
-
+        print('点击开始')
+        with open("make_dict.json", "r", encoding='utf-8') as f:
+            self.make_dict = json.load(f)
         pixmap = QPixmap()
         self.label_IMG.setPixmap(pixmap)
 
@@ -1192,22 +1351,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, '提示', f'获取分类信息出错，e={e}')
 
         re_urls = 0
-        kakaku_img = ''
-
-        try:
-            # 找到所有 id="imgBox" 的 div
-            img_boxes = soup.find('div', id='imgBox')
-            print(f'img_boxes:{img_boxes}')
-            img_tag = img_boxes.find('img')
-            if img_tag:
-                kakaku_img = img_tag.get('src')
-                req = requests.get(kakaku_img)
-                print(f'获取到的kakaku_img:{kakaku_img},req:{req}')
-                photo = QPixmap()
-                photo.loadFromData(req.content)
-                self.label_IMG.setPixmap(photo)
-        except:
-            pass
+        tupiannum = 0
         try:
             # 图片
             img_offer = soup.find('p', id='imgOffer')
@@ -1217,9 +1361,32 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             else:
                 urls = soup.find('div', id='imgBox').prettify()
                 re_urls = re.findall(f'{self.sku}.*?\.jpg', urls)
-                self.lineEdit_tupianshu.setText(str(len(re_urls)))
+                tupiannum = len(re_urls)
+                self.lineEdit_tupianshu.setText(str(tupiannum))
         except Exception as e:
             QMessageBox.warning(self, '提示', f'获取图片信息出错，e={e}')
+
+        kakaku_img = ''
+        image_dict = {'r10s': "OK", 'amazon': "OK", 'qoo10': "OK", 'kojima': "OK", 'rakuten': "OK"}
+
+        try:
+            # 找到所有 id="imgBox" 的 div
+            img_boxes = soup.find('div', id='imgBox')
+            # print(f'img_boxes:{img_boxes}')
+            img_tag = img_boxes.find('img')
+            if img_tag:
+                kakaku_img = img_tag.get('src')
+                # 检查 kakaku_img 是否包含 image_dict 中的任意一个关键词
+                if (tupiannum == 0 and any(keyword in kakaku_img for keyword in image_dict)) or tupiannum > 0:
+                    req = requests.get(kakaku_img)
+                    print(f'获取到的kakaku_img:{kakaku_img},req:{req}')
+                    photo = QPixmap()
+                    photo.loadFromData(req.content)
+                    # 缩放图片以适应 QLabel，保持比例
+                    pixmap = photo.scaled(self.label_IMG.size(), Qt.AspectRatioMode.KeepAspectRatio)
+                    self.label_IMG.setPixmap(pixmap)
+        except:
+            print('获取kakakku_img失败')
 
         if make_to_xiaoxie in self.paichu:
             if self.paichu[make_to_xiaoxie] == 'paichu':
@@ -1760,7 +1927,7 @@ class TanchuangDialog(QDialog):
                 reply = QMessageBox.question(
                     self, "替换确认",
                     f"已经选择了一个 {item_type}，是否要替换？",
-                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
                 )
                 if reply == QMessageBox.No:
                     sender.setChecked(False)
