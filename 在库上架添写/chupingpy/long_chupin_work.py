@@ -781,24 +781,26 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 # QMessageBox.information(self, '提示', '文件读入完成')
             except Exception as e:
                 QMessageBox.critical(self, '错误', f'Qoo10data文件读入错误: {str(e)}')
-        try:
-            title_banhao = ExcelHandler('title和番号.xlsm')
-            title_banhao_list = title_banhao.read_column('采集 (4)', 'W')
-            # print(title_banhao_list[3791::],len(title_banhao_list))
-            self.title_banhao_sku_dict = set()
-            for item in title_banhao_list:
-                # print(item)
-                try:
-                    sku = re.search(r'k\d+', item, flags=re.IGNORECASE)
-                    # print(f'url={url},sku = {sku}')
-                    if sku:
-                        sku = sku.group()
-                        self.title_banhao_sku_dict.add(sku)
-                except:
-                    pass
-            read_title = 'title和番号 读入成功'
-        except Exception as e:
-            QMessageBox.information(self, '提示', '读取 title和番号.xlsm 文件错误，跳过！')
+        for i in range(3):
+            try:
+                title_banhao = ExcelHandler('title和番号.xlsm')
+                title_banhao_list = title_banhao.read_column('采集 (4)', 'W')
+                # print(title_banhao_list[3791::],len(title_banhao_list))
+                self.title_banhao_sku_dict = set()
+                for item in title_banhao_list:
+                    # print(item)
+                    try:
+                        sku = re.search(r'k\d+', item, flags=re.IGNORECASE)
+                        # print(f'url={url},sku = {sku}')
+                        if sku:
+                            sku = sku.group()
+                            self.title_banhao_sku_dict.add(sku)
+                    except:
+                        pass
+                read_title = 'title和番号 读入成功'
+
+            except Exception as e:
+                QMessageBox.information(self, '提示', f'读取 title和番号.xlsm 文件错误，共重试3次，此为第{i+1}次')
         self.statusbar.showMessage(f'{read_Qoo10data},{read_title}')
 
     # JAN变化时触发查重
@@ -964,6 +966,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # self.comboBox.setCurrentIndex(0)
             self.spinBox_jiagequwei.setValue(5)
             self.spinBox_zitidaxiao.setValue(13)
+            pixmap = QPixmap()
+            self.label_IMG.setPixmap(pixmap)
         except Exception as e:
             print(f'重置窗口出错，e={e}')
         print('重置窗口完成')
@@ -986,6 +990,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 点击开始
     def kaishi(self, url=None):
+
+        pixmap = QPixmap()
+        self.label_IMG.setPixmap(pixmap)
+
         self.statusbar.showMessage('')
         self.downImgUrl = ''
         self.sku = ''
@@ -1184,6 +1192,22 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, '提示', f'获取分类信息出错，e={e}')
 
         re_urls = 0
+        kakaku_img = ''
+
+        try:
+            # 找到所有 id="imgBox" 的 div
+            img_boxes = soup.find('div', id='imgBox')
+            print(f'img_boxes:{img_boxes}')
+            img_tag = img_boxes.find('img')
+            if img_tag:
+                kakaku_img = img_tag.get('src')
+                req = requests.get(kakaku_img)
+                print(f'获取到的kakaku_img:{kakaku_img},req:{req}')
+                photo = QPixmap()
+                photo.loadFromData(req.content)
+                self.label_IMG.setPixmap(photo)
+        except:
+            pass
         try:
             # 图片
             img_offer = soup.find('p', id='imgOffer')
@@ -1517,8 +1541,7 @@ class WorkerThread(QThread):
         return page_source
 
     def yichu_html_biaoqian(self, goods_html):
-        goods_html = re.sub(r'<a[\s\S]+?>', '', goods_html)
-        goods_html = re.sub(r'</a>', '', goods_html)
+        goods_html = re.sub(r'<a[\s\S]*?>.*?</a>', '', goods_html)
         goods_html = re.sub(r'<img[\s\S]+?>', '', goods_html)
         goods_html = re.sub(r'https?://\S+', '', goods_html)
         return goods_html
