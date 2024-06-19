@@ -65,7 +65,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_qingkongdaima.clicked.connect(self.qingkongdaima)
         self.pushButton_chongzhi.clicked.connect(self.chongzhi)
         self.pushButton_yunxingzichongxu.clicked.connect(self.run_zichengxu)
-        self.pushButton_shengcheng.clicked.connect(self.shengcheng)
+        self.pushButton_shengcheng.clicked.connect(partial(self.shengcheng, None))
         self.pushButton_zhuijia.clicked.connect(self.zhuijia)
         self.pushButton_geshihuahtml.clicked.connect(self.geshihuahtml)
         # self.pushButton_charubiaoge.clicked.connect(self.chuarubiaoge)
@@ -187,13 +187,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
             df = pd.DataFrame(data, columns=[self.tableWidget_chuping.horizontalHeaderItem(col).text() for col in
                                              range(self.tableWidget_chuping.columnCount())])
-            print(df)
-            # Save DataFrame to Excel with sheet name
-            # file_path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "Excel Files (*.xlsx)")
-            # if file_path:
-            #     with pd.ExcelWriter(file_path, engine='xlsxwriter') as writer:
-            #         df.to_excel(writer, sheet_name=sheet_name, index=False)
-            #     print(f"Data saved to {file_path}")
+            # print(df)
+            try:
+                self.shengcheng(df=df)
+            except Exception as e:
+                print(e)
+                QMessageBox.information(self, '提示', f'保存文件失败，错误代码：{e}')
         except Exception as e:
             print(f"Error saving to Excel: {e}")
 
@@ -531,8 +530,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         formatted_html = soup.prettify()
         self.plainTextEdit.setPlainText(formatted_html)
 
-    def shengcheng(self):
+    def shengcheng(self, df=None):
         # 生成出品文件
+        print('开始处理生成保存文件',type(df))
         current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
         self.csv_filename = f'Z:\\YS登録\\q10\\Qoo10up_{current_date}.xlsx'
 
@@ -603,140 +603,145 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 BrandInfo_dict[brand_name] = value
                 BrandInfo_dict[brand_name_en] = value
                 BrandInfo_dict[brand_name_jp] = value
-        # print(BrandInfo_dict)
+        if df is None:
+            # print(BrandInfo_dict)
+            options = QFileDialog.Options()
+            file_name, _ = QFileDialog.getOpenFileName(self, "选择CSV文件", "", "CSV Files (*.csv);;All Files (*)",
+                                                       options=options)
+            if file_name:
+                try:
+                    # 读取CSV文件
+                    df = pd.read_csv(file_name, encoding='utf-8')
+                except Exception as e:
+                    print(f"处理文件时发生错误：{str(e)}")
+                    QMessageBox.critical(self, "错误", f"处理文件时发生错误：{str(e)}")
+                    return
 
-        options = QFileDialog.Options()
-        file_name, _ = QFileDialog.getOpenFileName(self, "选择CSV文件", "", "CSV Files (*.csv);;All Files (*)",
-                                                   options=options)
-        if file_name:
-            try:
-                # 读取CSV文件
-                df = pd.read_csv(file_name, encoding='utf-8')
+        try:
+            # 创建新数据框架并添加三行空行
+            new_data = [headers] + [[''] * len(headers)] * 3
+            df['商品個数'] = pd.to_numeric(df['商品個数'], errors='coerce').fillna(0).astype(int)
+            df['IMAGE有無'] = pd.to_numeric(df['IMAGE有無'], errors='coerce').fillna(0).astype(int)
 
-                # 创建新数据框架并添加三行空行
-                new_data = [headers] + [[''] * len(headers)] * 3
+            print(df.dtypes)
+            for index, row in df.iterrows():
+                # print(index, row['商品説明'])
+                item_number = ''
+                seller_unique_item_id = row['商品名']
+                category_number = row['Qカテゴリ']
 
-                for index, row in df.iterrows():
-                    print(index, row['商品説明'])
-                    item_number = ''
-                    seller_unique_item_id = row['商品名']
-                    category_number = row['Qカテゴリ']
+                brand_id = ''
+                new_brand = self.normalize_key(row['単位'])  # 大写转小写，片假转平假
+                if new_brand in BrandInfo_dict:
+                    brand_id = BrandInfo_dict[new_brand]
+                brand_number = brand_id
+                item_name = row['タイトル']
+                item_promotion_name = ''
+                item_status_Y_N_D = 'Y' if row['商品個数'] > 0 else 'N'
+                end_date = '2028-12-31'
+                price_yen = row['予定価格']
+                retail_price_yen = 0
+                taxrate = ''
+                quantity = row['商品個数']
+                option_info = ''
+                additional_option_info = ''
+                additional_option_text = ''
+                shopitme = row['商品説明']
 
-                    brand_id = ''
-                    new_brand = self.normalize_key(row['単位'])  # 大写转小写，片假转平假
-                    if new_brand in BrandInfo_dict:
-                        brand_id = BrandInfo_dict[new_brand]
-                    brand_number = brand_id
-                    item_name = row['タイトル']
-                    item_promotion_name = ''
-                    item_status_Y_N_D = 'Y' if row['商品個数'] > 0 else 'N'
-                    end_date = '2028-12-31'
-                    price_yen = row['予定価格']
-                    retail_price_yen = 0
-                    taxrate = ''
-                    quantity = row['商品個数']
-                    option_info = ''
-                    additional_option_info = ''
-                    additional_option_text = ''
-                    shopitme = row['商品説明']
-
-                    if row['IMAGE有無'] > 0:
-                        sRet = re.search(r'K\d+', row['補足'])
-                        if sRet:
-                            sRet = sRet.group(0)
-                            sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width="500" height="auto"><br><br>'
-                            shopitme = f'{sRet1}<br><br>{row["商品説明"]}'
-                            imgURL = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg'
-                            if row['IMAGE有無'] > 1:
-                                more_images = [
-                                    f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}_000{w}.jpg' for
-                                    w
-                                    in range(1, row['IMAGE有無'])]
-                                more_images = '$$'.join(more_images)
-                            else:
-                                more_images = ''
+                if row['IMAGE有無'] > 0:
+                    sRet = re.search(r'K\d+', row['補足'])
+                    if sRet:
+                        sRet = sRet.group(0)
+                        sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width="500" height="auto"><br><br>'
+                        shopitme = f'{sRet1}<br><br>{row["商品説明"]}'
+                        imgURL = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg'
+                        if row['IMAGE有無'] > 1:
+                            more_images = [
+                                f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}_000{w}.jpg' for
+                                w
+                                in range(1, row['IMAGE有無'])]
+                            more_images = '$$'.join(more_images)
                         else:
-                            # shopitme = row['商品説明']
-                            imgURL = row['補足']
                             more_images = ''
                     else:
-                        print(row['IMG'])
                         # shopitme = row['商品説明']
+                        imgURL = row['補足']
                         more_images = ''
-                        if row['IMG'] is not None:
-                            imgURL = row['IMG']
-                        else:
-                            imgURL = row['補足']
+                else:
+                    print(index, row['IMG'])
+                    # shopitme = row['商品説明']
+                    more_images = ''
+                    if pd.notna(row['IMG']) and row['IMG'].strip():
+                        imgURL = row['IMG']
+                    else:
+                        imgURL = row['補足']
 
-                    image_main_url = imgURL
-                    image_other_url = more_images if row['IMAGE有無'] > 1 else ''
-                    video_url = ''
-                    image_option_info = ''
-                    image_additional_option_info = ''
-                    header_html = ''
-                    footer_html = ''
-                    item_description = shopitme
-                    print(item_description)
-                    Shipping_number = row['送料']
-                    option_number = '444697' if row['送料'] == 335370 else ''
-                    available_shipping_date = row['発送日']
-                    desired_shipping_date = ''
-                    search_keyword = ''
-                    item_condition_type = 1
-                    origin_type = 3
-                    origin_region_id = ''
-                    origin_country_id = ''
-                    origin_others = 'その他'
-                    medication_type = ''
-                    item_weight = ''
-                    item_material = ''
-                    model_name = row['商品名']
-                    # model_name = row['商品名'].replace("/", "")
-                    external_product_type = 'JAN'
-                    external_product_id = row['商品ID']
-                    manufacture_date = ''
-                    expiration_date_type = ''
-                    expiration_date_MFD = ''
-                    expiration_date_PAO = ''
-                    expiration_date_EXP = ''
-                    under18s_display_Y_N = ''
-                    A_S_info = ''
-                    buy_limit_type = ''
-                    buy_limit_date = ''
-                    buy_limit_qty = ''
+                image_main_url = imgURL
+                image_other_url = more_images if row['IMAGE有無'] > 1 else ''
+                video_url = ''
+                image_option_info = ''
+                image_additional_option_info = ''
+                header_html = ''
+                footer_html = ''
+                item_description = shopitme
+                # print(item_description)
+                Shipping_number = row['送料']
+                option_number = '444697' if row['送料'] == 335370 else ''
+                available_shipping_date = row['発送日']
+                desired_shipping_date = ''
+                search_keyword = ''
+                item_condition_type = 1
+                origin_type = 3
+                origin_region_id = ''
+                origin_country_id = ''
+                origin_others = 'その他'
+                medication_type = ''
+                item_weight = ''
+                item_material = ''
+                model_name = row['商品名']
+                # model_name = row['商品名'].replace("/", "")
+                external_product_type = 'JAN'
+                external_product_id = row['商品ID']
+                manufacture_date = ''
+                expiration_date_type = ''
+                expiration_date_MFD = ''
+                expiration_date_PAO = ''
+                expiration_date_EXP = ''
+                under18s_display_Y_N = ''
+                A_S_info = ''
+                buy_limit_type = ''
+                buy_limit_date = ''
+                buy_limit_qty = ''
 
-                    new_row = [
-                        item_number, seller_unique_item_id, category_number, brand_number, item_name,
-                        item_promotion_name, item_status_Y_N_D, end_date, price_yen, retail_price_yen,
-                        taxrate, quantity, option_info, additional_option_info, additional_option_text,
-                        image_main_url, image_other_url, video_url, image_option_info, image_additional_option_info,
-                        header_html, footer_html, item_description, Shipping_number, option_number,
-                        available_shipping_date, desired_shipping_date, search_keyword, item_condition_type,
-                        origin_type, origin_region_id, origin_country_id, origin_others, medication_type,
-                        item_weight, item_material, model_name, external_product_type, external_product_id,
-                        manufacture_date, expiration_date_type, expiration_date_MFD, expiration_date_PAO,
-                        expiration_date_EXP, under18s_display_Y_N, A_S_info, buy_limit_type, buy_limit_date,
-                        buy_limit_qty
-                    ]
+                new_row = [
+                    item_number, seller_unique_item_id, category_number, brand_number, item_name,
+                    item_promotion_name, item_status_Y_N_D, end_date, price_yen, retail_price_yen,
+                    taxrate, quantity, option_info, additional_option_info, additional_option_text,
+                    image_main_url, image_other_url, video_url, image_option_info, image_additional_option_info,
+                    header_html, footer_html, item_description, Shipping_number, option_number,
+                    available_shipping_date, desired_shipping_date, search_keyword, item_condition_type,
+                    origin_type, origin_region_id, origin_country_id, origin_others, medication_type,
+                    item_weight, item_material, model_name, external_product_type, external_product_id,
+                    manufacture_date, expiration_date_type, expiration_date_MFD, expiration_date_PAO,
+                    expiration_date_EXP, under18s_display_Y_N, A_S_info, buy_limit_type, buy_limit_date,
+                    buy_limit_qty
+                ]
 
-                    new_data.append(new_row)
+                new_data.append(new_row)
 
-                new_df = pd.DataFrame(new_data, columns=headers)
+            new_df = pd.DataFrame(new_data, columns=headers)
 
-                # # 写入Excel文件
-                # new_df.to_excel(self.csv_filename, index=False, header=False)
-                # 写入Excel文件，使用xlsxwriter处理较大的数据
-                with pd.ExcelWriter(self.csv_filename, engine='xlsxwriter') as writer:
-                    new_df.to_excel(writer, index=False, header=False)
-                    writer.save()
+            # # 写入Excel文件
+            # new_df.to_excel(self.csv_filename, index=False, header=False)
+            # 写入Excel文件，使用xlsxwriter处理较大的数据
+            with pd.ExcelWriter(self.csv_filename, engine='xlsxwriter') as writer:
+                new_df.to_excel(writer, index=False, header=False)
+                writer.save()
 
-                QMessageBox.information(self, "成功", f"文件已成功保存到: {self.csv_filename}")
-
-            except Exception as e:
-                print(f"处理文件时发生错误：{str(e)}")
-                QMessageBox.critical(self, "错误", f"处理文件时发生错误：{str(e)}")
-        else:
-            QMessageBox.warning(self, "警告", "未选择任何文件")
+            QMessageBox.information(self, "成功", f"文件已成功保存到: {self.csv_filename}")
+        except Exception as e:
+            print(f'保存文件出错,错误代码：{e}')
+            QMessageBox.information(self, '提示', f'保存文件出错,错误代码：{e}')
 
     # 点击追加，追加出品商品到csv文件内
     def zhuijia(self):
@@ -767,69 +772,72 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 if pd_chuping == QMessageBox.No:
                     return
             row_data = self.collect_form_data()
-
-            # 写入表格
-            try:
-                # Insert a new row at the end
-                row_position = self.tableWidget_chuping.rowCount()
-                self.tableWidget_chuping.insertRow(row_position)
-
-                # Populate the new row with data
-                for col, data in enumerate(row_data):
-                    item = QTableWidgetItem(str(data))
-                    self.tableWidget_chuping.setItem(row_position, col, item)
-            except Exception as e:
-                print(f'追加写入表格失败：{e}')
-
-            excle_workbook = None
-            # 写入excel
-            # from Excelhandler import ExcelHandler
-            excel_name = '在庫出力.xlsx'
-
-            # 把在库写入数据生成字典，判断是否以写入过
-            for i in range(3):
+            if self.checkBox_benbiao.isChecked():
+                # 写入表格
                 try:
-                    excle_workbook = ExcelHandler(excel_name)
-                    A_list = excle_workbook.read_ranges('在庫写入', 'A2')
+                    # Insert a new row at the end
+                    row_position = self.tableWidget_chuping.rowCount()
+                    self.tableWidget_chuping.insertRow(row_position)
 
-                    for item in A_list:
-
-                        if item[0] is not None:
-                            if int(item[0]) == row_data[0] or item[1] == row_data[1] or item[10] == row_data[10]:
-
-                                write_Er = QMessageBox.information(self, '提示',
-                                                                   f'{row_data[0]} 在库出力文件以存在，是否在次写入！',
-                                                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                                if write_Er == QMessageBox.No:
-                                    return
-                    break
+                    # Populate the new row with data
+                    for col, data in enumerate(row_data):
+                        item = QTableWidgetItem(str(data))
+                        self.tableWidget_chuping.setItem(row_position, col, item)
+                    print(f'追加写入表格成功')
+                    self.statusbar.showMessage(f'{row_data[0]} 追加写入本表成功！')
                 except Exception as e:
-                    print('读取 在库写入失败，没有生成字典！')
-                    pd_A_list = QMessageBox.information(self, '提示',
-                                                        f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
-                                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                    if pd_A_list == QMessageBox.No:
-                        return
+                    print(f'追加写入表格失败：{e}')
+            # 开始追加写入文件
+            if self.checkBox_wenjian.isChecked():
+                excle_workbook = None
+                # 写入excel
+                # from Excelhandler import ExcelHandler
+                excel_name = '在庫出力.xlsx'
 
-            print(excle_workbook.workbook)
-            if excle_workbook.workbook is not None:
-                print(f'绑定{excel_name}成功')
-            else:
-                QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
-                return
-            try:
-                excle_workbook.write_last_row('在庫写入', row_data)
-            except Exception as e:
-                QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
-                return
-            try:
-                global driver
-                print(driver)
-                driver.quit()
-            except:
-                pass
-            print('写入成功')
-            self.statusbar.showMessage(f'{row_data[0]} 追加写入成功！')
+                # 把在库写入数据生成字典，判断是否以写入过
+                for i in range(3):
+                    try:
+                        excle_workbook = ExcelHandler(excel_name)
+                        A_list = excle_workbook.read_ranges('在庫写入', 'A2')
+
+                        for item in A_list:
+
+                            if item[0] is not None:
+                                if int(item[0]) == row_data[0] or item[1] == row_data[1] or item[10] == row_data[10]:
+
+                                    write_Er = QMessageBox.information(self, '提示',
+                                                                       f'{row_data[0]} 在库出力文件以存在，是否在次写入！',
+                                                                       QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                    if write_Er == QMessageBox.No:
+                                        return
+                        break
+                    except Exception as e:
+                        print('读取 在库写入失败，没有生成字典！')
+                        pd_A_list = QMessageBox.information(self, '提示',
+                                                            f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
+                                                            QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                        if pd_A_list == QMessageBox.No:
+                            return
+
+                print(excle_workbook.workbook)
+                if excle_workbook.workbook is not None:
+                    print(f'绑定{excel_name}成功')
+                else:
+                    QMessageBox.warning(self, '提示', f'绑定{excel_name}失败,检查文件是否打开或被占用中！！！')
+                    return
+                try:
+                    excle_workbook.write_last_row('在庫写入', row_data)
+                except Exception as e:
+                    QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
+                    return
+                try:
+                    global driver
+                    print(driver)
+                    driver.quit()
+                except:
+                    pass
+                print('写入文件成功')
+                self.statusbar.showMessage(f'{row_data[0]} 追加写入成功！')
         else:
             print('开始 修正 写入')
             biaoti = self.lineEdit_Qoo10biaoti.text()
@@ -1706,11 +1714,13 @@ class WorkerThread(QThread):
         page_source = driver.page_source
         # driver.quit()
         return page_source
-
+    # 去掉商品详情中的特殊字符串
     def yichu_html_biaoqian(self, goods_html):
         goods_html = re.sub(r'<a[\s\S]*?>.*?</a>', '', goods_html)
+        goods_html = re.sub(r'<iframe[\s\S]*?>.*?</iframe>', '', goods_html)
         goods_html = re.sub(r'<img[\s\S]+?>', '', goods_html)
         goods_html = re.sub(r'https?://\S+', '', goods_html)
+        goods_html = re.sub(r'http?://\S+', '', goods_html)
         return goods_html
 
     def getjanxq(self):

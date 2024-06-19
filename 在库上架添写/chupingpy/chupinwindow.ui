@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>922</width>
-    <height>873</height>
+    <width>957</width>
+    <height>890</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -741,6 +741,26 @@
          </spacer>
         </item>
         <item>
+         <widget class="QCheckBox" name="checkBox_benbiao">
+          <property name="text">
+           <string>本表</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_wenjian">
+          <property name="text">
+           <string>文件</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButton_shengcheng">
           <property name="text">
            <string>生成文件</string>
@@ -757,14 +777,186 @@
        </layout>
       </item>
       <item>
-       <widget class="QPlainTextEdit" name="plainTextEdit"/>
-      </item>
-      <item>
-       <widget class="QTextEdit" name="textEdit">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QPlainTextEdit" name="plainTextEdit"/>
+          </item>
+          <item>
+           <widget class="QTextEdit" name="textEdit">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QTableWidget" name="tableWidget_chuping">
+            <column>
+             <property name="text">
+              <string>商品ID</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>商品名</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>商品説明</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>タイトル</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>予定価格</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>商品個数</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>IMAGE有無</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>発送日</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>送料</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>商品状態</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>補足</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>Qカテゴリ</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>kaakuカテゴリ</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>ショップ情報</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>単位</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>シリーズ</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>サイズ</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>手数料</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>jiajia</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>IMG</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>login_date</string>
+             </property>
+            </column>
+            <column>
+             <property name="text">
+              <string>last scan date</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
+             <widget class="QPushButton" name="pushButton_qingkong">
+              <property name="text">
+               <string>清空</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_zairu">
+              <property name="text">
+               <string>载入</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_biaogexiuzheng">
+              <property name="text">
+               <string>表格修正</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_baocun">
+              <property name="text">
+               <string>保存</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_zidong">
+              <property name="text">
+               <string>自动</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_chongxinhuoqu">
+              <property name="text">
+               <string>重新获取</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -775,12 +967,24 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>922</width>
+     <width>957</width>
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menumenu">
+    <property name="title">
+     <string>菜单</string>
+    </property>
+    <addaction name="actionaa"/>
+   </widget>
+   <addaction name="menumenu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionaa">
+   <property name="text">
+    <string>重新获取Qoo10data</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
