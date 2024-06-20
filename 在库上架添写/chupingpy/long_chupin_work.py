@@ -247,6 +247,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         row_data.append('')
                 data.append(row_data)
             print(data)
+            if data is None:
+                QMessageBox.information(self, '提示', '没有数据，保存取消！')
+                return
 
             # 保存为在库出力
             current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
@@ -254,14 +257,18 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             title_list = ['商品ID', '商品名', '商品説明', 'タイトル', '予定価格', '商品個数', 'IMAGE有無','発送日','送料',
                           '商品状態', '補足', 'Qカテゴリ', 'kaakuカテゴリ', 'ショップ情報', '単位', 'シリーズ', 'サイズ',
                           '手数料', 'jiajia', 'IMG', 'login_date', 'last scan date']
-            try:
-                csv_df = pd.DataFrame(data, columns=title_list)
-                csv_df.to_csv(csv_name, index=False, encoding="utf-8-sig")
-                self.statusbar.showMessage(f'{csv_name}:保存成功')
-            except Exception as e:
-                print(f'{csv_name}:保存失败，错误：{e}')
-                QMessageBox.information(self, '提示', f'{csv_name}:保存失败，错误：{e}')
-            if data:
+            csv_pd = QMessageBox.question(self, '保存', f'{csv_name}:是否保存此CSV文件？', QMessageBox.Yes | QMessageBox.No)
+            if csv_pd == QMessageBox.Yes:
+                try:
+                    csv_df = pd.DataFrame(data, columns=title_list)
+                    csv_df.to_csv(csv_name, index=False, encoding="utf-8-sig")
+                    self.statusbar.showMessage(f'{csv_name}:保存成功')
+                except Exception as e:
+                    print(f'{csv_name}:保存失败，错误：{e}')
+                    QMessageBox.information(self, '提示', f'{csv_name}:保存失败，错误：{e}')
+            xlsx_pd = QMessageBox.question(self, '保存', f'是否保存为上传文件？',
+                                          QMessageBox.Yes | QMessageBox.No)
+            if xlsx_pd == QMessageBox.Yes:
                 df = pd.DataFrame(data, columns=[self.tableWidget_chuping.horizontalHeaderItem(col).text() for col in
                                                  range(self.tableWidget_chuping.columnCount())])
                 # print(df)
@@ -270,8 +277,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 except Exception as e:
                     print(e)
                     QMessageBox.information(self, '提示', f'保存文件失败，错误代码：{e}')
-            else:
-                QMessageBox.information(self, '提示', '没有数据，保存取消！')
+
         except Exception as e:
             print(f"Error saving to Excel: {e}")
 
