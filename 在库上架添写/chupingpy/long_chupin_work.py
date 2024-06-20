@@ -201,31 +201,31 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 自动获取数据
     def pBzidong(self):
-
-        pub_text = self.pushButton_zidong.text()
-        all_datas = len(self.sku_list)
-        if pub_text == '自动':
-            self.pushButton_zidong.setText('停止')
-            self.lineEdit_jan.textChanged.disconnect(self.lineeditJAN)
-            # print(f'开始自动获取数据，数据共有：{len(self.sku_list)},指针位置：{self.sku_list_dingwei + 1}')
-            urls = []
-            start_num = self.sku_list_dingwei
-            for i, (key, value) in enumerate(self.sku_list.items()):
-                if i == start_num:
-                    print(f'{i}, {key}')
-                    urls.append(key)
-                    start_num += 1
-            self.start_janxq({}, {}, 'auto', urls=urls)
-            # self.pushButton_zidong.setText('自动')
-        else:
-            try:
-                print('点击停止')
-                self.thread.stop()
-                self.pushButton_zidong.setText('自动')
-                print(f'停止获取数据，数据共有：{all_datas},停止时指针位置：{self.sku_list_dingwei + 1}')
-                self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
-            except Exception as e:
-                print(f'停止失败，错误：{e}')
+        print('开始自动获取数据')
+        # pub_text = self.pushButton_zidong.text()
+        # all_datas = len(self.sku_list)
+        # if pub_text == '自动':
+        #     self.pushButton_zidong.setText('停止')
+        #     self.lineEdit_jan.textChanged.disconnect(self.lineeditJAN)
+        #     # print(f'开始自动获取数据，数据共有：{len(self.sku_list)},指针位置：{self.sku_list_dingwei + 1}')
+        #     urls = []
+        #     start_num = self.sku_list_dingwei
+        #     for i, (key, value) in enumerate(self.sku_list.items()):
+        #         if i == start_num:
+        #             print(f'{i}, {key}')
+        #             urls.append(key)
+        #             start_num += 1
+        #     self.start_janxq({}, {}, 'auto', urls=urls)
+        #     # self.pushButton_zidong.setText('自动')
+        # else:
+        #     try:
+        #         print('点击停止')
+        #         self.thread.stop()
+        #         self.pushButton_zidong.setText('自动')
+        #         print(f'停止获取数据，数据共有：{all_datas},停止时指针位置：{self.sku_list_dingwei + 1}')
+        #         self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
+        #     except Exception as e:
+        #         print(f'停止失败，错误：{e}')
 
     # 表格保存
     def pBbaocun(self):
@@ -247,6 +247,20 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         row_data.append('')
                 data.append(row_data)
             print(data)
+
+            # 保存为在库出力
+            current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+            csv_name = f'Z:\\YS登録\\在庫出力\\在庫出力_{current_date}.csv'
+            title_list = ['商品ID', '商品名', '商品説明', 'タイトル', '予定価格', '商品個数', 'IMAGE有無','発送日','送料',
+                          '商品状態', '補足', 'Qカテゴリ', 'kaakuカテゴリ', 'ショップ情報', '単位', 'シリーズ', 'サイズ',
+                          '手数料', 'jiajia', 'IMG', 'login_date', 'last scan date']
+            try:
+                csv_df = pd.DataFrame(data, columns=title_list)
+                csv_df.to_csv(csv_name, index=False, encoding="utf-8-sig")
+                self.statusbar.showMessage(f'{csv_name}:保存成功')
+            except Exception as e:
+                print(f'{csv_name}:保存失败，错误：{e}')
+                QMessageBox.information(self, '提示', f'{csv_name}:保存失败，错误：{e}')
             if data:
                 df = pd.DataFrame(data, columns=[self.tableWidget_chuping.horizontalHeaderItem(col).text() for col in
                                                  range(self.tableWidget_chuping.columnCount())])
@@ -691,6 +705,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         try:
             # 创建新数据框架并添加三行空行
             new_data = [headers] + [[''] * len(headers)] * 3
+            df['商品ID'] = pd.to_numeric(df['商品ID'], errors='coerce').fillna(0).astype(int)
             df['商品個数'] = pd.to_numeric(df['商品個数'], errors='coerce').fillna(0).astype(int)
             df['IMAGE有無'] = pd.to_numeric(df['IMAGE有無'], errors='coerce').fillna(0).astype(int)
 
@@ -1836,7 +1851,8 @@ class WorkerThread(QThread):
         driver = webdriver.Chrome()
         driver.get(url)
         page_source = driver.page_source
-        driver.quit()
+        if self.auto:
+            driver.quit()
         return page_source
 
     # 去掉商品详情中的特殊字符串
