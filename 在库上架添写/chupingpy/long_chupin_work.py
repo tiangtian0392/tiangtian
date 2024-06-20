@@ -705,7 +705,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         try:
             # 创建新数据框架并添加三行空行
             new_data = [headers] + [[''] * len(headers)] * 3
-            df['商品ID'] = pd.to_numeric(df['商品ID'], errors='coerce').fillna(0).astype(int)
+            # df['商品ID'] = pd.to_numeric(df['商品ID'], errors='coerce').fillna(0).astype(int)
             df['商品個数'] = pd.to_numeric(df['商品個数'], errors='coerce').fillna(0).astype(int)
             df['IMAGE有無'] = pd.to_numeric(df['IMAGE有無'], errors='coerce').fillna(0).astype(int)
 
