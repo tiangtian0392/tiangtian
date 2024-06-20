@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>957</width>
+    <width>978</width>
     <height>890</height>
    </rect>
   </property>
@@ -927,7 +927,7 @@
             <item>
              <widget class="QPushButton" name="pushButton_biaogexiuzheng">
               <property name="text">
-               <string>表格修正</string>
+               <string>行修正</string>
               </property>
              </widget>
             </item>
@@ -967,7 +967,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>957</width>
+     <width>978</width>
      <height>21</height>
     </rect>
    </property>

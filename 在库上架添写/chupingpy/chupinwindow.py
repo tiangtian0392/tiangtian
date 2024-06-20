@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(957, 890)
+        MainWindow.resize(978, 890)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -408,7 +408,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addLayout(self.verticalLayout_4, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 957, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 978, 21))
         self.menubar.setObjectName("menubar")
         self.menumenu = QtWidgets.QMenu(self.menubar)
         self.menumenu.setObjectName("menumenu")
@@ -529,7 +529,7 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "last scan date"))
         self.pushButton_qingkong.setText(_translate("MainWindow", "清空"))
         self.pushButton_zairu.setText(_translate("MainWindow", "载入"))
-        self.pushButton_biaogexiuzheng.setText(_translate("MainWindow", "表格修正"))
+        self.pushButton_biaogexiuzheng.setText(_translate("MainWindow", "行修正"))
         self.pushButton_baocun.setText(_translate("MainWindow", "保存"))
         self.pushButton_zidong.setText(_translate("MainWindow", "自动"))
         self.pushButton_chongxinhuoqu.setText(_translate("MainWindow", "重新获取"))
