@@ -15,7 +15,7 @@ import pyperclip  # 剪贴板
 from collections import OrderedDict
 import jaconv  # 英文转小写，片假转平假
 from functools import partial
-
+import glob
 
 class MyWindow(QMainWindow, Ui_MainWindow):
     re_path = pyqtSignal(str, str)
@@ -89,6 +89,16 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_baocun.clicked.connect(self.pBbaocun)
         self.pushButton_zidong.clicked.connect(self.pBzidong)
         self.tableWidget_chuping.itemDoubleClicked.connect(self.table_Double)
+        # 连接itemChanged信号到槽函数
+        self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
+
+        # 创建备份文件夹，如果不存在的话
+        self.backup_dir = 'baktab'
+        if not os.path.exists(self.backup_dir):
+            os.makedirs(self.backup_dir)
+
+        # 初始化备份文件列表
+        self.backup_files = self.load_existing_backups()
 
         # 设置菜单动作，重读Qoo10data
         self.actionaa.triggered.connect(self.chongduQoo10data)
@@ -132,6 +142,42 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # "lineEdit_jiajia": "加价",
             "plainTextEdit": "商品说明"
         }
+
+    def load_existing_backups(self):
+        # 获取所有备份文件，按修改时间排序
+        backup_files = glob.glob(os.path.join(self.backup_dir, 'backup_*.csv'))
+        backup_files.sort(key=os.path.getmtime)
+        return backup_files
+
+    def backup_table_data(self):
+        # 获取表格数据并保存为DataFrame
+        data = []
+        for row in range(self.tableWidget_chuping.rowCount()):
+            row_data = []
+            for column in range(self.tableWidget_chuping.columnCount()):
+                item = self.tableWidget_chuping.item(row, column)
+                row_data.append(item.text() if item is not None else '')
+            data.append(row_data)
+
+        df = pd.DataFrame(data)
+
+        # 确定备份文件名，使用当前日期和时间
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = os.path.join(self.backup_dir, f'backup_{timestamp}.csv')
+
+        # 保存备份文件
+        df.to_csv(backup_filename, index=False, header=False)
+
+        # 添加新备份文件到列表
+        self.backup_files.append(backup_filename)
+
+        # 只保留最近的5个备份文件
+        if len(self.backup_files) > 5:
+            oldest_backup = self.backup_files.pop(0)
+            if os.path.exists(oldest_backup):
+                os.remove(oldest_backup)
+
+        print(f'Backup saved to {backup_filename}')
     # 菜单动作
     def chongduQoo10data(self):
         self.open_file_dialog()
@@ -290,11 +336,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             selected_items = self.tableWidget_chuping.selectedItems()
             if selected_items:
                 selected_row = selected_items[0].row()
+                self.tableWidget_chuping.itemChanged.disconnect(self.backup_table_data)
                 for i, item in enumerate(row_data):
                     tab_item = QTableWidgetItem(item)
-                    print(f'修正行数据：{selected_row},{i},{item}')
+                    # print(f'修正行数据：{selected_row},{i},{item}')
                     self.tableWidget_chuping.setItem(selected_row, i, tab_item)
-
+                self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
+                self.backup_table_data()
         except Exception as e:
             print(f'修正表格出错：{e}')
 
@@ -327,6 +375,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                                                    "CSV Files (*.csv);;Excel Files (*.xlsx);;All Files (*)",
                                                    options=options)
         if file_name:
+            self.tableWidget_chuping.itemChanged.disconnect(self.backup_table_data)
             if file_name.endswith('.csv'):
                 df = pd.read_csv(file_name)
             elif file_name.endswith('.xlsx'):
@@ -344,7 +393,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 for col_idx in range(len(df.columns)):
                     item = QTableWidgetItem(str(df.iat[row_idx, col_idx]))
                     self.tableWidget_chuping.setItem(row_idx, col_idx, item)
-
+        self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
+        
     def huoqu_zhuijia(self):
         if self.checkBox_huoqu_zhuijia.isChecked():
             self.pushButton_huoqu.setText('追加')
@@ -888,13 +938,18 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     # Insert a new row at the end
                     row_position = self.tableWidget_chuping.rowCount()
                     self.tableWidget_chuping.insertRow(row_position)
-
+                    self.tableWidget_chuping.itemChanged.disconnect(self.backup_table_data)
                     # Populate the new row with data
                     for col, data in enumerate(row_data):
                         item = QTableWidgetItem(str(data))
                         self.tableWidget_chuping.setItem(row_position, col, item)
                     print(f'追加写入表格成功')
                     self.statusbar.showMessage(f'{row_data[0]} 追加写入本表成功！')
+                    try:
+                        self.backup_table_data()
+                    except Exception as e:
+                        print('备份表格失败')
+                    self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
                 except Exception as e:
                     print(f'追加写入表格失败：{e}')
             # 开始追加写入文件
@@ -1913,7 +1968,7 @@ class WorkerThread(QThread):
                             data_dict['详情'] = search_str
                             get_shuoming_make = make
                         if item == 'JAN':
-                            data_dict['JAN'] = search_str
+                            data_dict['JAN'] = str(int(search_str))
                             get_jan_make = make
                         if item == '图片':
                             self.imgUrl = search_str
