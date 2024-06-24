@@ -2,6 +2,14 @@
 47.94.119.221  cloud.laiye.com
 47.94.119.221  login.laiye.com
 
+bat运行python角本
+@echo off
+:: Copyright (c) 2013 The Chromium Authors. All rights reserved.
+:: Use of this source code is governed by a BSD-style license that can be
+:: found in the LICENSE file.
+
+python "%~dp0/native-messaging-example-host" %* 
+
 税额计算
 总价-总价/1.1  10%时
 
