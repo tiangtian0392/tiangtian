@@ -1,100 +1,132 @@
+"""
+C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --profile-directory="Profile 2"  --remote-debugging-port=3556 --force-renderer-accessibility
+如上，浏览器要添加--remote-debugging-port=3556
+指定端口，这样才能用代码联接
+
+"""
+
 import pychrome
-import time
 from bs4 import BeautifulSoup
+import time
 
-def switch_to_tab_with_keyword_and_click(browser, keyword):
-    # 获取所有可用的标签页
-    tabs = browser.list_tab()
 
-    for tab in tabs:
-        # 启动标签页
-        tab.start()
 
-        # 启用 Page 域
-        tab.Page.enable()
+class BrowserAutomation:
+    def __init__(self, browser_url):
+        self.browser = pychrome.Browser(url=browser_url)
+        self.tab = None
+    # 根据关键字切换标签
+    def switch_to_tab_with_keyword(self, keyword):
+        tabs = self.browser.list_tab()
+        for tab in tabs:
+            tab.start()
+            tab.Page.enable()
+            result = tab.Runtime.evaluate(expression="document.title")
+            title = result['result']['value']
+            print(f"Tab ID: {tab.id}, Title: {title}")
+            if keyword in title:
+                self.tab = tab
+                tab.Page.bringToFront()
+                return True
+        return False
+    # 点击元素，传入JS选择路径
+    def click_element(self, element_selector):
+        if not self.tab:
+            print("No tab matching the keyword found.")
+            return None
 
-        # 获取页面标题
-        result = tab.Runtime.evaluate(expression="document.title")
-        title = result['result']['value']
+        click_script = f"document.querySelector('{element_selector}').click();"
+        self.tab.Runtime.evaluate(expression=click_script)
+    # 获取元素html源码
+    def get_table_html(self, selector):
+        # 使用 JS 获取整个表格的HTML内容
+        get_table_script = f"""
+        (function() {{
+            var table = document.querySelector('{selector}'); // 替换成你需要获取的表格的选择器
+            if (table) {{
+                return table.outerHTML;
+            }} else {{
+                return "Table not found";
+            }}
+        }})();
+        """
+        result = self.tab.Runtime.evaluate(expression=get_table_script)
+        print(result)
+        if 'result' in result and 'value' in result['result']:
+            return result['result']['value']
+        else:
+            return "Error: Unable to retrieve table HTML content."
+    # 根据元素源码，获取tr,td生成数组，这里获取定单信息生成定单数组
+    def get_tr(self, htmlcode):
+        soup = BeautifulSoup(htmlcode, 'html.parser')
+        data = []
+        for tr in soup.find_all('tr'):
+            row = []
+            for td in tr.find_all('td'):
+                # print(td.text.strip())
+                row.append(td.text.strip())
+            data.append(row)
+        return data
+    # 新建标签并打开指定URL
+    def new_tab_with_url(self, url):
+        self.tab = self.browser.new_tab(url=url)
+        self.tab.start()
+        self.tab.Page.enable()
 
-        print(f"Tab ID: {tab.id}, Title: {title}")
-        if keyword in title:
-            # 切换到该标签页
-            tab.Page.bringToFront()
+    # 根据关键词关闭标签
+    def close_tab_with_keyword(self, keyword):
+        tabs = self.browser.list_tab()
+        tab_PD = False
+        print(f'开始查找标签页:{keyword},{tabs}')
+        for tab in tabs:
+            tab.start()
+            tab.Page.enable()
+            result = tab.Runtime.evaluate(expression="document.title")
+            title = result['result']['value']
+            print(title)
+            if keyword in title:
+                self.browser.close_tab(tab.id)
+                tab_PD = True
+                return True
+        if not tab_PD:
+            print('没有找到标签页')
+            # 没有找到匹配的标签页，可以做一些默认操作，比如关闭所有标签页或者抛出异常
+            # self.browser.close_all_tabs()  # 关闭所有标签页
+            # raise Exception(f"No tab found with keyword '{keyword}'")  # 抛出异常
+            return None  # 或者返回空值，视具体情况而定
+    # 运行指定JS代码
+    def execute_js_in_tab(self, js_script):
+        if self.tab:
+            self.tab.Runtime.evaluate(expression=js_script)
+    # 关闭浏览器
+    def stop_browser(self):
+        self.browser.close()
 
-            return tab
+# 示例用法
+if __name__ == "__main__":
+    browser_automation = BrowserAutomation("http://127.0.0.1:3556")
+    keyword = "配送管理"
+    # 要点击的元素选择器
+    element_selector = "#tab_main_request > a"
+    yibanpeisong_BT = "#txt_shipping_type_registered"
 
-def click_element(tab, selector):
-    # 使用 JS 选择并点击元素
-    click_script = f"""
-    var element = document.querySelector('{selector}');
-    if (element) {{
-        element.click();
-        "Clicked";
-    }} else {{
-        "Element not found";
-    }}
-    """
-    result = tab.Runtime.evaluate(expression=click_script)
-    print(result)
-    if 'result' in result and 'value' in result['result']:
-        print(result['result']['value'])
-    else:
-        print("Error: Click script did not return 'value' key.")
-        if 'exceptionDetails' in result:
-            print(result['exceptionDetails']['description'])
+    # 切换到包含关键词的标签页
+    browser_automation.switch_to_tab_with_keyword(keyword)
 
-def get_table_html(tab, selector):
-    # 使用 JS 获取整个表格的HTML内容
-    get_table_script = f"""
-    (function() {{
-        var table = document.querySelector('{selector}'); // 替换成你需要获取的表格的选择器
-        if (table) {{
-            return table.outerHTML;
-        }} else {{
-            return "Table not found";
-        }}
-    }})();
-    """
-    result = tab.Runtime.evaluate(expression=get_table_script)
-    print(result)
-    if 'result' in result and 'value' in result['result']:
-        return result['result']['value']
-    else:
-        return "Error: Unable to retrieve table HTML content."
+    time.sleep(1)
 
-def get_tr(htmlcode):
-    soup = BeautifulSoup(htmlcode,'html.parser')
-    data = []
-    for tr in soup.find_all('tr'):
-        row = []
-        for td in tr.find_all('td'):
-            # print(td.text.strip())
-            row.append(td.text.strip())
-        data.append(row)
-    return data
+    browser_automation.click_element(element_selector)
+    time.sleep(2)
+    browser_automation.click_element(yibanpeisong_BT)
+    time.sleep(2)
+    tab_str = '#__grid_goods_grid > div:nth-child(2) > div.objbox > table'
+    tab_html = browser_automation.get_table_html(tab_str)
 
-# 连接到 Chrome
-browser = pychrome.Browser(url="http://127.0.0.1:3556")
+    data = browser_automation.get_tr(tab_html)
+    print(data, len(data),len(data[1]))
 
-# 关键字
-keyword = "配送管理"
+    pd = browser_automation.close_tab_with_keyword('価格')
+    print(pd)
+    time.sleep(2)
+    browser_automation.new_tab_with_url('https://google.com/')
 
-# 要点击的元素选择器
-element_selector = "#tab_main_request > a"
-yibanpeisong_BT = "#txt_shipping_type_registered"
-
-# 切换到包含关键字的标签页并点击指定元素
-tab = switch_to_tab_with_keyword_and_click(browser, keyword)
-time.sleep(2)
-# 点击配送要请详细
-click_element(tab, element_selector)
-time.sleep(2)
-# 点击一般配送(追跡-O)
-click_element(tab, yibanpeisong_BT)
-time.sleep(2)
-tab_html = get_table_html(tab, '#__grid_goods_grid > div:nth-child(2) > div.objbox > table')
-print(tab_html)
-
-data = get_tr(tab_html)
-print(data,len(data))
