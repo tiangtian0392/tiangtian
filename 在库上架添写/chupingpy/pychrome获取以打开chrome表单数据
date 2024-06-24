@@ -51,11 +51,34 @@ class BrowserAutomation:
         }})();
         """
         result = self.tab.Runtime.evaluate(expression=get_table_script)
-        print(result)
+        # print(result)
         if 'result' in result and 'value' in result['result']:
             return result['result']['value']
         else:
             return "Error: Unable to retrieve table HTML content."
+    # 获取定单选择
+    def get_table_select(self, tab_html):
+        soup = BeautifulSoup(tab_html, 'html.parser')
+        data = []
+        for tr in soup.find_all('tr'):
+            row = []
+            for index, td in enumerate(tr):
+                if index == 0:
+                    # 找到 img 标签
+                    img_tag = td.find('img')
+                    if img_tag:
+                        # 获取 img 标签的 title 属性值
+                        title_value = img_tag.get('src', '')  # 获取 img 标签的 src 属性值
+                        print(title_value)
+                        if 'item_chk1.gif' in title_value:
+                            row.append('OK')
+                        else:
+                            row.append('')
+                else:
+                    row.append(td.text.strip())
+            data.append(row)
+        return data
+
     # 根据元素源码，获取tr,td生成数组，这里获取定单信息生成定单数组
     def get_tr(self, htmlcode):
         soup = BeautifulSoup(htmlcode, 'html.parser')
@@ -119,14 +142,21 @@ if __name__ == "__main__":
     time.sleep(2)
     browser_automation.click_element(yibanpeisong_BT)
     time.sleep(2)
+    # 定单表格
     tab_str = '#__grid_goods_grid > div:nth-child(2) > div.objbox > table'
     tab_html = browser_automation.get_table_html(tab_str)
-
     data = browser_automation.get_tr(tab_html)
     print(data, len(data),len(data[1]))
 
-    pd = browser_automation.close_tab_with_keyword('価格')
-    print(pd)
-    time.sleep(2)
-    browser_automation.new_tab_with_url('https://google.com/')
+    # 定单选择表格,要获取定单选择，上面就不能刷新表单，也就是要去掉点击那两步
+    tab_select_str = '#cgrid2_1719205511879 > div.objbox > table'
+    tab_select_html = browser_automation.get_table_html(tab_select_str)
+    data = browser_automation.get_table_select(tab_select_html)
+    print(data, len(data), len(data[1]))
+
+    #
+    # pd = browser_automation.close_tab_with_keyword('価格')
+    # print(pd)
+    # time.sleep(2)
+    # browser_automation.new_tab_with_url('https://google.com/')
 
