@@ -21,7 +21,7 @@ class BrowserAutomation:
         """
         self.browser = pychrome.Browser(url=browser_url)
         self.tab = None
-
+        print('浏览器初使化完成')
     def switch_to_tab_with_keyword(self, keyword):
         """
         根据关键字或URL(包含http)切换到包含该关键字的标签页
@@ -32,22 +32,29 @@ class BrowserAutomation:
         """
         tabs = self.browser.list_tab()
         for tab in tabs:
-            tab.start()
-            tab.Page.enable()
-            if 'http' in keyword:
-                result = tab.Runtime.evaluate(expression="window.location.href")
-                url = result['result']['value']
-                print(f"Tab ID: {tab.id}, URL: {url}")
-                tab_keywork = url
-            else:
-                result = tab.Runtime.evaluate(expression="document.title")
-                title = result['result']['value']
-                print(f"Tab ID: {tab.id}, Title: {title}")
-                tab_keywork = title
-            if keyword in tab_keywork:
-                self.tab = tab
-                tab.Page.bringToFront()
-                return True
+            try:
+                tab.start()
+                tab.Page.enable()
+
+                # 获取当前标签页的URL或标题
+                if 'http' in keyword:
+                    result = tab.Runtime.evaluate(expression="window.location.href")
+                    # print(result)
+                    current_value = result.get('result', {}).get('value', '')
+                else:
+                    result = tab.Runtime.evaluate(expression="document.title")
+                    # print(result)
+                    current_value = result.get('result', {}).get('value', '')
+
+                if keyword in current_value:
+                    self.tab = tab
+                    tab.Page.bringToFront()
+                    return True
+
+            except Exception as e:
+                print(f"Error while processing tab ID {tab.id}: {e}")
+                return False
+
         return False
     # 刷新页面
     def refresh_tab(self):
@@ -81,13 +88,17 @@ class BrowserAutomation:
         获取定单信息
         """
 
-        keyword = "https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Delivery/DeliveryManagement.aspx"
+        url = "https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Delivery/DeliveryManagement.aspx"
         # 要点击的元素选择器
         element_selector = "#tab_main_request > a"
         yibanpeisong_BT = "#txt_shipping_type_registered"
-
+        print('开始获取定单信息')
         # 切换到包含关键词的标签页
-        self.switch_to_tab_with_keyword(keyword)
+        url_pd = self.switch_to_tab_with_keyword(url)
+        print(url_pd)
+        if url_pd == False:
+            self.new_tab_with_url(url)
+            return self.get_dingdan()
 
         time.sleep(1)
 
@@ -125,7 +136,10 @@ class BrowserAutomation:
         url = 'https://qsm.qoo10.jp/GMKT.INC.Gsm.Web/Product/ProductListSummary.aspx'
         chrom.switch_to_tab_with_keyword(url)
         time.sleep(1)
-        chrom.open_tab_with_url(url)
+        pd_url = chrom.open_tab_with_url(url)
+        if pd_url == False:
+            self.new_tab_with_url(url)
+            return self.down_Qoo10data()
         tab_data = []
         for i in range(4):
             tab_str = '#__grid_DataDwonload_Grid > div.objbox > table'
