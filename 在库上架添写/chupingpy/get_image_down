@@ -1,0 +1,71 @@
+    def get_image_down(self, xingban):
+        """
+        获取图片，价格网没有图片时，获取“画像提供”商家的图片
+        :param xingban:
+        :return:
+        """
+        kakakuurl = self.window.lineEdit_jiagewangURL.text()
+        if kakakuurl:
+            sku_ = re.search('K\d+', kakakuurl)
+            if sku_:
+                SKU = sku_.group()
+                if SKU:
+                    url_sku = f"https://kakaku.com/item/{SKU}/imgview/"
+                    print(url_sku)
+                else:
+                    print("没有获取到SKU")
+                    return None
+
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'
+                }
+                images_html = requests.get(url_sku, headers=headers, timeout=60).text
+                images_list = re.findall(r'<td width="33%">[\s\S]+?</td>', images_html)
+
+                url_make_list = ["qoo10", "rakuten", "amazon"]
+                get_url = ""
+
+                for url_make in url_make_list:
+                    find_url = False
+                    for value in images_list:
+                        img_url = re.search(r"https.*?jpg", value)
+                        if img_url:
+                            img_url = img_url.group(0)
+                            img_PD = url_make in img_url
+
+                            if img_PD:
+                                if url_make == "amazon":
+                                    print("amazon", img_url)
+                                    find_str = re.search(r"\._.*?_", img_url)
+                                    if find_str:
+                                        get_url = img_url.replace(find_str.group(0), "")
+                                    else:
+                                        get_url = img_url
+                                    print(get_url)
+                                elif url_make == "qoo10":
+                                    print("qoo10", img_url)
+                                    get_url = img_url
+                                elif url_make == "rakuten":
+                                    print("rakuten", img_url)
+                                    get_url = img_url
+
+                                find_url = True
+                                break
+
+                    if find_url:
+                        break
+
+                if not get_url:
+                    print("没有找到匹配的URL")
+                    return None
+
+                image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
+                print(f"开始下载网页，输出型号，URL: {xingban}, {get_url}, {image_save_path}")
+
+                try:
+                    response = requests.get(get_url, headers=headers, timeout=3)
+                    with open(image_save_path, 'wb') as file:
+                        file.write(response.content)
+                except Exception as e:
+                    print("图片下载失败:", e)
+                    return None
