@@ -1,21 +1,28 @@
-import os, re, json, time, datetime, csv
-from selenium import webdriver
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, \
-    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
-from PyQt5.QtGui import QMovie, QPixmap, QTextCursor, QTextCharFormat, QColor
-from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QEvent, QRect
-import requests
-import pandas as pd
-from bs4 import BeautifulSoup
-from chupin_window import Ui_MainWindow
-from Excelhandler import ExcelHandler
-import pyperclip  # 剪贴板
-from collections import OrderedDict
-import jaconv  # 英文转小写，片假转平假
-from functools import partial
+import csv
+import datetime
 import glob
+import json
+import os
+import re
+import sys
+from collections import OrderedDict
+from functools import partial
+
+import jaconv  # 英文转小写，片假转平假
+import pandas as pd
+import pyperclip  # 剪贴板
+import requests
+from PyQt5.QtCore import pyqtSignal, Qt, QThread, QEvent, QRect
+from PyQt5.QtGui import QMovie, QPixmap
+from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
+    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, QAbstractItemView,\
+    QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
+from bs4 import BeautifulSoup
+from selenium import webdriver
+
+from Excelhandler import ExcelHandler
+from chupin_window import Ui_MainWindow
+
 
 class MyWindow(QMainWindow, Ui_MainWindow):
     re_path = pyqtSignal(str, str)
@@ -48,6 +55,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         # JAN变化时查找是否出品过
         self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
+        # 双击图片下载
+        self.label_IMG.mousePressEvent = self.get_image_down()
 
         # 改变字体大小
         self.spinBox_zitidaxiao.valueChanged.connect(self.setFontSize)
@@ -166,7 +175,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         backup_filename = os.path.join(self.backup_dir, f'backup_{timestamp}.csv')
 
         # 保存备份文件
-        df.to_csv(backup_filename, index=False, header=False)
+        df.to_csv(backup_filename, index=False, header=False, encoding='utf-8-sig')
 
         # 添加新备份文件到列表
         self.backup_files.append(backup_filename)
@@ -178,9 +187,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 os.remove(oldest_backup)
 
         print(f'Backup saved to {backup_filename}')
+
     # 菜单动作
     def chongduQoo10data(self):
         self.open_file_dialog()
+
     # 右键菜单
     def open_menu(self, position):
         menu = QMenu()
@@ -300,10 +311,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # 保存为在库出力
             current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
             csv_name = f'Z:\\YS登録\\在庫出力\\在庫出力_{current_date}.csv'
-            title_list = ['商品ID', '商品名', '商品説明', 'タイトル', '予定価格', '商品個数', 'IMAGE有無','発送日','送料',
+            title_list = ['商品ID', '商品名', '商品説明', 'タイトル', '予定価格', '商品個数', 'IMAGE有無', '発送日', '送料',
                           '商品状態', '補足', 'Qカテゴリ', 'kaakuカテゴリ', 'ショップ情報', '単位', 'シリーズ', 'サイズ',
                           '手数料', 'jiajia', 'IMG', 'login_date', 'last scan date']
-            csv_pd = QMessageBox.question(self, '保存', f'{csv_name}:是否保存此CSV文件？', QMessageBox.Yes | QMessageBox.No)
+            csv_pd = QMessageBox.question(self, '保存', f'{csv_name}:是否保存此CSV文件？',
+                                          QMessageBox.Yes | QMessageBox.No)
             if csv_pd == QMessageBox.Yes:
                 try:
                     csv_df = pd.DataFrame(data, columns=title_list)
@@ -312,8 +324,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 except Exception as e:
                     print(f'{csv_name}:保存失败，错误：{e}')
                     QMessageBox.information(self, '提示', f'{csv_name}:保存失败，错误：{e}')
+
+            # 保存为上传文件
             xlsx_pd = QMessageBox.question(self, '保存', f'是否保存为上传文件？',
-                                          QMessageBox.Yes | QMessageBox.No)
+                                           QMessageBox.Yes | QMessageBox.No)
             if xlsx_pd == QMessageBox.Yes:
                 df = pd.DataFrame(data, columns=[self.tableWidget_chuping.horizontalHeaderItem(col).text() for col in
                                                  range(self.tableWidget_chuping.columnCount())])
@@ -333,6 +347,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         row_data = self.collect_form_data()
         print(row_data)
         try:
+            self.lineeditJAN(row_data[0])  # 触发JAN查重
             selected_items = self.tableWidget_chuping.selectedItems()
             if selected_items:
                 selected_row = selected_items[0].row()
@@ -367,6 +382,89 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def pBqingkong(self):
         self.tableWidget_chuping.setRowCount(0)
 
+    def get_image_down(self):
+        """
+        获取图片，价格网没有图片时，获取“画像提供”商家的图片
+        :param xingban:
+        :return:
+        """
+        print('开始下载图片')
+        kakakuurl = self.lineEdit_jiagewangURL.text()
+        xingban = self.lineEdit_xingban.text()
+        if kakakuurl:
+            sku_ = re.search('K\d+', kakakuurl)
+            if sku_:
+                SKU = sku_.group()
+                if SKU:
+                    url_sku = f"https://kakaku.com/item/{SKU}/imgview/"
+                    print(url_sku)
+                else:
+                    print("没有获取到SKU")
+                    return None
+
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'
+                }
+                images_html = requests.get(url_sku, headers=headers, timeout=60).text
+                images_list = re.findall(r'<td width="33%">[\s\S]+?</td>', images_html)
+
+                url_make_list = ["qoo10", "rakuten", "amazon"]
+                get_url = ""
+
+                for url_make in url_make_list:
+                    find_url = False
+                    for value in images_list:
+                        img_url = re.search(r"https.*?jpg", value)
+                        if img_url:
+                            img_url = img_url.group(0)
+                            img_PD = url_make in img_url
+
+                            if img_PD:
+                                if url_make == "amazon":
+                                    print("amazon", img_url)
+                                    find_str = re.search(r"\._.*?_", img_url)
+                                    if find_str:
+                                        get_url = img_url.replace(find_str.group(0), "")
+                                    else:
+                                        get_url = img_url
+                                    print(get_url)
+                                elif url_make == "qoo10":
+                                    print("qoo10", img_url)
+                                    get_url = img_url
+                                elif url_make == "rakuten":
+                                    print("rakuten", img_url)
+                                    get_url = img_url
+
+                                find_url = True
+                                break
+
+                    if find_url:
+                        break
+
+                if not get_url:
+                    print("没有找到匹配的URL")
+                    return None
+
+                image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
+                print(f"开始下载图片，输出型号，URL: {xingban}, {get_url}, {image_save_path}")
+
+                try:
+                    response = requests.get(get_url, headers=headers, timeout=3)
+                    with open(image_save_path, 'wb') as file:
+                        file.write(response.content)
+                    print(f'{xingban}：图片下载成功')
+                except Exception as e:
+                    print("图片下载失败:", e)
+                    return None
+
+                # 打开下载的图片
+                # try:
+                #
+                #     os.startfile(image_save_path)
+                # except Exception as e:
+                #     print("打开图片失败:", e)
+                #     return None
+
     # 表格载入文档
     def pBzairu(self):
 
@@ -377,9 +475,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         if file_name:
             self.tableWidget_chuping.itemChanged.disconnect(self.backup_table_data)
             if file_name.endswith('.csv'):
-                df = pd.read_csv(file_name)
+                df = pd.read_csv(file_name, header=None)
             elif file_name.endswith('.xlsx'):
-                df = pd.read_excel(file_name)
+                df = pd.read_excel(file_name, header=None)
             else:
                 return
 
@@ -394,7 +492,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     item = QTableWidgetItem(str(df.iat[row_idx, col_idx]))
                     self.tableWidget_chuping.setItem(row_idx, col_idx, item)
         self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
-        
+
     def huoqu_zhuijia(self):
         if self.checkBox_huoqu_zhuijia.isChecked():
             self.pushButton_huoqu.setText('追加')
@@ -828,7 +926,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 item_description = shopitme
                 # print(item_description)
                 Shipping_number = row['送料']
-                option_number = '444697' if row['送料'] == 335370 else ''
+                option_number = '444697' if row['送料'] == '335370' else ''
                 available_shipping_date = row['発送日']
                 desired_shipping_date = ''
                 search_keyword = ''
@@ -947,6 +1045,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     self.statusbar.showMessage(f'{row_data[0]} 追加写入本表成功！')
                     try:
                         self.backup_table_data()
+
                     except Exception as e:
                         print('备份表格失败')
                     self.tableWidget_chuping.itemChanged.connect(self.backup_table_data)
@@ -982,7 +1081,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     except Exception as e:
                         print('读取 在库写入失败，没有生成字典！')
                         pd_A_list = QMessageBox.information(self, '提示',
-                                                            f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次',
+                                                            f'在库出力文件读入失败！检查文件是否占用或没有打开，共计重试3次，此为 {i} 次'
+                                                            f',如果第一次写入报错正常。',
                                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                         if pd_A_list == QMessageBox.No:
                             return
@@ -1042,6 +1142,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.chongzhi()
         # else:
         #     self.chongzhi()
+        try:
+            # 表格滚动到最后一行
+            print('表格滚动到最末行')
+            self.tableWidget_chuping.scrollToBottom()
+        except Exception as e:
+            print(f'表格滚动到最末行 出错:{e}')
+
     # 用于生成保存时的行数据
     def collect_form_data(self):
         no_image = ''
@@ -1139,6 +1246,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, '提示', f'读取 title和番号.xlsm 文件错误，共重试3次，此为第{i + 1}次')
         self.statusbar.showMessage(f'{read_Qoo10data},{read_title}')
         self.hide_loading_image()
+
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
         if self.table_Double_F == True:
@@ -1167,7 +1275,27 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                                                           QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                             if JAN_PD == QMessageBox.No:
                                 self.chongzhi()
+                                return
+                xinban = self.lineEdit_xingban.text()
+                if xinban:
+                    # 查找包含指定JAN的行
+                    matching_rows = self.Qoo10data[
+                        self.Qoo10data['seller_unique_item_id'].astype(str) == xinban]
 
+                    if not matching_rows.empty:
+                        for _, row in matching_rows.iterrows():
+                            item_number = row.get('item_number', 'N/A')
+                            seller_unique_item_id = row.get('seller_unique_item_id', 'N/A')
+                            item_name = row.get('item_name', 'N/A')
+                            JAN_PD = QMessageBox.question(self, '查重', f'型番:{seller_unique_item_id}重复！\n'
+                                                                        f'JAN:{jan_to_search}\n'
+                                                                        f'番号:{item_number}\n'
+                                                                        f'标题: {item_name}\n'
+                                                                        f'以出品！,是否重新出品？',
+                                                          QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                            if JAN_PD == QMessageBox.No:
+                                self.chongzhi()
+                                return
         except Exception as e:
             QMessageBox.critical(self, '错误', f'JAN 查重错误: {str(e)}')
 
@@ -1380,11 +1508,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.thread.win_to_jishu.connect(self.jishu)
         self.thread.re_work_OK.connect(self.re_work_ok)
         self.thread.start()
-        print('urls',urls)
+        print('urls', urls)
         if urls is None:
             self.show_loading_image()
+
     def re_work_ok(self):
         QMessageBox.information(self, '提示', '工作完成！')
+
     def jishu(self, num):
         self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + num}')
 
@@ -1430,9 +1560,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         print(f'触发回写= {jandict, gebuchuchu, downimgurl, self.downImgUrl}')
         print(
             f'图片地址={self.downImgUrl}\n 图片数={self.lineEdit_tupianshu.text()}\n型番={self.lineEdit_xingban.text()}')
-        if self.downImgUrl != '' and self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
+        if self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
             try:
-                self.getdownImgUrl(self.downImgUrl)
+                self.get_image_down()
             except Exception as e:
                 if auto == 'auto':
                     print(f'下载图片失败，错误原因：{e}')
@@ -1440,8 +1570,6 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     QMessageBox.information(self, '提示', f'下载图片失败，错误原因：{e}')
         if auto == 'auto':
             self.zhuijia()
-
-
 
     def getdownImgUrl(self, url):
         print('开始下载图片')
@@ -1517,7 +1645,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
 
             xingban_match = re.search(
-                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
+                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-\\.][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
             if xingban_match:
                 xingban = xingban_match.group(0)
                 xingban = self.xingbanchuli(xingban)
@@ -1622,15 +1750,21 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         try:
             release_date_span = soup.find('span', class_='releaseDate')
             release_date_text = release_date_span.text.strip()
-
+            print(f'主线程获取到的发布日期：{release_date_text}')
             # 使用正则表达式提取日期并格式化
-            date_match = re.search(r'(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日', release_date_text)
-            if date_match:
-                year, month, day = date_match.groups()
-                formatted_date = f"{year}/{int(month):02}/{int(day):02}"
-                print(formatted_date)  # 输出格式化的日期
-            else:
-                print("发布日期未找到")
+            year = ''
+            month = ''
+            date_year = re.search(r'(\d{4})年', release_date_text)
+            print(date_year)
+            date_month = re.search(r'(\d{1,2})月', release_date_text)
+            print(date_month)
+            if date_year:
+                year= date_year.group(1)
+            if date_month:
+                month = date_month.group(1)
+            formatted_date = f"{year}/{int(month):02}"
+            print(formatted_date)  # 输出格式化的日期
+
         except:
             print('提取发布日期失败')
         self.label_paiming_riqi.setText(f'排名：{rank_num}/日期：{formatted_date}')
@@ -1886,7 +2020,7 @@ class WorkerThread(QThread):
     re_JAN_XQ_dict = pyqtSignal(dict, str, str, str)
     re_kakaku_data = pyqtSignal(dict)
     win_to_jishu = pyqtSignal(int)
-    re_work_OK  = pyqtSignal()
+    re_work_OK = pyqtSignal()
 
     def __init__(self, makedict, make_url_dict, window, method, urls):
         super().__init__()
@@ -1978,6 +2112,17 @@ class WorkerThread(QThread):
                     print(f'{make}获取{item}信息出错：{e}')
                     continue
         gubuchuchu = ''
+
+        # 下载图片
+        # try:
+        #     tupinshu = self.window.lineEdit_tupianshu.text()
+        #     print(f'开始判断下载图片，型号：{data_dict["型号"]},图片数：{tupinshu}')
+        #     if data_dict['型号'] and int(tupinshu) == 0:
+        #         self.get_image_down(data_dict['型号'])
+        #         self.window.statusbar.showMessage(f'{data_dict["型号"]}:图片保存成功')
+        # except Exception as e:
+        #     print(f'图片下载失败：{e}')
+
         try:
             gubuchuchu = f'JAN={get_jan_make},型番={get_xingban},说明={get_shuoming_make},图片={get_tupian}'
         except Exception as e:
@@ -2036,7 +2181,7 @@ class WorkerThread(QThread):
                 self.window.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
 
             xingban_match = re.search(
-                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
+                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-\\.][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
             if xingban_match:
                 xingban = xingban_match.group(0)
                 xingban = self.window.xingbanchuli(xingban)
@@ -2147,15 +2292,20 @@ class WorkerThread(QThread):
         try:
             release_date_span = soup.find('span', class_='releaseDate')
             release_date_text = release_date_span.text.strip()
-
+            print(f'主线程获取到的发布日期：{release_date_text}')
             # 使用正则表达式提取日期并格式化
-            date_match = re.search(r'(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日', release_date_text)
-            if date_match:
-                year, month, day = date_match.groups()
-                formatted_date = f"{year}/{int(month):02}/{int(day):02}"
-                print(formatted_date)  # 输出格式化的日期
-            else:
-                print("发布日期未找到")
+            year = ''
+            month = ''
+            date_year = re.search(r'(\d{4})年', release_date_text)
+            # print(date_year)
+            date_month = re.search(r'(\d{1,2})月', release_date_text)
+            # print(date_month)
+            if date_year:
+                year = date_year.group(1)
+            if date_month:
+                month = date_month.group(1)
+            formatted_date = f"{year}/{int(month):02}"
+            print(formatted_date)  # 输出格式化的日期
         except:
             print('提取发布日期失败')
         self.window.label_paiming_riqi.setText(f'排名：{rank_num}/日期：{formatted_date}')
@@ -2247,6 +2397,89 @@ class WorkerThread(QThread):
         print(to_dialog_dict)
         return to_dialog_dict, make_url, all_make
 
+    def get_image_down(self, xingban):
+        """
+        获取图片，价格网没有图片时，获取“画像提供”商家的图片
+        :param xingban:
+        :return:
+        """
+        kakakuurl = self.window.lineEdit_jiagewangURL.text()
+        if kakakuurl:
+            sku_ = re.search('K\d+', kakakuurl)
+            if sku_:
+                SKU = sku_.group()
+                if SKU:
+                    url_sku = f"https://kakaku.com/item/{SKU}/imgview/"
+                    print(url_sku)
+                else:
+                    print("没有获取到SKU")
+                    return None
+
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'
+                }
+                images_html = requests.get(url_sku, headers=headers, timeout=60).text
+                images_list = re.findall(r'<td width="33%">[\s\S]+?</td>', images_html)
+
+                url_make_list = ["qoo10", "rakuten", "amazon"]
+                get_url = ""
+
+                for url_make in url_make_list:
+                    find_url = False
+                    for value in images_list:
+                        img_url = re.search(r"https.*?jpg", value)
+                        if img_url:
+                            img_url = img_url.group(0)
+                            img_PD = url_make in img_url
+
+                            if img_PD:
+                                if url_make == "amazon":
+                                    print("amazon", img_url)
+                                    find_str = re.sub(r"\._.*?_", '', img_url)
+                                    if find_str:
+                                        get_url = find_str
+                                    else:
+                                        get_url = img_url
+                                    print(get_url)
+                                elif url_make == "qoo10":
+                                    print("qoo10", img_url)
+                                    get_url = img_url
+                                elif url_make == "rakuten":
+                                    print("rakuten", img_url)
+                                    find_str = re.search(r'http\.*?jpg', img_url)
+                                    if find_str:
+                                        get_url = find_str
+                                    else:
+                                        get_url = img_url
+
+                                find_url = True
+                                break
+
+                    if find_url:
+                        break
+
+                if not get_url:
+                    print("没有找到匹配的URL")
+                    return None
+
+                image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
+                print(f"开始下载网页，输出型号，URL: {xingban}, {get_url}, {image_save_path}")
+
+                try:
+                    response = requests.get(get_url, headers=headers, timeout=3)
+                    with open(image_save_path, 'wb') as file:
+                        file.write(response.content)
+                except Exception as e:
+                    print("图片下载失败:", e)
+                    return None
+
+                # 打开下载的图片
+                try:
+                    os.startfile(image_save_path)
+                except Exception as e:
+                    print("打开图片失败:", e)
+                    return None
+
     def get_auto(self):
         print('开始线程内自动获取')
 
@@ -2323,7 +2556,6 @@ class WorkerThread(QThread):
         self.window.pushButton_zidong.setText('自动')
         self.window.lineEdit_jan.textChanged.connect(self.window.lineeditJAN)
         self.re_work_OK.emit()
-
 
     def get_htmlcode(self, url):
         hd = {
