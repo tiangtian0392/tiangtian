@@ -2801,7 +2801,7 @@ if __name__ == '__main__':
 
     driver = ''
 
-    splash = QSplashScreen(QPixmap('images.jpg'))
+    splash = QSplashScreen(QPixmap('images.jpg'), Qt.WindowStaysOnTopHint)
     splash.showMessage('程序加载中(Qoo10data,paichu,title和番号)......', Qt.AlignHCenter | Qt.AlignBottom, Qt.black)
     splash.show()
 
