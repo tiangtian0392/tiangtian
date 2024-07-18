@@ -1,5 +1,6 @@
 import win32com.client
 import datetime
+import re
 
 class ExcelHandler:
 
@@ -15,7 +16,6 @@ class ExcelHandler:
             else:
                 self.connected = True
 
-
     def bind_open_workbook(self, filename_keyword):
         """
         绑定以打开的工作簿，根据文件名关键词查找
@@ -25,7 +25,6 @@ class ExcelHandler:
                 return workbook
         return None
 
-
     def activate_workbook(self):
         """
         激活当前工作簿
@@ -33,11 +32,31 @@ class ExcelHandler:
         if self.workbook:
             self.workbook.Activate()
 
+    def activate_sheet(self, sheet_name):
+        """
+        激活指定工作表
+        """
+        if self.workbook:
+            try:
+                self.workbook.Sheets(sheet_name).Activate()
+            except Exception as e:
+                print(f"Error activating sheet '{sheet_name}': {e}")
+
+    def maximize_window(self):
+        """
+        最大化Excel窗口
+        """
+        try:
+            self.excel.WindowState = win32com.client.constants.xlMaximized
+        except Exception as e:
+            print(f"Error maximizing window: {e}")
+
     def _convert_cell_name_to_indices(self, cell_name):
         """
         将单元格名称（如"A1"）转换为行列索引
         """
         import re
+        cell_name = cell_name.upper()
         match = re.match(r"([A-Z]+)(\d+)", cell_name)
         if match:
             col_letters, row = match.groups()
@@ -97,6 +116,7 @@ class ExcelHandler:
     def read_column(self, sheet_name, col):
         """
         读取整列的值，返回一个数组
+        col : 列名，如P
         """
         sheet = self.workbook.Sheets(sheet_name)
         # 获取已使用范围的行数
@@ -131,13 +151,28 @@ class ExcelHandler:
         sheet = self.workbook.Sheets(sheet_name)
         sheet.Cells(row, col).Value = value
 
-    def write_range(self, sheet_name, start_cell_name, end_cell_name, values):
+    def write_range(self, sheet_name, start_cell_name, end_cell_name=None, values=None):
         """
-        写入指定范围的值，values 为嵌套数组
+        写入单元格区域
+        :param sheet_name: 表名
+        :param start_cell_name: 开始单元格
+        :param end_cell_name: 结束单元格，可以省略，但后一个参数则要values=
+        :param values:  为二维数组
+        :return:
         """
         start_row, start_col = self._convert_cell_name_to_indices(start_cell_name)
-        end_row, end_col = self._convert_cell_name_to_indices(end_cell_name)
         sheet = self.workbook.Sheets(sheet_name)
+
+        if end_cell_name:
+            end_row, end_col = self._convert_cell_name_to_indices(end_cell_name)
+        else:
+            # If end_cell_name is not provided, calculate end_row and end_col based on values array
+            if values is None:
+                raise ValueError("Values must be provided if end_cell_name is None")
+
+            end_row = start_row + len(values) - 1
+            end_col = start_col + len(values[0]) - 1
+
         sheet.Range(sheet.Cells(start_row, start_col), sheet.Cells(end_row, end_col)).Value = values
 
     def write_row(self, sheet_name, row, values):
@@ -149,13 +184,21 @@ class ExcelHandler:
         #     sheet.Cells(row, col).Value = value
         array = [values]
         sheet.Range(sheet.Cells(row, 1), sheet.Cells(row, len(values))).Value = array
-    def write_column(self, sheet_name, col, values):
+
+    def write_column(self, sheet_name, cols, values):
         """
-        写入整列的值，values 为数组
+        写入整列的值，values 为数组，从指定行开始写入
         """
         sheet = self.workbook.Sheets(sheet_name)
-        for row, value in enumerate(values, start=1):
-            sheet.Cells(row, col).Value = value
+
+        row, col = self._convert_cell_name_to_indices(cols)
+        num_values = len(values)
+
+        # Convert 1D list to a 2D list (column vector)
+        array = [[value] for value in values]
+
+        # Write the entire column in one go
+        sheet.Range(sheet.Cells(row, col), sheet.Cells(row + num_values - 1, col)).Value = array
 
     def write_last_row(self, sheet_name, values):
         """
@@ -195,6 +238,17 @@ class ExcelHandler:
         end_row, end_col = self._convert_cell_name_to_indices(end_cell_name)
         sheet = self.workbook.Sheets(sheet_name)
         sheet.Range(sheet.Cells(start_row, start_col), sheet.Cells(end_row, end_col)).Delete()
+
+    def select_range(self, sheet_name, range_address):
+        """
+        选择单元格
+        :param sheet_name:
+        :param range_address:
+        :return:
+        """
+        sheet = self.workbook.Sheets(sheet_name)
+        sheet.Range(range_address).Select()
+
 
     def switch_sheet(self, sheet_name):
         """
