@@ -16,7 +16,7 @@ import requests
 from PyQt5.QtCore import pyqtSignal, Qt, QThread, QEvent, QRect
 from PyQt5.QtGui import QMovie, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, QAbstractItemView, \
+    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, QAbstractItemView, QInputDialog, \
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -53,11 +53,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.lineEdit_Qoo10biaoti.textChanged.connect(self.Qoo10biaoti)
 
         self.lineEdit_jiagewangURL.installEventFilter(self)
-
+        self.lineEdit_xingban.installEventFilter(self)
         # JAN变化时查找是否出品过
         self.lineEdit_jan.textChanged.connect(self.lineeditJAN)
         # 双击图片下载
-        self.label_IMG.mousePressEvent = self.get_image_down()
+        # self.label_IMG.mousePressEvent = self.get_image_down()
 
         # 改变字体大小
         self.spinBox_zitidaxiao.valueChanged.connect(self.setFontSize)
@@ -84,6 +84,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_huoqu.clicked.connect(self.huoqu)
         self.pushButton_zhuangdao.clicked.connect(self.zhuandao)
         self.pushButton_xiaye.clicked.connect(self.xiaye)
+        self.pushButton_shangye.clicked.connect(self.shangye)
 
         # 点击添加分类
         self.pushButton_huoqufenlei.clicked.connect(self.huoqufenlei)
@@ -411,65 +412,63 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 headers = {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.101 Safari/537.36'
                 }
-                images_html = requests.get(url_sku, headers=headers, timeout=60).text
+                images_html = requests.get(url_sku, headers=headers, timeout=60)
+                images_html.encoding = images_html.apparent_encoding  # 自动检测编码并设置
+                images_html = images_html.text
                 images_list = re.findall(r'<td width="33%">[\s\S]+?</td>', images_html)
-
-                url_make_list = ["qoo10", "rakuten", "amazon"]
-                get_url = ""
-
-                for url_make in url_make_list:
-                    find_url = False
-                    for value in images_list:
-                        img_url = re.search(r"https.*?jpg", value)
-                        if img_url:
+                print(images_list)
+                img_dict = {}
+                items = []
+                if images_list:
+                    for item in images_list:
+                        name = re.search(r'画像提供：([^<]+)', item)
+                        img_url = re.search(r"https.*?jpg", item)
+                        if name and img_url:
+                            name = name.group(0)
                             img_url = img_url.group(0)
-                            img_PD = url_make in img_url
+                            img_dict[name] = img_url
+                            items.append(name)
+                print(items)
+                print(img_dict)
+                get_url = None
+                item, ok = QInputDialog.getItem(self, '图片下载', '下载列表', items)
+                print(item,ok)
+                if ok and item:
+                    get_url = img_dict[item]
 
-                            if img_PD:
-                                if url_make == "amazon":
-                                    print("amazon", img_url)
-                                    find_str = re.search(r"\._.*?_", img_url)
-                                    if find_str:
-                                        get_url = img_url.replace(find_str.group(0), "")
-                                    else:
-                                        get_url = img_url
-                                    print(get_url)
-                                elif url_make == "qoo10":
-                                    print("qoo10", img_url)
-                                    get_url = img_url
-                                elif url_make == "rakuten":
-                                    print("rakuten", img_url)
-                                    get_url = img_url
+                    if "amazon" in get_url:
+                        print("amazon", get_url)
+                        find_str = re.search(r"\._.*?_", get_url)
+                        if find_str:
+                            get_url = get_url.replace(find_str.group(0), "")
+                        else:
+                            get_url = get_url
+                        print(get_url)
+                    else:
+                        pass
 
-                                find_url = True
-                                break
-
-                    if find_url:
-                        break
-
+                print(get_url)
                 if not get_url:
                     print("没有找到匹配的URL,图片下载失败")
                     return None
 
-                image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
+                image_save_path = f"Z:\\YS登録\\Pictures\\{xingban}.jpg"
                 print(f"开始下载图片，输出型号，URL: {xingban}, {get_url}, {image_save_path}")
-
+                str_text = ''
                 try:
                     response = requests.get(get_url, headers=headers, timeout=3)
                     with open(image_save_path, 'wb') as file:
                         file.write(response.content)
                     print(f'{xingban}：图片下载成功')
+                    str_text = f'{xingban}：图片下载成功'
                 except Exception as e:
                     print("图片下载失败:", e)
+                    str_text = f'{xingban}：图片下载失败'
                     return None
+                QMessageBox.information(self, '提示', str_text)
+                return True
 
-                # 打开下载的图片
-                # try:
-                #
-                #     os.startfile(image_save_path)
-                # except Exception as e:
-                #     print("打开图片失败:", e)
-                #     return None
+
 
     # 表格载入文档
     def pBzairu(self):
@@ -514,13 +513,47 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 双击价格网URL事件
     def eventFilter(self, obj, event):
-        # print('价格网URL双击事件')
+        # print(f'双击事件:obj={obj},event={event}')
         if obj == self.lineEdit_jiagewangURL and event.type() == QEvent.MouseButtonDblClick:
+            print('双击价格网URL事件')
             url = self.lineEdit_jiagewangURL.text()
             os.system(f'start {url}')
             print(f'{url} 以打开')
+        elif obj == self.lineEdit_xingban and event.type() == QEvent.MouseButtonDblClick:
+            print('双击型番下载图片事件')
+            self.get_image_down()
+            return True
         return super().eventFilter(obj, event)
+    def shangye(self):
 
+        try:
+            if self.sku_list_dingwei - 1 >0:
+                self.sku_list_dingwei -= 1
+            elif self.sku_list_dingwei - 1 == 0:
+                self.sku_list_dingwei = 0
+            else:
+                QMessageBox.information(self, '提示', '向上没有商品，退出！')
+                return
+            print('点击上页', self.sku_list_dingwei)
+            # 迭代获取指定索引的元素
+            sku = None
+            for i, (key, value) in enumerate(self.sku_list.items()):
+                if i == self.sku_list_dingwei:
+                    sku = key
+                    break
+            if sku is None:
+                QMessageBox.information(self, '提示', '没有找到 sku, 退出！')
+                return
+            # sku = self.sku_list[self.sku_list_dingwei][0]
+            print(f'点击下页,开始获取{sku}的数据')
+            url = f'https://kakaku.com/item/{sku}'
+            re_str = self.kaishi(url=url)
+            if re_str == 'OK':
+                # self.sku_list_dingwei -= 2
+                self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + 1}')
+        except Exception as e:
+            QMessageBox.information(self, '提示', 'sku获取出错，重试！')
+            return
     # 点击下一页
     def xiaye(self):
         if self.huoquORxiuzheng == 'huoqu':
@@ -541,7 +574,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 re_str = self.kaishi(url=url)
                 if re_str == 'OK':
                     self.sku_list_dingwei += 1
-                    self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + 1}')
+                    self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei}')
             except Exception as e:
                 QMessageBox.information(self, '提示', 'sku获取出错，重试！')
                 return
@@ -1138,12 +1171,12 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 except Exception as e:
                     QMessageBox.warning(self, '提示', f'写入{excel_name},检查文件是否打开或被占用中，错误={e}')
                     return
-                try:
-                    global driver
-                    print(driver)
-                    driver.quit()
-                except:
-                    pass
+                # try:
+                #     global driver
+                #     print(driver)
+                #     driver.quit()
+                # except:
+                #     pass
                 print('写入文件成功')
                 self.statusbar.showMessage(f'{row_data[0]} 追加写入成功！')
 
@@ -1626,21 +1659,21 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         print(f'触发回写= {jandict, gebuchuchu, downimgurl, self.downImgUrl}')
         print(
             f'图片地址={self.downImgUrl}\n 图片数={self.lineEdit_tupianshu.text()}\n型番={self.lineEdit_xingban.text()}')
-        if self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
-            try:
-                self.get_image_down()
-            except Exception as e:
-                if auto == 'auto':
-                    print(f'下载图片失败，错误原因：{e}')
-                else:
-                    QMessageBox.information(self, '提示', f'下载图片失败，错误原因：{e}')
-        if auto == 'auto':
-            self.zhuijia()
+        # if self.lineEdit_tupianshu.text() == '0' and self.lineEdit_xingban.text() != '':
+        #     try:
+        #         self.get_image_down()
+        #     except Exception as e:
+        #         if auto == 'auto':
+        #             print(f'下载图片失败，错误原因：{e}')
+        #         else:
+        #             QMessageBox.information(self, '提示', f'下载图片失败，错误原因：{e}')
+        # if auto == 'auto':
+        #     self.zhuijia()
 
     def getdownImgUrl(self, url):
         print('开始下载图片')
         # 保存目录
-        save_dir = "D:\\Users\\Pictures\\"
+        save_dir = "Z:\\YS登録\\Pictures\\"
 
         # 新的文件名
         new_file_name = f'{self.lineEdit_xingban.text()}.jpg'
@@ -2035,7 +2068,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def charutupian(self):
         # 在当前光标位置插入图片标签
         cursor = self.plainTextEdit.textCursor()
-        cursor.insertText('<img src="image" width="300" Height="auto">')
+        cursor.insertText('<img src="image_URL" width="300" Height="auto">')
         self.plainTextEdit.setTextCursor(cursor)
 
     def qingkongdaima(self):
@@ -2134,8 +2167,9 @@ class WorkerThread(QThread):
         driver = webdriver.Chrome()
         driver.get(url)
         page_source = driver.page_source
-        if self.auto:
-            driver.quit()
+        # if self.auto:
+        #     driver.quit()
+        driver.quit()
         return page_source
 
     # 去掉商品详情中的特殊字符串
@@ -2410,7 +2444,7 @@ class WorkerThread(QThread):
             print(formatted_date)  # 输出格式化的日期
         except:
             print('提取发布日期失败')
-        self.window.label_paiming_riqi.setText(f'排名：{rank_num}/日期：{formatted_date}')
+        self.window.label_paiming_riqi.setText(f'排名：{rank_num}|日期：{formatted_date}')
 
         result = []
         to_dialog_dict = {}
@@ -2564,7 +2598,7 @@ class WorkerThread(QThread):
                     print("没有找到匹配的URL")
                     return None
 
-                image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
+                image_save_path = f"Z:\\YS登録\\Pictures\\{xingban}.jpg"
                 print(f"开始下载网页，输出型号，URL: {xingban}, {get_url}, {image_save_path}")
 
                 try:
