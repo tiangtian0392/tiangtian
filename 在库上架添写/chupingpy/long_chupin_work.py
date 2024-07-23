@@ -7,15 +7,16 @@ import re
 import sys
 from collections import OrderedDict
 from functools import partial
-
+import time
 import jaconv  # 英文转小写，片假转平假
+import openpyxl
 import pandas as pd
 import pyperclip  # 剪贴板
 import requests
 from PyQt5.QtCore import pyqtSignal, Qt, QThread, QEvent, QRect
 from PyQt5.QtGui import QMovie, QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QMessageBox, QMainWindow, QVBoxLayout, QHBoxLayout, \
-    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, QAbstractItemView,\
+    QDialog, QSpacerItem, QSizePolicy, QTableWidgetItem, QMenu, QAction, QAbstractItemView, \
     QDialogButtonBox, QLabel, QPlainTextEdit, QLineEdit, QPushButton, QCheckBox, QScrollArea, QGridLayout, QSplashScreen
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -360,6 +361,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.backup_table_data()
         except Exception as e:
             print(f'修正表格出错：{e}')
+    def get_filepath(self, filename):
+        # 获取当前脚本的目录路径
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(script_dir, filename)
+        return file_path
 
     # 表格点击重新获取
     def pBchongxinhuoqu(self):
@@ -442,7 +448,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         break
 
                 if not get_url:
-                    print("没有找到匹配的URL")
+                    print("没有找到匹配的URL,图片下载失败")
                     return None
 
                 image_save_path = f"D:\\Users\\Pictures\\{xingban}.jpg"
@@ -616,6 +622,11 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     # 获取价格表列表数据
     def huoqu(self):
+        name = self.pushButton_huoqu.text()
+        pD = QMessageBox.information(self, '提示', f'确认：{name} 吗？', QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.Yes)
+        if pD == QMessageBox.No:
+            return
         if self.checkBox_huoqu_zhuijia.isChecked():
             print('现在处理追加')
             # self.sku_list = OrderedDict()  # 使用 OrderedDict 来去重并保持顺序
@@ -629,7 +640,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.huoquORxiuzheng = 'huoqu'
 
             self.urls_all = 0
-            url = self.get_kakaku_url()
+            url = url_str
             print(url)
 
             if 'pdf_pg' in url:
@@ -694,7 +705,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                                 # print(variation_popup_data[input_element['value']],'\n')
                 # self.sku_list = list(self.sku_list.items())
                 print(self.sku_list, len(self.sku_list))
-                self.urls_all = len(self.sku_list) + 1
+                self.urls_all = len(self.sku_list)
 
                 self.label_url_num.setText(f'共{self.urls_all}/现{self.sku_list_dingwei + 1}')
             else:
@@ -708,7 +719,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, '提示', f'{url_str} 绑定失败，检查文件是否打开或正在被占用！')
                 return
             self.sku_list = excel_work.read_ranges('Sheet1', 'A1')
-            self.urls_all = len(self.sku_list) + 1
+            self.urls_all = len(self.sku_list)
             self.label_url_num.setText(f'共{self.urls_all}/现{1}')
             # print(excel_work_list,len(excel_work_list))
             self.excel_DF = pd.DataFrame(self.sku_list[1:], columns=self.sku_list[0])
@@ -772,6 +783,28 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def shengcheng(self, df=None):
         # 生成出品文件
         print('开始处理生成保存文件', type(df))
+
+        testxlsx_path = self.get_filepath('TEST_tax.xlsx')
+        if testxlsx_path:
+            try:
+                TEST_work = ExcelHandler('TEST_tax.xlsx')
+                print(TEST_work.connected)
+                if TEST_work.connected:
+                    self.err_num = 0
+                else:
+                    print('绑定TEST.xlsx失败，退出！')
+                    os.system(f'start {testxlsx_path}')
+                    test_PD = self.try_num('TEST_tax.xlsx', 10)
+                    if not test_PD and self.err_num < 3:
+                        self.err_num += 1
+                        return self.shengcheng()
+                # return self.qianzhichuli()
+            except Exception as e:
+                print(f'打开TEST.xlsx失败，e={e}')
+                QMessageBox.information(self, '提示', 'TEST_tax.xlsx文件打开失败，不能保存，退出！')
+                return
+
+
         current_date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
         self.csv_filename = f'Z:\\YS登録\\q10\\Qoo10up_{current_date}.xlsx'
 
@@ -857,8 +890,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     return
 
         try:
-            # 创建新数据框架并添加三行空行
-            new_data = [headers] + [[''] * len(headers)] * 3
+            # 创建新数据框架
+            new_data = []
             # df['商品ID'] = pd.to_numeric(df['商品ID'], errors='coerce').fillna(0).astype(int)
             df['商品個数'] = pd.to_numeric(df['商品個数'], errors='coerce').fillna(0).astype(int)
             df['IMAGE有無'] = pd.to_numeric(df['IMAGE有無'], errors='coerce').fillna(0).astype(int)
@@ -868,19 +901,19 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 # print(index, row['商品説明'])
                 item_number = ''
                 seller_unique_item_id = row['商品名']
-                category_number = row['Qカテゴリ']
+                category_number = str(row['Qカテゴリ'])
 
                 brand_id = ''
                 new_brand = self.normalize_key(row['単位'])  # 大写转小写，片假转平假
                 if new_brand in BrandInfo_dict:
                     brand_id = BrandInfo_dict[new_brand]
-                brand_number = brand_id
+                brand_number = str(brand_id)
                 item_name = row['タイトル']
                 item_promotion_name = ''
                 item_status_Y_N_D = 'Y' if row['商品個数'] > 0 else 'N'
                 end_date = '2028-12-31'
-                price_yen = row['予定価格']
-                retail_price_yen = 0
+                price_yen = str(row['予定価格'])
+                retail_price_yen = '0'
                 taxrate = ''
                 quantity = row['商品個数']
                 option_info = ''
@@ -892,7 +925,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                     sRet = re.search(r'K\d+', row['補足'])
                     if sRet:
                         sRet = sRet.group(0)
-                        sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width="500" height="auto"><br><br>'
+                        sRet1 = f'<img src="https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg" width = "500" height="auto">'
                         shopitme = f'{sRet1}<br><br>{row["商品説明"]}'
                         imgURL = f'https://img1.kakaku.k-img.com/images/productimage/fullscale/{sRet}.jpg'
                         if row['IMAGE有無'] > 1:
@@ -925,13 +958,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 footer_html = ''
                 item_description = shopitme
                 # print(item_description)
-                Shipping_number = row['送料']
+                Shipping_number = str(row['送料'])
                 option_number = '444697' if row['送料'] == '335370' else ''
-                available_shipping_date = row['発送日']
+                available_shipping_date = str(row['発送日'])
                 desired_shipping_date = ''
                 search_keyword = ''
-                item_condition_type = 1
-                origin_type = 3
+                item_condition_type = '1'
+                origin_type = '3'
                 origin_region_id = ''
                 origin_country_id = ''
                 origin_others = 'その他'
@@ -941,7 +974,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 model_name = row['商品名']
                 # model_name = row['商品名'].replace("/", "")
                 external_product_type = 'JAN'
-                external_product_id = row['商品ID']
+                external_product_id = str(row['商品ID'])
                 manufacture_date = ''
                 expiration_date_type = ''
                 expiration_date_MFD = ''
@@ -968,17 +1001,24 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 ]
 
                 new_data.append(new_row)
+            print(new_data)
 
-            new_df = pd.DataFrame(new_data, columns=headers)
+            try:
+                TEST_work = ExcelHandler('TEST_tax.xlsx')
+                TEST_work.write_range("TEST", "A5", values=new_data)
+                TEST_work.set_column_format("TEST", "AM", '0')
+                time.sleep(1)
 
-            # # 写入Excel文件
-            # new_df.to_excel(self.csv_filename, index=False, header=False)
-            # 写入Excel文件，使用xlsxwriter处理较大的数据
-            with pd.ExcelWriter(self.csv_filename, engine='xlsxwriter') as writer:
-                new_df.to_excel(writer, index=False, header=False)
-                writer.save()
+                # 检查文件名是否有效
+                if not os.path.basename(self.csv_filename):
+                    print(f"无效的文件名：{self.csv_filename}")
+                    return
+                TEST_work.save_as(self.csv_filename)
+                time.sleep(1)
+                TEST_work.close()
+            except Exception as e:
+                print('写入TEST，保存上传文件失败，检查！')
 
-            QMessageBox.information(self, "成功", f"文件已成功保存到: {self.csv_filename}")
         except Exception as e:
             print(f'保存文件出错,错误代码：{e}')
             QMessageBox.information(self, '提示', f'保存文件出错,错误代码：{e}')
@@ -1209,23 +1249,20 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.show_loading_image()
         read_Qoo10data = 'Qoo10data 读入出错'
         read_title = 'title和番号 读入出错'
-        options = QFileDialog.Options()
-        options |= QFileDialog.ReadOnly
-        file_name, _ = QFileDialog.getOpenFileName(self, "打开Qoo10下载文件", r"D:\downloads",
-                                                   "Excel Files (*.xlsx);;All Files (*)",
-                                                   options=options)
-        if file_name:
 
-            try:
-
-                self.Qoo10data = pd.read_excel(file_name, engine='openpyxl')
-                read_Qoo10data = 'Qoo10data 读入成功'
-                # QMessageBox.information(self, '提示', '文件读入完成')
-            except Exception as e:
-                QMessageBox.critical(self, '错误', f'Qoo10data文件读入错误: {str(e)}')
-
-        for i in range(3):
-            try:
+        zaikuchuli_path = self.get_filepath('在庫出力.xlsx')
+        if zaikuchuli_path:
+            os.system(f'start {zaikuchuli_path}')
+            xlsm_PD = self.try_num('在庫出力.xlsx', 20)
+            if xlsm_PD:
+                print('在庫出力.xlsx 打开成功')
+            else:
+                print('在庫出力.xlsx 打开失败')
+        titleAndBanhao_path = self.get_filepath('title和番号.xlsm')
+        if titleAndBanhao_path:
+            os.system(f'start {titleAndBanhao_path}')
+            title_banhao = self.try_num('title和番号.xlsm', 20)
+            if title_banhao:
                 title_banhao = ExcelHandler('title和番号.xlsm')
                 title_banhao_list = title_banhao.read_column('采集 (4)', 'W')
                 # print(title_banhao_list[3791::],len(title_banhao_list))
@@ -1242,11 +1279,40 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                         pass
                 read_title = 'title和番号 读入成功'
 
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_name, _ = QFileDialog.getOpenFileName(self, "打开Qoo10下载文件", r"D:\downloads",
+                                                   "Excel Files (*.xlsx);;All Files (*)",
+                                                   options=options)
+        if file_name:
+
+            try:
+
+                self.Qoo10data = pd.read_excel(file_name, engine='openpyxl')
+                read_Qoo10data = 'Qoo10data 读入成功'
+                # QMessageBox.information(self, '提示', '文件读入完成')
             except Exception as e:
-                QMessageBox.information(self, '提示', f'读取 title和番号.xlsm 文件错误，共重试3次，此为第{i + 1}次')
+                QMessageBox.critical(self, '错误', f'Qoo10data文件读入错误: {str(e)}')
+
         self.statusbar.showMessage(f'{read_Qoo10data},{read_title}')
         self.hide_loading_image()
-
+    def try_num(self, file, num):
+        """
+        :param file: 要绑定的excel文件路径
+        :param num: 要重试的次数,每次延时1秒
+        :return: True时返回，或超时返回假
+        """
+        for i in range(num):
+            print(f'try_num,{file}重试第{i}次')
+            try:
+                name = ExcelHandler(file)
+                if name.connected:
+                    return True
+                else:
+                    time.sleep(1)
+            except:
+                time.sleep(1)
+        return False
     # JAN变化时触发查重
     def lineeditJAN(self, jan_to_search):
         if self.table_Double_F == True:
@@ -1596,6 +1662,29 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
             self.statusbar.showMessage(f"无法下载图片: {self.lineEdit_xingban.text()} URL={self.downImgUrl}")
 
+    def xinban_find(self, title):
+        try:
+            pattern1 = re.compile(r'[A-Za-z0-9/+-]+\b')
+            pattern2 = re.compile(r'[A-Za-z0-9]+\b')
+
+            matches1 = pattern1.findall(title)
+            matches2 = pattern2.findall(title)
+            print(f'正则查找：matches1={matches1}\nmatches2={matches2}')
+
+            if matches1:
+                longlist = []
+                for item in matches1:
+                    if '/' in item or '-' in item:
+                        longlist.append(item)
+                if longlist:
+                    return max(longlist, key=len)
+            if matches2:
+                longest_match2 = max(matches2, key=len)
+                return longest_match2
+        except:
+            pass
+        return None
+
     def getxpath(self, htmlcode):
 
         with open("paichu.json", "r", encoding='utf-8') as f:
@@ -1644,11 +1733,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
 
-            xingban_match = re.search(
-                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-\\.][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
+            xingban_match = self.xinban_find(title)
             if xingban_match:
-                xingban = xingban_match.group(0)
-                xingban = self.xingbanchuli(xingban)
+                print(f'kakaku标题中获取到的型号：{xingban_match}')
+                xingban = self.xingbanchuli(xingban_match)
                 self.lineEdit_xingban.setText(xingban)
         except Exception as e:
             QMessageBox.warning(self, '提示', f'获取标题信息出错，e={e}')
@@ -1759,7 +1847,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             date_month = re.search(r'(\d{1,2})月', release_date_text)
             print(date_month)
             if date_year:
-                year= date_year.group(1)
+                year = date_year.group(1)
             if date_month:
                 month = date_month.group(1)
             formatted_date = f"{year}/{int(month):02}"
@@ -1892,14 +1980,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             x = main_window_geometry.x() + main_window_geometry.width()
         elif left_space >= dialog_width:
             # 如果左侧空间足够，放在左侧
-            x = main_window_geometry.x() - dialog_width
+            x = main_window_geometry.x() - dialog_width - 10
         else:
             # 如果左右都没有足够空间，放在主窗体上方
-            x = main_window_geometry.x()
+            x = main_window_geometry.x() + 20
 
         y = main_window_geometry.y()  # 保持与主窗体的Y坐标一致
 
-        return QRect(x + 10, y, dialog_width, dialog_height)
+        return QRect(x, y, dialog_width, dialog_height)
 
     # 获取分类
     def huoqufenlei(self):
@@ -2132,6 +2220,22 @@ class WorkerThread(QThread):
         else:
             self.re_JAN_XQ_dict.emit(data_dict, gubuchuchu, self.imgUrl, None)
 
+    def xinban_find(self, title):
+        pattern1 = re.compile(r'\b[A-Z0-9/-]+\b')
+        pattern2 = re.compile(r'\b[A-Z0-9]+\b')
+
+        matches1 = pattern1.findall(title)
+        matches2 = pattern2.findall(title)
+
+        if matches1:
+            longest_match1 = max(matches1, key=len)
+            if '/' in longest_match1 or '-' in longest_match1:
+                return longest_match1
+        if matches2:
+            longest_match2 = max(matches2, key=len)
+            return longest_match2
+        return None
+
     def getxpath(self, htmlcode):
 
         with open("paichu.json", "r", encoding='utf-8') as f:
@@ -2180,10 +2284,8 @@ class WorkerThread(QThread):
             else:
                 self.window.lineEdit_Qoo10biaoti.setText(title + ' ' + title_houzhui)
 
-            xingban_match = re.search(
-                r'(?<!\w)(?:[A-Za-z0-9()（）/-]*[/\-\\.][A-Za-z0-9()（）/-]*|[A-Za-z0-9()（）/-]{3,})(?!\w)', title)
+            xingban_match = self.xinban_find(title)
             if xingban_match:
-                xingban = xingban_match.group(0)
                 xingban = self.window.xingbanchuli(xingban)
                 self.window.lineEdit_xingban.setText(xingban)
         except Exception as e:

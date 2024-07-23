@@ -1,3 +1,5 @@
+import os
+
 import win32com.client
 import datetime
 import re
@@ -5,8 +7,18 @@ import re
 class ExcelHandler:
 
     def __init__(self, filename_keyword=None):
-        self.excel = win32com.client.Dispatch("Excel.Application")
-        self.excel.Visible = True
+        print(f'excel中绑定文件：{filename_keyword}')
+        try:
+            self.excel = win32com.client.GetObject(Class="Excel.Application")
+            print("已连接到现有的 Excel 实例")
+        except Exception as e:
+            self.excel = win32com.client.Dispatch("Excel.Application")
+            print("创建了一个新的 Excel 实例")
+        # self.excel = win32com.client.Dispatch("Excel.Application")
+        if 'personal' in filename_keyword:
+            self.excel.Visible = False
+        else:
+            self.excel.Visible = True
         self.workbook = None
         self.connected = False
         if filename_keyword:
@@ -15,7 +27,6 @@ class ExcelHandler:
                 print(f"未找到包含关键词 '{filename_keyword}' 的工作簿")
             else:
                 self.connected = True
-
     def bind_open_workbook(self, filename_keyword):
         """
         绑定以打开的工作簿，根据文件名关键词查找
@@ -151,6 +162,18 @@ class ExcelHandler:
         sheet = self.workbook.Sheets(sheet_name)
         sheet.Cells(row, col).Value = value
 
+    def set_column_format(self, sheet_name, column, format_):
+        """
+        设置列 格式 如@ 字符串
+        :param sheet_name: 表名
+        :param column: 列 如A
+        :param format_: 如 @ 如："0"设置整列为数字格式，保留0位小数
+        :return:
+        """
+        print(f'设置{column}列格式为{format_}')
+        sheet = self.workbook.Sheets(sheet_name)
+        sheet.Columns(column).NumberFormat = format_
+
     def write_range(self, sheet_name, start_cell_name, end_cell_name=None, values=None):
         """
         写入单元格区域
@@ -274,6 +297,18 @@ class ExcelHandler:
         if self.workbook:
             self.workbook.Save()
 
+    def save_as(self, new_file_path):
+        """
+        另存为新文件名
+        """
+        if self.workbook:
+            try:
+                # 构建新的完整路径
+                new_path = os.path.abspath(new_file_path)
+                self.workbook.SaveAs(new_path)
+                print(f"文件成功另存为：{new_file_path}")
+            except Exception as e:
+                print(f"另存为失败：{e}")
     def close(self):
         """
         关闭当前工作簿并退出 Excel
